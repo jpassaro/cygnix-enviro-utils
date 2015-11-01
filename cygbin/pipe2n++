@@ -1,0 +1,17 @@
+#!/bin/bash
+
+myfile=$1
+
+if [[ -z $myfile ]] ; then
+  i=0
+  while [[ -e ~/tmp/file${i}.txt ]] ; do
+    i=$((i+1))
+  done
+  myfile=~/tmp/file${i}.txt
+fi
+
+cat >$myfile
+
+echo routed output to $myfile
+
+n++ $myfile >/dev/null

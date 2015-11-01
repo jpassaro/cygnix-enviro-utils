@@ -1,0 +1,16 @@
+#!/bin/bash
+
+cygsetup -go
+
+eval "$(ssh-agent -k)"
+
+echo
+
+if ps --summary | sed 1d | egrep -v '(bash|mintty|ps|sed)$' ; then
+	echo You must kill all the processes above.
+	echo I provide an admin window for your convenience.
+	cygadmin &
+	echo Also:
+fi
+
+echo Remember to close this and any other Cygwin terminals.

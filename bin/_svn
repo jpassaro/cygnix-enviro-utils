@@ -1,0 +1,4 @@
+#!/bin/sh
+
+echo svn "$@" >&2
+exec svn "$@"

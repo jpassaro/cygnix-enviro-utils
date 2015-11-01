@@ -1,0 +1,4 @@
+source_pragma_once $HOME/bashrc.d/path
+prepend-path ~/workbin
+append-path /cygdrive/c/athena_trunk/apache-maven-3.2.1/bin
+append-path /cygdrive/c/Program\ Files/Java/jdk1.6.0_43/bin

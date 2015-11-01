@@ -1,0 +1,2 @@
+#!/bin/sh
+mintty -i /Cygwin-Terminal.ico - >/dev/null 2>&1 & disown

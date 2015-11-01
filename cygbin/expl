@@ -1,0 +1,8 @@
+#!/bin/bash
+
+for x in "$@" "" ; do
+  [[ -z "$x" && -n "$done" ]] && exit 0
+  [[ -z "$x" ]] && arg=. || arg="$(cygpath -w "$x")"
+  explorer "$arg"
+  done=x
+done

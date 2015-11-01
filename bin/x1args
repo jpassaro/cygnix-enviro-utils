@@ -1,0 +1,33 @@
+#!/bin/bash
+
+if [[ "$1" == -v ]] ; then
+  DEBUG=echo ; shift
+else
+  DEBUG=true #noop
+fi
+
+declare -a CMD
+subst=
+let i=0
+while [[ -n "$1" && "$1" != "--args" ]] ; do
+  [[ "$1" == {} ]] && subst="$subst $i"
+  CMD[$i]="$1"
+  shift
+  let i++
+done
+
+[[ "$1" == "--args" ]] && shift || {
+  echo >&2 usage: $0 EXECUTABLE [ARGS] --args individualarg1 individualarg2 ...
+  exit 1
+}
+
+[[ -z "$subst" ]] && function doit(){
+  $DEBUG "${CMD[@]}" "$x" >&2
+  "${CMD[@]}" "$x"
+} || function doit() {
+  for i in $subst ; do CMD[$i]=$x ; done
+  $DEBUG "${CMD[@]}" >&2
+  "${CMD[@]}"
+}
+
+for x ; do doit ; done

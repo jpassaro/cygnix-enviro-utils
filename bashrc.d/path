@@ -1,0 +1,18 @@
+
+function haspath() {
+  [[ -n "$1" && "$#" == 1 ]] && [[  "$PATH" == *?:"$1":?* || "$PATH" == "$1":?*
+                                    || "$PATH" == *?:"$1" ]]
+}
+
+function prepend-path() {
+  for x ; do haspath "$x" || export PATH="$x":"$PATH" ; done
+}
+
+function append-path() {
+  for x ; do haspath "$x" || export PATH="$PATH":"$x" ; done
+}
+
+prepend-path ~/bin
+[ ! -d ~/cygbin ] || prepend-path ~/cygbin
+source_pragma_once $HOME/bashrc.d/*-path
+

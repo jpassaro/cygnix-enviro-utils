@@ -1,0 +1,2 @@
+#!/bin/sh
+exec "/cygdrive/c/Program Files/TortoiseSVN/bin/TortoisePlink.exe" ""

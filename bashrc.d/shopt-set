@@ -1,0 +1,12 @@
+# Don't use ^D to exit
+set -o ignoreeof
+
+# extended globbing
+shopt -s extglob
+shopt -s globstar
+shopt -s histappend
+
+# When changing directory small typos can be ignored by bash
+# for example, cd /vr/lgo/apaache would find /var/log/apache
+shopt -s cdspell
+

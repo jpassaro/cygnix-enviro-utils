@@ -1,0 +1,2 @@
+#!/bin/sh
+cygstart --action=runas mintty -i /usr/bin/cygicons-0.dll,1  -t cygwin-as-administrator -o AppID=CYG-ADMIN -

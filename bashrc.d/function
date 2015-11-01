@@ -1,0 +1,105 @@
+#!source
+
+. ~/.sleeprc ##enable the builtin version of sleep
+
+function addhost(){
+    for x in "$@" ; do
+      echo adding $x
+      sed "s/%HOST%/$x/" ~/.ssh/config_template >>~/.ssh/config
+    done
+}
+
+function cdsrc() {
+  envi="$1" ; shift
+  c "$SRC/${envi}/projects" "$@"
+  return $?
+}
+
+function svnup(){
+  local ARGS
+  if [[ -z "$*" ]] ; then
+    for x in ecn-{ps,gs,common} ; do
+      [[ -e "$x" ]] && ARGS="$ARGS $x"
+    done
+    [[ -n "$ARGS" ]] && echo implicit args $ARGS
+  fi
+  svn update --accept postpone "$@" $ARGS
+}
+
+function c(){
+  DIR="$1"
+  shift
+  if [[ ! -d "$DIR" ]] ; then
+    mkdir -pv "$DIR" >&2
+    RESULT=$?
+    [[ $RESULT == 0 ]] || return $RESULT
+  fi
+  echo "$DIR" >&2
+  if [[ -z "$*" ]] ; then
+    cd "$DIR"
+  else
+    ( cd "$DIR" && "$@" )
+  fi
+}
+
+alias svnup_imms="svn up --set-depth=immediates "
+
+function svn_depth(){
+  svn info "$2" | grep -iq "^Depth: $1"
+}
+
+
+function svnup_r(){
+  local RECURSIVE
+  local INFINITY
+  local BASE
+  local x
+  case "$1" in
+    --recurse) RECURSIVE=x ; shift ;;
+    -r) DEPTH=infinity ; shift ;;
+    *) DEPTH=immediates ;;
+  esac
+  for x in "$@" ; do 
+     BASE="$(dirname "$x")"
+     [[ -e "$BASE" ]] || svnup_r --recurse "$BASE"
+     svn_depth empty "$BASE" && svnup_imms "$BASE"
+     svn_depth immediates "$BASE" && svn up "$BASE"
+  done
+  [[ -z "$RECURSIVE" ]] && svn up --set-depth=${DEPTH} "$@"
+}
+
+function ppid() {
+  local PID=$$ ; ps -p $(cat /proc/$PID/ppid)
+}
+
+function _transfer_jars(){
+  [[ -n "${JAR_PATHS[*]}" ]] || { echo >&2 JAR_PATHS not specified ; return 1 ; }
+  
+  local -a JARS
+  local path
+  for path in "${JAR_PATHS[@]}"; do
+    local dir="$(dirname "$path")" patt="$(basename "$path")"
+    [[ -d "$dir" && -n "$(find "$dir" -maxdepth 1 -name "$patt")" ]] || {
+      echo >&2 "$dir" contains no jars matching "$patt" ; return 1
+    }
+    JAR="$(find "$dir" -maxdepth 1 -name "$patt" -print0 | xargs -r0 ls -t | head -n1)"
+    echo scheduled for transfer: "$JAR"
+    JARS=("${JARS[@]}" "$JAR")
+  done
+  
+  local DESTPATH="$1" ; shift
+  [[ -n "${JARS[*]}" ]] && for TARGET ; do 
+    rsync -avb --suffix=.bak."$(date +%Y%m%d_%H%M)" "${JARS[@]}" "$TARGET:$DESTPATH"
+  done
+}
+
+function jars_gs() {
+  local -a JAR_PATHS=(ecn-gs/target/ecn-gs-\*-SNAPSHOT{,-tests}.jar ecn-common/modules/ecn-common-lib/target/ecn-common-lib-\*-SNAPSHOT.jar)
+  _transfer_jars /opt/fxall/ecn-gs/lib "$@"
+}
+
+function jars_ps() {
+  local -a JAR_PATHS=(ecn-ps/target/ecn-gs-\*-SNAPSHOT{,-tests}.jar ecn-common/modules/ecn-common-lib/target/ecn-common-lib-\*-SNAPSHOT.jar)
+  transfer_jars /opt/fxall/ecn-ps/lib "$@"
+}
+

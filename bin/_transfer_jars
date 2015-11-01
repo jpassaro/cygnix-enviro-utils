@@ -1,0 +1,39 @@
+#!/bin/bash
+
+## utilities to transfer latest version of jars to a given machine
+_transfer_jars () 
+{ 
+    [[ -n "${JAR_PATHS[*]}" ]] || { 
+        echo JAR_PATHS not specified 1>&2;
+        return 1
+    };
+    local -a JARS;
+    local path;
+    for path in "${JAR_PATHS[@]}";
+    do
+        local dir="$(dirname "$path")" patt="$(basename "$path")";
+        [[ -d "$dir" && -n "$(find "$dir" -maxdepth 1 -name "$patt")" ]] || { 
+            echo "$dir" contains no jars matching "$patt" 1>&2;
+            return 1
+        };
+        JAR="$(find "$dir" -maxdepth 1 -name "$patt" -print0 | xargs -r0 ls -t | head -n1)";
+        echo scheduled for transfer: "$JAR";
+        JARS=("${JARS[@]}" "$JAR");
+    done;
+    local DESTPATH="$1";
+    shift;
+    [[ -n "${JARS[*]}" ]] && for TARGET in "$@"; do
+        rsync -avb --suffix=.bak."$(date +%Y%m%d_%H%M)" "${JARS[@]}" "$TARGET:$DESTPATH";
+    done
+}
+ECNCOMMON=ecn-common/modules/ecn-common-lib/target/ecn-common-lib-\*-SNAPSHOT.jar
+case "$0" in 
+    *-ps) JAR_PATHS=(ecn-ps/target/ecn-ps-\*-SNAPSHOT.jar "$ECNCOMMON") ;;
+    *-gs) JAR_PATHS=(ecn-gs/target/ecn-gs-\*-SNAPSHOT{,-tests}.jar "$ECNCOMMON") ;;
+    *) echo >&2 error: must be invoked as jars-ps or jars-gs ; exit 1 ;;
+esac
+if [[ -n "$*" ]] ; then
+  _transfer_jars "$@"
+else
+  echo >&2 usage: "$0" hostname ...
+fi

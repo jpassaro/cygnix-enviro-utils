@@ -1,0 +1,29 @@
+#!/bin/bash
+
+function fail(){
+  [[ "$1" == *[^0-9]* ]] || { EXIT="$1" ; shift ; }
+  echo >&2 "$@" ; exit ${EXIT:-1}
+}
+
+SSHOPTS=(--with-args --AppID MINTTYLOGREADER --title -t)
+while [[ "$1" == [+-]* ]] ; do
+  if [[ $1 == -x ]] ; then
+    shift ; SSHOPTS=("${SSHOPTS[@]}" "$1")
+  else
+    LESSOPTS=("${LESSOPTS[@]}" "$1")
+  fi
+  shift
+done
+[[ -z "${LESSOPTS[*]}" ]] && LESSOPTS=(+F -n)
+echo "LESSOPTS: " "${LESSOPTS[@]}"
+echo "SSHOPTS: " "${SSHOPTS[@]}"
+
+for x ; do ## run through them and check for any bad ones
+  [[ "$x" == *:* && "$x" != *:*:* ]] || fail 1 arg "$1" is ill-formatted
+done
+
+for x ; do
+  HOST="${x%%:*}"
+  FILE="${x##*:}"
+  ssh-launch "${SSHOPTS[@]}" --title "$x" "$HOST" less "${LESSOPTS[@]}" "$FILE"
+done

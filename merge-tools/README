@@ -1,0 +1,52 @@
+jpassaro's Merge Tools
+======================
+These scripts are intended to automate certain tedious svn branches processes,
+especially under process constraints that restrict your ability to merge
+revisions all at once.
+
+For example, with this script, you can automatically merge every eligible
+revision with a separate check-in:
+
+$ ./see-eligible ps
+$ for x in $(cat listrevs_ecn-ps.trunk.txt) ; do
+>   ./bring-merge.sh ps $x && ./status.sh ps && ./check-in.sh ps
+> done
+
+It will furthermore display the changes to be merged and wait for your
+physical confirmation before checking in.
+
+Tools are also included for easy record-only merges, including the endless
+build checkins of a Maven build process, or other merges.
+
+Individual scripts may be ill-documented, contact the author with any questions.
+
+
+Setting Up
+==========
+The scripts as originally written invoke each other on the assumption that a)
+they are in the same directory, and b) they are in a projects directory with
+each source project eligible for merges represented by a different directory.
+(Further assumptions are made about the names of those directories, an
+shortcoming to be remedied in a future commit.) To facilitate the portability of
+these utilities, a setup script is included.
+
+To set up your projects directory for merging, invoke the setup script from said
+projects directory. It will create symbolic links. 
+
+$ ls
+[... snip ...]
+ecn-ps/
+ecn-gs/
+ecn-common/
+[... snip ...]
+$ git clone ^^/merge-tools ~/github-repos/jpassaro-merge-tools
+[ ... snip ...]
+$ ~/github-repos/jpassaro-merge-tools/setup.sh
+
+You must also specify which branch you are merging from. There are two ways
+to do this:
+
+1) specify in branch.txt, which should contain only the text "BRANCH=trunk" or
+whatever...
+
+2) or set and export the environment variable BRANCH.

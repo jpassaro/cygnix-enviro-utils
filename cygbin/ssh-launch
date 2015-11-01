@@ -1,0 +1,23 @@
+#!/bin/bash
+
+[[ -z "$*" ]] && {
+  echo >&2 $0 \[USER@\]HOST ...
+  exit 1
+}
+
+SSH=(ssh)
+while [[ "$1" == -* ]] ; do
+  case "$1" in
+    --AppID|--title|--icon) OPT="${1##--}" ; shift ; eval "$OPT"="$1" ;;
+    --with-args) WITH_ARGS=with-args ;;
+    *) SSH=("${SSH[@]}" "$1");;
+  esac
+  shift
+  echo SSH="${SSH[@]}"
+done
+
+MINTTY=(mintty -o "AppID=${AppID:-MINTTYLOGINSHELL}"
+         "${TITLE[@]}" --hold error)
+[[ -z "$WITH_ARGS" ]] && for x ; do 
+  cygstart "${MINTTY[@]}" "${SSH[@]}" "$x"
+done || cygstart "${MINTTY[@]}" "${SSH[@]}" "$@"

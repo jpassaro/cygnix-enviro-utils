@@ -1,0 +1,2 @@
+#!/bin/sh
+cygstart /cygdrive/c/athena_trunk/setup-x86.exe

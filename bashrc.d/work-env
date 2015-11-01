@@ -1,0 +1,2 @@
+export MAIN=/cygdrive/c/athena_trunk
+export SRC=$MAIN/MTA_src

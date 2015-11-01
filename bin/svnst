@@ -1,0 +1,18 @@
+#!/bin/sh
+
+function paths_exist() {
+  for x ; do [[ -d "$x" ]] || return 1 ; done ; return 0
+}
+
+function svnst_doit() {
+    if [[ "$#" == 0 ]] && paths_exist "${PROJECTS[@]}" ; then
+      svn stat "${PROJECTS[@]}"
+    else
+      svn stat "$@"
+    fi
+}
+
+case $0 in
+  *q) svnst_doit "$@" | grep -v '^?' ;;
+  *) svnst_doit "$@" ;;
+esac 
