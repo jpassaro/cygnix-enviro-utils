@@ -13,6 +13,5 @@ function append-path() {
 }
 
 prepend-path ~/bin
-[ ! -d ~/cygbin ] || prepend-path ~/cygbin
 source_pragma_once $HOME/bashrc.d/*-path
 
