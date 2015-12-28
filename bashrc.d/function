@@ -1,6 +1,6 @@
 #!source
 
-. ~/.sleeprc ##enable the builtin version of sleep
+source_pragma_once ~/.sleeprc ##enable the builtin version of sleep
 
 function addhost(){
     for x in "$@" ; do
