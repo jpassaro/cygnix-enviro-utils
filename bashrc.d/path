@@ -1,15 +1,15 @@
 
-function haspath() {
+function _can_add() {
   [[ -n "$1" && "$#" == 1 ]] && [[  "$PATH" == *?:"$1":?* || "$PATH" == "$1":?*
-                                    || "$PATH" == *?:"$1" ]]
+                                    || "$PATH" == *?:"$1" || ! -d "$1" ]]
 }
 
 function prepend-path() {
-  for x ; do haspath "$x" || export PATH="$x":"$PATH" ; done
+  for x ; do _can_add "$x" || export PATH="$x":"$PATH" ; done
 }
 
 function append-path() {
-  for x ; do haspath "$x" || export PATH="$PATH":"$x" ; done
+  for x ; do _can_add "$x" || export PATH="$PATH":"$x" ; done
 }
 
 prepend-path ~/bin
