@@ -1,9 +1,6 @@
 #!source
-alias merge="svn merge --accept=postpone"
-#alias svnup="svn update --accept=postpone"
 alias sshes='grep Host ~/.ssh/config'
 alias hosts='grep Host ~/.ssh/config'
-alias ping=/cygdrive/c/Windows/system32/ping
 alias hello='echo hello'
 
 # alias less='less -r'                          # raw control characters
@@ -19,10 +16,9 @@ alias hello='echo hello'
  alias vdir='ls --color=auto --format=long'
  alias ll='ls -l'                              # long list
  alias la='ls -A'                              # all but . and ..
- alias l='ls -CF'     
 
-alias jmx-ps="x1args cygstart --args http://nyatintecn0{1..8}.fxall.com:8085 http://nyatintecn0{3,4}.fxall.com:8088"
-alias jmx-gs="x1args cygstart --args http://nyatintecn0{1..8}.fxall.com:8082"
-alias jmx-cs="x1args cygstart --args http://nyatintecn0{1,2}.fxall.com:8100"
-alias svn-summ='svn diff --diff-cmd diff -x -q'
-alias sshl="ssh-launch"
+alias l="ls -FGh"
+alias ackp="ack --type=python"
+alias ackh="ack --type=html"
+alias pzql="psql -U zeconomy zeconomy"
+alias ackn="ack --nopager"
