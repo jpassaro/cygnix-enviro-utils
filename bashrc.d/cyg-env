@@ -1,4 +1,6 @@
+[[ -e /cygdrive ]] && {
 export MAIN=/cygdrive/c/athena_trunk
 USERPROFILE=$(cygpath -u "$USERPROFILE")
 export TERM=cygwin
 export CYGWIN=true
+}
