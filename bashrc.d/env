@@ -1,3 +1,4 @@
 export EDITOR=vi
+PS1='\[\e[1;31m\]\W\[\e[m\] \[\e[1;34m\]$\[\e[m\] '
 
 source_pragma_once ~/bashrc.d/*-env
