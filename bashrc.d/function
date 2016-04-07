@@ -35,3 +35,18 @@ function c(){
 function ppid() {
   local PID=$$ ; ps -p $(cat /proc/$PID/ppid)
 }
+
+function create_alias() {
+  for x ; do
+    echo alias "'$x'" >>~/bashrc.d/alias
+    source ~/bashrc.d/alias
+  done
+}
+
+function gulp(){
+#  if ! [[ -d app ]] ; then
+#    echo 'no app/ directory found. Go to a code directory or execute "command gulp"' >&2
+#    return 1
+#  fi
+  ( cd app ; command gulp dev )
+}

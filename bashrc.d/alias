@@ -22,3 +22,7 @@ alias ackp="ack --type=python"
 alias ackh="ack --type=html"
 alias pzql="psql -U zeconomy zeconomy"
 alias ackn="ack --nopager"
+alias vi="vim"
+alias ackl='ack --pager="less -FRX"'
+
+eval "$(thefuck --alias)"
