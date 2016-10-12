@@ -1,3 +1,5 @@
+#!/bin/bash
+## the above for vim filetype detection; however,
 ## this file should be installed as, or sourced from, your ~/.bashrc
 
 # User dependent .bashrc file

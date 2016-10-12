@@ -1,3 +1,4 @@
+#!/bin/bash
 # Don't use ^D to exit
 set -o ignoreeof
 

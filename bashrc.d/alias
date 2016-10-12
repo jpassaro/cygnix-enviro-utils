@@ -1,4 +1,4 @@
-#!source
+#!/bin/bash
 alias sshes='grep Host ~/.ssh/config'
 alias hosts='grep Host ~/.ssh/config'
 alias hello='echo hello'

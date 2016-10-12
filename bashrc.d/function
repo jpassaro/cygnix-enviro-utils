@@ -1,4 +1,4 @@
-#!source
+#!/bin/bash
 
 source_pragma_once ~/.sleeprc ##enable the builtin version of sleep
 

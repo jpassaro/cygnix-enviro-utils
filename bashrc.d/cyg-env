@@ -1,3 +1,4 @@
+#!/bin/bash
 [[ -e /cygdrive ]] && {
 export MAIN=/cygdrive/c/athena_trunk
 USERPROFILE=$(cygpath -u "$USERPROFILE")
