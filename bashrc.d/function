@@ -43,10 +43,22 @@ function create_alias() {
   done
 }
 
-function gulp(){
-#  if ! [[ -d app ]] ; then
-#    echo 'no app/ directory found. Go to a code directory or execute "command gulp"' >&2
-#    return 1
-#  fi
-  ( cd app ; command gulp dev )
+function code() {
+  suff="${1:-wc}"
+  folders=(~/code/*"$suff")
+  numf="${#folders[@]}"
+  case "$numf" in
+    1) ;;
+    *)
+        echo >/dev/tty "$numf" folders found for \*"$suff", please be more specific:
+	for folder in "${folders[@]}" ; do
+           echo >/dev/tty -e "\\t$folder"
+        done
+	return 2 ;;
+  esac
+  for folder in "${folders[@]}" ; do
+    [[ -d "$folder" ]] && c "$folder" || \
+         { echo >/dev/tty 'No folder found for *'"$suff" ; return 1 ;}
+  done
+
 }

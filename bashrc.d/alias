@@ -21,6 +21,7 @@ alias l="ls -FGh"
 alias ackp="ack --type=python"
 alias ackh="ack --type=html"
 alias pzql="psql -U zeconomy zeconomy"
+alias pzql-dev="pzql -h localhost -p 3333"
 alias ackn="ack --nopager"
 alias vi="vim"
 alias ackl='ack --pager="less -FRX"'
