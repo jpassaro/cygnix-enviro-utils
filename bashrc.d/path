@@ -13,6 +13,7 @@ function append-path() {
   for x ; do _can_add "$x" || export PATH="$PATH":"$x" ; done
 }
 
-prepend-path ~/bin
+prepend-path /usr/local/bin ~/bin
+echo -n PATH= ; printenv PATH
 source_pragma_once $HOME/bashrc.d/*-path
 
