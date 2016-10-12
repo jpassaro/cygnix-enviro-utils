@@ -8,6 +8,9 @@ if [[ "$TERM" == xterm* ]] ; then
   TITLEBAR=""
 fi
 
+_lesspipe="$(which lesspipe.sh)"
+[[ -x "$_lesspipe" ]] && export LESSOPEN="|${_lesspipe} %s" || true
+
 source_pragma_once ~/bashrc.d/*-env
 
 [[ -n "$COLORFGBG" ]] || export COLORFGBG="15;0"
