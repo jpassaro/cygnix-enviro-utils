@@ -50,9 +50,9 @@ syntax on
 highlight BadWhitespace ctermbg=red guibg=darkred
 au BufRead,BufNewFile *.py,*.pyw,*.c,*.h match BadWhitespace /\s\+$/
 
-nnoremap <space> za
-
-nnoremap <Leader>n :noh<CR>
+" shortcut for unfolding a fold.
+" nnoremap <space> za
+" Disabled temporarily so I can learn the keybindings
 
 " display tabs everywhere
 set list lcs=tab:⟩—
@@ -74,8 +74,8 @@ au BufEnter /private/tmp/crontab.* setl backupcopy=yes
 " from vimtutor
 set hlsearch
 set incsearch
-" :noh to temporarily stop highlighting
-
+" :noh, or \n, to temporarily stop highlighting
+nnoremap <Leader>n :noh<CR>
 
 " set a useful statusline
 set ruler laststatus=2
