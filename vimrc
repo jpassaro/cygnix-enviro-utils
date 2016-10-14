@@ -95,8 +95,8 @@ autocmd Filetype vim setlocal fo-=ro
 autocmd Filetype gitcommit setlocal colorcolumn=+0
 
 " create custom vim-surround setting for {% %} blocks in jinja
+" got this from SO i think, but lost the link
 autocmd Filetype jinja let b:surround_{char2nr('%')} = "{% \1{% \1 %}\r{% end\1\r .*\r\1 %}"
 
 " for debugging syntax settings, borrowed from vim wikia
 map <F10> :echo "hi<" . synIDattr(synID(line("."),col("."),1),"name") . '> trans<' . synIDattr(synID(line("."),col("."),0),"name") . "> lo<" . synIDattr(synIDtrans(synID(line("."),col("."),1)),"name") . ">"<CR>
-
