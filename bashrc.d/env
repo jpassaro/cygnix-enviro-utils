@@ -1,7 +1,7 @@
 #!/bin/bash
 export EDITOR=vi
 
-PS1='\[\e[1;31m\]\W\[\e[m\] \[\e[1;34m\]$\[\e[m\] '
+PS1='\[\e[0;32m\]\D{%F %T}\[\e[m\] \[\e[1;31m\]\W\[\e[m\] \[\e[1;34m\]$\[\e[m\] '
 if [[ "$TERM" == xterm* ]] ; then
   TITLEBAR='\[\033]0;\u@\h:\w\007\]'
   PS1="$TITLEBAR$PS1"
