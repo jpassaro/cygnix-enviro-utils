@@ -28,8 +28,6 @@ Plugin 'tpope/vim-repeat.git'
 call vundle#end()            " required
 filetype plugin indent on    " required
 
-" Nota Bene: remember to 
-
 " let python_highlight_numbers=1
 " let python_highlight_exceptions=1
 " let python_highlight_space_errors=1
@@ -103,3 +101,5 @@ autocmd Filetype jinja let b:surround_{char2nr('%')} = "{% \1{% \1 %}\r{% end\1\
 
 " for debugging syntax settings, borrowed from vim wikia
 map <F10> :echo "hi<" . synIDattr(synID(line("."),col("."),1),"name") . '> trans<' . synIDattr(synID(line("."),col("."),0),"name") . "> lo<" . synIDattr(synIDtrans(synID(line("."),col("."),1)),"name") . ">"<CR>
+
+autocmd BufRead .log setf gitcommit
