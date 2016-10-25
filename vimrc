@@ -78,8 +78,9 @@ nnoremap <Leader>n :noh<CR>
 " set a useful statusline
 set ruler laststatus=2
 
-"use timestamp in ruler / statusline, pulled from vim wikia
-set rulerformat=%58(%{strftime('%a\ %b\ %e\ %T\ %p')}\ %5l,%-6(%c%V%)\ %P%)
+"timestamp in ruler pulled from vim wikia
+"window dimensions in ruler entirely my own (-:
+set rulerformat=%47(%{strftime('%e\ %b\ %T\ %p')}\ %5l,%-6(%c%V%)\ %P%10((%{winwidth(0)}x%{winheight(0)})%)%)
 
 " preferred length < 78...
 autocmd Filetype python setlocal textwidth=78
