@@ -98,7 +98,12 @@ autocmd Filetype gitcommit setlocal colorcolumn=+0
 
 " create custom vim-surround setting for {% %} blocks in jinja
 " got this from SO i think, but lost the link
-autocmd Filetype jinja let b:surround_{char2nr('%')} = "{% \1{% \1 %}\r{% end\1\r .*\r\1 %}"
+autocmd Filetype jinja
+        \ let b:surround_{char2nr('^')} = "{% \1{% \1 %}\r{% end\1\r .*\r\1 %}"
+autocmd Filetype jinja
+        \ let b:surround_{char2nr('%')} = "{% \r %}"
+autocmd Filetype jinja
+        \ let b:surround_{char2nr('#')} = "{# \r #}"
 
 " enact syntax folds to fight the incredible verbosity of these email templates
 autocmd BufRead,BufNewFile app/templates/email/*.html
