@@ -34,26 +34,13 @@ filetype plugin indent on    " required
 " let python_no_builtin_highlight=1
 syntax on
 
-"au BufNewFile,BufRead *.py
-"    \ set tabstop=4
-"    \ set softtabstop=4
-"    \ set shiftwidth=4
-"    \ set textwidth=79
-"    \ set expandtab
-"    \ set autoindent
-"    \ set fileformat=unix
-
-
 "define BadWhitespace before using in a match
 highlight BadWhitespace ctermbg=red guibg=darkred
-au BufRead,BufNewFile *.py,*.pyw,*.c,*.h match BadWhitespace /\s\+$/
+autocmd BufRead,BufNewFile *.py,*.pyw,*.c,*.h match BadWhitespace /\s\+$/
 
 " shortcut for unfolding a fold.
 " nnoremap <space> za
-" Disabled temporarily so I can learn the keybindings
-
-" display tabs everywhere
-set list lcs=tab:⟩—
+" Disabled so I can learn the keybindings
 
 " never not!
 set number
@@ -61,11 +48,15 @@ set number
 set backspace=start,indent,eol
 set hidden
 
-autocmd Filetype javascript setlocal tabstop=4 softtabstop=4 shiftwidth=4 expandtab
-autocmd Filetype html setlocal tabstop=8 softtabstop=4 shiftwidth=4 expandtab
-autocmd Filetype jinja setlocal tabstop=8 softtabstop=4 shiftwidth=4 expandtab
-autocmd Filetype vim setlocal tabstop=8 softtabstop=4 shiftwidth=4 expandtab
-autocmd Filetype sh setlocal tabstop=8 softtabstop=2 shiftwidth=2 expandtab
+" display tabs everywhere, with width 8, and use spaces instead when entering
+" new content
+set list lcs=tab:⟩— tabstop=8 expandtab softtabstop=4 shiftwidth=4
+" formerly the tabstop bits were in an autocmd
+" autocmd Filetype javascript,html,jinja,vim,python,gitcommit setlocal ...
+" now i just want it to be the default
+
+" but bash is a special baby, for some reason 2-char indent works better
+autocmd Filetype sh setlocal softtabstop=2 shiftwidth=2
 
 au BufEnter /private/tmp/crontab.* setl backupcopy=yes
 
@@ -83,12 +74,12 @@ set ruler laststatus=2
 set rulerformat=%47(%{strftime('%e\ %b\ %T\ %p')}\ %5l,%-6(%c%V%)\ %P%10((%{winwidth(0)}x%{winheight(0)})%)%)
 
 " preferred length < 78...
-autocmd Filetype python setlocal textwidth=78
+autocmd Filetype python,vim setlocal textwidth=78
+autocmd Filetype python,vim setlocal colorcolumn=+2
 autocmd Filetype python setlocal fo-=t
 autocmd Filetype python setlocal fo+=r
-autocmd Filetype python setlocal colorcolumn=+2
 
-autocmd Filetype python,gitcommit highlight ColorColumn ctermbg=235
+autocmd Filetype python,gitcommit,vim highlight ColorColumn ctermbg=235
 " don't autocomment in vimscripts... however leave 'c' so that it can autowrap
 " a very long comment like this one
 autocmd Filetype vim setlocal fo-=ro
@@ -112,4 +103,5 @@ autocmd BufRead,BufNewFile app/templates/email/*.html
 " for debugging syntax settings, borrowed from vim wikia
 map <F10> :echo "hi<" . synIDattr(synID(line("."),col("."),1),"name") . '> trans<' . synIDattr(synID(line("."),col("."),0),"name") . "> lo<" . synIDattr(synIDtrans(synID(line("."),col("."),1)),"name") . ">"<CR>
 
-autocmd BufRead .log setf gitcommit
+autocmd BufRead,BufNewFile .log setf gitcommit
+"                                      PONMLKJIHGFEDCBAzyxwvutsrqponmlkjihgfedcba987654321
