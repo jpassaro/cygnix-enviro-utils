@@ -100,6 +100,10 @@ autocmd Filetype gitcommit setlocal colorcolumn=+0
 " got this from SO i think, but lost the link
 autocmd Filetype jinja let b:surround_{char2nr('%')} = "{% \1{% \1 %}\r{% end\1\r .*\r\1 %}"
 
+" enact syntax folds to fight the incredible verbosity of these email templates
+autocmd BufRead,BufNewFile app/templates/email/*.html
+            \ setlocal foldmethod=syntax
+
 " for debugging syntax settings, borrowed from vim wikia
 map <F10> :echo "hi<" . synIDattr(synID(line("."),col("."),1),"name") . '> trans<' . synIDattr(synID(line("."),col("."),0),"name") . "> lo<" . synIDattr(synIDtrans(synID(line("."),col("."),1)),"name") . ">"<CR>
 
