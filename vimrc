@@ -23,10 +23,17 @@ Plugin 'mileszs/ack.vim'
 Plugin 'tpope/vim-surround.git'
 Plugin 'tpope/vim-abolish.git'
 Plugin 'tpope/vim-repeat.git'
+Plugin 'kana/vim-textobj-user'
+Plugin 'kana/vim-textobj-indent'
+Plugin 'kana/vim-textobj-line'
+Plugin 'b4winckler/vim-angry'
+Plugin 'bkad/CamelCaseMotion'
 
 " All of your Plugins must be added before the following line
 call vundle#end()            " required
 filetype plugin indent on    " required
+
+call camelcasemotion#CreateMotionMappings('<leader>')
 
 " let python_highlight_numbers=1
 " let python_highlight_exceptions=1
@@ -51,9 +58,8 @@ set hidden
 " display tabs everywhere, with width 8, and use spaces instead when entering
 " new content
 set list lcs=tab:⟩— tabstop=8 expandtab softtabstop=4 shiftwidth=4
-" formerly the tabstop bits were in an autocmd
+" formerly the tabstop bits were in an autocmd, now they set by default.
 " autocmd Filetype javascript,html,jinja,vim,python,gitcommit setlocal ...
-" now i just want it to be the default
 
 " but bash is a special baby, for some reason 2-char indent works better
 autocmd Filetype sh setlocal softtabstop=2 shiftwidth=2
@@ -87,8 +93,8 @@ autocmd Filetype vim setlocal fo-=ro
 " mark 72nd column in git commit messages
 autocmd Filetype gitcommit setlocal colorcolumn=+0
 
-" create custom vim-surround setting for {% %} blocks in jinja
-" got this from SO i think, but lost the link
+" create custom vim-surround setting for {% %} and {# #} blocks in jinja
+" got the first one from SO i think, but lost the link. The others all me.
 autocmd Filetype jinja
         \ let b:surround_{char2nr('^')} = "{% \1{% \1 %}\r{% end\1\r .*\r\1 %}"
 autocmd Filetype jinja
