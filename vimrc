@@ -57,14 +57,14 @@ set hidden
 
 " display tabs everywhere, with width 8, and use spaces instead when entering
 " new content
-set list lcs=tab:⟩— tabstop=8 expandtab softtabstop=4 shiftwidth=4
+set list listchars=tab:⟩— tabstop=8 expandtab softtabstop=4 shiftwidth=4
 " formerly the tabstop bits were in an autocmd, now they set by default.
 " autocmd Filetype javascript,html,jinja,vim,python,gitcommit setlocal ...
 
 " but bash is a special baby, for some reason 2-char indent works better
 autocmd Filetype sh setlocal softtabstop=2 shiftwidth=2
 
-au BufEnter /private/tmp/crontab.* setl backupcopy=yes
+au BufEnter /private/tmp/crontab.* setlocal backupcopy=yes
 
 " from vimtutor
 set hlsearch
