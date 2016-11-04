@@ -59,6 +59,7 @@ function code() {
   for folder in "${folders[@]}" ; do
     [[ -d "$folder" ]] && c "$folder" || \
          { echo >/dev/tty 'No folder found for *'"$suff" ; return 1 ;}
+    [[ ! -d .git ]] || git status
   done
 
 }
