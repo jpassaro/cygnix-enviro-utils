@@ -37,5 +37,9 @@ if [ -d $HOME/bashrc.d ] ; then
   source_pragma_once $HOME/bashrc.d/*
 fi
 
+MY_BASHRC_FILE="${BASH_SOURCE[0]}"
 
-
+function reload-profile() {
+  unset PRAGMA_IMPORTED
+  source "$MY_BASHRC_FILE"
+}
