@@ -1,12 +1,32 @@
 #!/bin/bash
 export EDITOR=vi
 
-PS1='\[\e[0;32m\]\D{%F %T}\[\e[m\] \[\e[1;31m\]\W\[\e[m\] \[\e[1;34m\]$\[\e[m\] '
+PS1='\[\e[0;32m\]\D{%F %T}\[\e[m\] \[\e[1;31m\]\W\[\e[m\] '
 if [[ "$TERM" == xterm* ]] ; then
   TITLEBAR='\[\033]0;\u@\h:\w - ${COLUMNS}x${LINES}\007\]'
   PS1="$TITLEBAR$PS1"
   TITLEBAR=""
 fi
+
+if [[ -e "${HOME}"/bashrc.d/git-prompt.sh ]] ; then
+  source "${HOME}"/bashrc.d/git-prompt.sh
+  PS1="$PS1"'\[\e[1;30m\]$(__git_ps1 "(%s)")\[\e[m\]'
+  GIT_PS1_SHOWDIRTYSTATE=x
+  GIT_PS1_SHOWUPSTREAM=auto
+  GIT_PS1_HIDE_IF_PWD_IGNORED=x
+  GIT_PS1_SHOWUNTRACKEDFILES=x
+  #GIT_PS1_STATESEPARATOR=
+else
+  echo No bashrc.d/git-prompt.sh found: consider copying or linking from local git /etc resources
+fi
+
+if [[ -e "${HOME}"/bashrc.d/git-completion.bash ]] ; then
+  source "${HOME}"/bashrc.d/git-completion.bash
+else
+  echo No bashrc.d/git-completion.bash found: consider copying or linking from local git /etc resources
+fi
+PS1="$PS1"'\[\e[1;34m\]$\[\e[m\] '
+
 
 _lesspipe="$(which lesspipe.sh)"
 [[ -x "$_lesspipe" ]] && export LESSOPEN="|${_lesspipe} %s" || true
