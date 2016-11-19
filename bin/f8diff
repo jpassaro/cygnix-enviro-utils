@@ -1,0 +1,15 @@
+#!/bin/bash
+# f8diff [ { diff-args } ] [ -- { flake8-args } ]
+# calls git diff with diff-args,
+# passes to flake8 --diff with flake8-args
+
+DIFFARGS=()
+
+while [[ "$#" > 0 && "$1" != -- ]] ; do
+  DIFFARGS=("${DIFFARGS[@]}" "$1")
+  shift
+done
+
+if [[ "$1" == -- ]] ; then shift ; fi
+
+git diff "${DIFFARGS[@]}" | flake8 --diff "$@"

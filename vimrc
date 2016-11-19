@@ -14,7 +14,6 @@ Plugin 'gmarik/Vundle.vim'
 Plugin 'tmhedberg/SimpylFold'
 Plugin 'vim-scripts/indentpython.vim'
 Plugin 'vim-scripts/mru.vim'
-" Plugin 'scrooloose/syntastic'
 Plugin 'jnurmine/Zenburn'
 Plugin 'Glench/Vim-Jinja2-Syntax'
 Plugin 'isRuslan/vim-es6'
@@ -28,6 +27,7 @@ Plugin 'kana/vim-textobj-indent'
 Plugin 'kana/vim-textobj-line'
 Plugin 'b4winckler/vim-angry'
 Plugin 'bkad/CamelCaseMotion'
+Plugin 'nvie/vim-flake8'
 
 " All of your Plugins must be added before the following line
 call vundle#end()            " required
@@ -110,4 +110,12 @@ autocmd BufRead,BufNewFile app/templates/email/*.html
 map <F10> :echo "hi<" . synIDattr(synID(line("."),col("."),1),"name") . '> trans<' . synIDattr(synID(line("."),col("."),0),"name") . "> lo<" . synIDattr(synIDtrans(synID(line("."),col("."),1)),"name") . ">"<CR>
 
 autocmd BufRead,BufNewFile .log setf gitcommit
-"                                      PONMLKJIHGFEDCBAzyxwvutsrqponmlkjihgfedcba987654321
+
+command SetPyMake setlocal makeprg=f8diff makeef=logs/flake.err errorformat="%f:%l:%c: %m\,%f:%l: %m"
+" allow :make to run f8diff and read errors into a quickfix list
+autocmd Filetype python SetPyMake
+
+function AutoFlake()
+    autocmd BufWrite <buffer> call Flake8()
+endfunction
+autocmd BufReadPost *.py if getline('$') =~ '^\s*\#\W*autoflake' | call AutoFlake() | endif
