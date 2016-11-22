@@ -1,0 +1,8 @@
+[alias]
+	co = checkout
+	br = branch
+	st = status
+	wip = commit --no-verify -am WIP
+	last = reset --soft HEAD~
+	ci = commit
+	di = diff
