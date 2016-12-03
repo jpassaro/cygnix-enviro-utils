@@ -1,1 +1,1 @@
-syn keyword noKeyword type next id
+syn keyword noKeyword type next id help
