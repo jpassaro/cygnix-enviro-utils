@@ -6,3 +6,4 @@
 	last = reset --soft HEAD~
 	ci = commit
 	di = diff
+	mb = merge-base
