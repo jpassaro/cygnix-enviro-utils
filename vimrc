@@ -143,3 +143,5 @@ function GitNoCommit()
     quit
 endfunction
 autocmd Filetype gitcommit command Nocommit call GitNoCommit()
+
+set wildmode=full wildmenu
