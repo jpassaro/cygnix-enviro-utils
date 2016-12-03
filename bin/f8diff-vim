@@ -1,0 +1,5 @@
+#!/bin/bash
+
+make_opt=+make
+[[ -z "$*" ]] || make_opt="${make_opt} ${*}"
+exec vim +SetPyMake "${make_opt}" +copen
