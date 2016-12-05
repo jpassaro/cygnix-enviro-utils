@@ -61,5 +61,17 @@ function code() {
          { echo >/dev/tty 'No folder found for *'"$suff" ; return 1 ;}
     [[ ! -d .git ]] || git status
   done
+}
 
+function space() {
+  local lines=${LINES}
+  local arg="${1:-0}"
+  local neg=""
+  local div=""
+  [[ -n "$1" && "$arg" != -* ]] || { neg=x ; arg=${arg##-} ; }
+  [[ "${arg}" != /* ]] || { div=x ; arg="${arg##/}" ; }
+  [[ "${arg}" != *[^0-9]* ]] || return 1 ;
+  [[ -z "$div" ]] || arg="$((LINES / arg))"
+  [[ -z "$neg" ]] && lines="$arg" || lines="$((lines - ${arg}))"
+  seq "$lines" | tr -dC \\n
 }

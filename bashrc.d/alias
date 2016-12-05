@@ -29,5 +29,3 @@ alias ackl='ack --pager="less -FRX"'
 eval "$(thefuck --alias)"
 
 alias hasvim="find . -name '[._]*.swp' -o -name .swp"
-
-alias space='seq "${LINES}" | tr -dC \\n'
