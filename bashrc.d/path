@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# utilities to easily add paths to your PATH.
+# Each one checks for duplicate entries and that the directory exists.
+
 function _can_add() {
   [[ -n "$1" && "$#" == 1 ]] && [[  "$PATH" == *?:"$1":?* || "$PATH" == "$1":?*
                                     || "$PATH" == *?:"$1" || ! -d "$1" ]]
@@ -14,6 +17,6 @@ function append-path() {
 }
 
 prepend-path /usr/local/bin ~/bin
-echo -n PATH= ; printenv PATH
 source_pragma_once $HOME/bashrc.d/*-path
+echo -n PATH= ; printenv PATH
 

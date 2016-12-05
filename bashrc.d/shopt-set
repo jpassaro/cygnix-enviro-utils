@@ -1,11 +1,15 @@
 #!/bin/bash
+
+# several useful bash options available via `set` and `shopt`.
+
 # Don't use ^D to exit
 set -o ignoreeof
 
 # extended globbing
-shopt -s extglob
-shopt -s globstar
-shopt -s histappend
+shopt -s globstar # allows ** for recursive globbing
+shopt -s histappend # history appended to .bash_history
+shopt -s extglob # allows things like glob with pattern list, or exclusions;
+                 # most usefully !(*badstring*) for exclusions
 
 # When changing directory small typos can be ignored by bash
 # for example, cd /vr/lgo/apaache would find /var/log/apache

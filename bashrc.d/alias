@@ -3,29 +3,30 @@ alias sshes='grep Host ~/.ssh/config'
 alias hosts='grep Host ~/.ssh/config'
 alias hello='echo hello'
 
+# pulled from some default bashrc somewhere
 # alias less='less -r'                          # raw control characters
- alias whence='type -a'                        # where, of a sort
- alias grep='grep --color'                     # show differences in colour
- alias egrep='egrep --color=auto'              # show differences in colour
- alias fgrep='fgrep --color=auto'              # show differences in colour
- alias grepp='grep -P'
-
+alias whence='type -a'                        # where, of a sort
+alias grep='grep --color'                     # show differences in colour
+alias egrep='egrep --color=auto'              # show differences in colour
+alias fgrep='fgrep --color=auto'              # show differences in colour
 # Some shortcuts for different directory listings
 # alias ls='ls -hF --color=tty'                 # classify files in colour
- alias dir='ls --color=auto --format=vertical'
- alias vdir='ls --color=auto --format=long'
- alias ll='ls -l'                              # long list
- alias la='ls -A'                              # all but . and ..
-
+alias dir='ls --color=auto --format=vertical'
+alias vdir='ls --color=auto --format=long'
+alias ll='ls -l'                              # long list
+alias la='ls -A'                              # all but . and ..
 alias l="ls -FGh"
+
+# my own:
+alias grepp='grep -P' # obselete when ack is available
 alias ackp="ack --type=python"
 alias ackh="ack --type=html"
-alias pzql="psql -U zeconomy zeconomy"
-alias pzql-dev="pzql -h localhost -p 3333"
-alias ackn="ack --nopager"
+alias ackn="ack --nopager" # suppress pager
+alias ackl='ack --pager="less -FRX"' # force pager
 alias vi="vim"
-alias ackl='ack --pager="less -FRX"'
 
+# enables "fuck" command to correct your last command
 eval "$(thefuck --alias)"
 
+# look for vim swap files in current file tree
 alias hasvim="find . -name '[._]*.swp' -o -name .swp"

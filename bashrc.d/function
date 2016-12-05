@@ -9,19 +9,20 @@ function addhost(){
     done
 }
 
+# obselete
 function cdsrc() {
-  envi="$1" ; shift
+  local envi="$1" ; shift
   c "$SRC/${envi}/projects" "$@"
   return $?
 }
 
 
 function c(){
-  DIR="$1"
+  local DIR="$1"
   shift
   if [[ ! -d "$DIR" ]] ; then
     mkdir -pv "$DIR" >&2
-    RESULT=$?
+    local RESULT=$?
     [[ $RESULT == 0 ]] || return $RESULT
   fi
   echo "$DIR" >&2
@@ -32,6 +33,7 @@ function c(){
   fi
 }
 
+# Mac-only
 function ppid() {
   local PID=$$ ; ps -p $(cat /proc/$PID/ppid)
 }
@@ -44,9 +46,9 @@ function create_alias() {
 }
 
 function code() {
-  suff="${1:-wc}"
-  folders=(~/code/*"$suff")
-  numf="${#folders[@]}"
+  local suff="${1:-wc}"
+  local folders=(~/code/*"$suff")
+  local numf="${#folders[@]}"
   case "$numf" in
     1) ;;
     *)
