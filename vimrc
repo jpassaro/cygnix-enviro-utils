@@ -28,6 +28,7 @@ Plugin 'kana/vim-textobj-line'
 Plugin 'b4winckler/vim-angry'
 Plugin 'bkad/CamelCaseMotion'
 Plugin 'nvie/vim-flake8'
+Plugin 'chrisbra/csv.vim'
 
 " All of your Plugins must be added before the following line
 call vundle#end()            " required
