@@ -129,7 +129,7 @@ function AutoFlake()
     autocmd BufWrite <buffer> call Flake8()
 endfunction
 " create the above autocmd when a file is marked with '# autoflake'
-autocmd BufReadPost *.py if getline('$') =~ '^\s*\#.*\bautoflake' | call AutoFlake() | endif
+autocmd BufReadPost *.py if getline('$') =~ '^\s*\#.*autoflake' | call AutoFlake() | endif
 
 function GitNoCommit()
     " abandon a git commit message, but save the results.
@@ -146,3 +146,4 @@ endfunction
 autocmd Filetype gitcommit command Nocommit call GitNoCommit()
 
 set wildmode=full wildmenu
+set splitright
