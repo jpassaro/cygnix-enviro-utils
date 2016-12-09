@@ -4,7 +4,7 @@ export EDITOR=vi
 # PS1
 
 # green datetime; bold red cwd
-PS1='\[\e[0;32m\]\D{%F %T}\[\e[m\] \[\e[1;31m\]\W\[\e[m\] '
+PS1='[\l] \[\e[0;32m\]\D{%F %T}\[\e[m\] \[\e[1;31m\]\W\[\e[m\] '
 if [[ "$TERM" == xterm* ]] ; then
   # set terminal title: user, host, cwd, terminal size
   TITLEBAR='\[\033]0;\u@\h:\w - ${COLUMNS}x${LINES}\007\]'
