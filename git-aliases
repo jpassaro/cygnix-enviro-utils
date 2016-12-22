@@ -7,3 +7,5 @@
 	ci = commit
 	di = diff
 	mb = merge-base
+[core]
+	excludesfile = ~/.gitignore
