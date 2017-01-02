@@ -29,6 +29,7 @@ Plugin 'b4winckler/vim-angry'
 Plugin 'bkad/CamelCaseMotion'
 Plugin 'nvie/vim-flake8'
 Plugin 'chrisbra/csv.vim'
+Plugin 'tpope/vim-unimpaired'
 
 " All of your Plugins must be added before the following line
 call vundle#end()            " required
@@ -147,3 +148,6 @@ autocmd Filetype gitcommit command Nocommit call GitNoCommit()
 
 set wildmode=full wildmenu
 set splitright
+
+nnoremap gb :Ack -Qw <cword><CR>
+nnoremap gB :Ack -Qw <cWORD><CR>
