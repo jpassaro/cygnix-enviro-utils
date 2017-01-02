@@ -1,0 +1,3 @@
+#!/bin/bash
+
+[[ -z "$(which brew)" ]] || source_pragma_once $(brew --prefix)/etc/bash_completion
