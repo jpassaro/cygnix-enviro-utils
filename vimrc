@@ -122,7 +122,7 @@ autocmd BufRead,BufNewFile .log setf gitcommit
 
 " sets :make to run f8diff and read errors into a quickfix list.
 " errorformat copied from nvie/vim-flake8
-command SetPyMake setlocal makeprg=f8diff makeef=logs/flake.err errorformat="%f:%l:%c: %m\,%f:%l: %m"
+command SetPyMake setlocal makeprg=f8diff makeef=/tmp/flake.err errorformat="%f:%l:%c: %m\,%f:%l: %m"
 autocmd Filetype python SetPyMake
 
 function AutoFlake()
@@ -151,3 +151,5 @@ set splitright
 
 nnoremap gb :Ack -Qw <cword><CR>
 nnoremap gB :Ack -Qw <cWORD><CR>
+
+autocmd BufRead,BufNewFile Dockerfile.* setlocal filetype=dockerfile
