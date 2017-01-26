@@ -50,7 +50,7 @@ Plugin 'mileszs/ack.vim'
 " So, so useful.
 Plugin 'tpope/vim-surround.git'
 
-" Spelling utilities. I mostly use for :Subvert. 
+" Spelling utilities. I mostly use for :Subvert.
 Plugin 'tpope/vim-abolish.git'
 
 " in the tpope/* utilities, some complex commands are defined; this basically
@@ -88,12 +88,18 @@ Plugin 'nvie/vim-flake8'
 " CSV, found them well-documented the few times I've needed them.
 Plugin 'chrisbra/csv.vim'
 
-" A bunch of ]-mappings. [q/]q move you through quickfix list, [f/]f move
-" through arg files, &c. [e/]e moves current line or selection up or down by
-" [count] lines; [<space>/]<space> adds lines above or before this line
+" A bunch of ]-mappings. [q / ]q move you through quickfix list, [f / ]f move
+" through arg files, &c. [e / ]e moves current line or selection up or down by
+" [count] lines; [<space> / ]<space> adds lines above or before this line
 " instead of calling o<Esc> or O<Esc>. Saves a lot of time.
 Plugin 'tpope/vim-unimpaired'
 
+" runs make and shit asynchronously. ack.vim has this as an optional
+" dependency; it improves performance very noticeably and seems to solve an
+" extremely annoying problem I was running into occasionally
+" (https://github.com/mileszs/ack.vim/issues/199). Highly recommend, at least
+" with ack.vim.
+Plugin 'tpope/vim-dispatch'
 
 " All Plugins must be added before the following line
 call vundle#end()            " required
@@ -238,12 +244,15 @@ autocmd FileType python set foldcolumn=4
 
 " delete backward then start an insert.
 " TODO: try and figure out how to use repeat.vim on this.
-nnoremap S Xi
+nnoremap <unique> S Xi
+nnoremap <unique> zS Xi<CR><Esc>
 
 " A bunch of stuff to populate the search register and highlight the results.
 " Inspired by something on the msgboard that points out you don't always want
 " the usual "*" behavior of navigating to the next match in order to get the
 " highlighting.
+" Note: The direction bit doesn't work right now. I think vim resets
+" v:searchforward after a function. TODO: see if I can override
 function SetSearch(patt, direction, ...)
     let thing = a:patt
     if a:0
@@ -277,7 +286,7 @@ function SetSearchFromSelection(type, direction, ...)
     endif
 
     if proceed == 1
-        call SetSearch('\V' . @@, direction)
+        call SetSearch('\V' . @@, a:direction)
     endif
 
     let &selection = sel_save
@@ -288,23 +297,52 @@ endfunction
 
 " search for next/last instance of selection. Normally keeps you in visual and
 " just moves cursor to next word, which is sensible but rarely useful for me.
-vnoremap <silent> * :<C-U>call OperatorSetSearch(visualmode(), 1, 1)<CR>n<CR>
-vnoremap <silent> # :<C-U>call OperatorSetSearch(visualmode(), 0, 1)<CR>n<CR>
+vnoremap <silent> * :<C-U>call SetSearchFromSelection(visualmode(), 1, 1)<CR>n<CR>
+vnoremap <silent> # :<C-U>call SetSearchFromSelection(visualmode(), 0, 1)<CR>n<CR>
 
 " like the above mappings but without navigating.
-vnoremap <silent> z* :<C-U>call OperatorSetSearch(visualmode(), 1, 1)<CR>:set hls<CR>
-vnoremap <silent> z# :<C-U>call OperatorSetSearch(visualmode(), 0, 1)<CR>:set hls<CR>
+vnoremap <silent> z* :<C-U>call SetSearchFromSelection(visualmode(), 1, 1)<CR>:set hls<CR>
+vnoremap <silent> z# :<C-U>call SetSearchFromSelection(visualmode(), 0, 1)<CR>:set hls<CR>
 
 " place text under motions into search register and highlight them. only words
 " with character-wise motions.
 nnoremap <silent> =* :set operatorfunc=OperatorSetSearchForward<CR>g@
 nnoremap <silent> =# :set operatorfunc=OperatorSetSearchBackward<CR>g@
 function OperatorSetSearchForward(type)
-    call SetSearchFromSelection(type, 1)
+    call SetSearchFromSelection(a:type, 1)
 endfunction
 function OperatorSetSearchBackward(type)
-    call SetSearchFromSelection(type, 0)
+    call SetSearchFromSelection(a:type, 0)
 endfunction
 
 " let's start using this...
 colors zenburn
+
+" prevents open quickfix window from keeping vim open
+autocmd BufEnter * if &buftype == "quickfix" && winbufnr(2) == -1 | quit | fi
+
+" " vim-unimpaired provides mappings for [e and ]e. normally, [e inserts [count]
+" " newlines above this line, ]e inserts them below. However as implemented, if
+" " folds are active, this causes all the folds to be recalculated, which
+" " results in all folds closing. The following is my workaround. But instead
+" " I decided to try implementing it in the plugin...
+" " these variants will cause re-folding
+" nmap [E <Plug>unimpairedMoveUp
+" nmap ]E <Plug>unimpairedMoveDown
+" xmap [E <Plug>unimpairedMoveSelectionUp
+" xmap ]E <Plug>unimpairedMoveSelectionDown
+" " these do not, though they do have the unfortunate side effect of
+" " recalculating the folds which can occasion a noticeable pause. Also it
+" " doesn't respect [count]. TODO: refactor to a function, then <Plug> mappings,
+" " then autocmds to map [e and ]e to those mappings
+" autocmd FileType python nmap <buffer> <silent> ]e :<C-U>set fdm=manual<CR>:<C-U>exe "normal ".v:count1."]E"<CR>:<C-U>set fdm=expr<CR>
+" autocmd FileType python xmap <buffer> <silent> ]e :<C-U>set fdm=manual<CR>:<C-U>exe "normal ".v:count1."]E"<CR>:<C-U>set fdm=expr<CR>
+" autocmd FileType python nmap <buffer> <silent> [e :<C-U>set fdm=manual<CR>:<C-U>exe "normal ".v:count1."[E"<CR>:<C-U>set fdm=expr<CR>
+" autocmd FileType python xmap <buffer> <silent> [e :<C-U>set fdm=manual<CR>:<C-U>exe "normal ".v:count1."[E"<CR>:<C-U>set fdm=expr<CR>
+
+" Another unimpaired-style mapping to create newlines.
+nnoremap <unique> [<CR> i<CR><Esc>
+nnoremap <unique> ]<CR> a<CR><Esc>
+
+" tell ack.vim to use dispatch
+let g:ack_use_dispatch = 1

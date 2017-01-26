@@ -42,7 +42,7 @@ else
   echo No bashrc.d/git-completion.bash found: consider copying or linking from local git /etc resources
 fi
 
-# finish up PS1 with a blue 
+# finish up PS1 with a blue dollar sign
 PS1="$PS1"'\[\e[1;34m\]$\[\e[m\] '
 
 

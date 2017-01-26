@@ -2,4 +2,4 @@
 
 make_opt=+make
 [[ -z "$*" ]] || make_opt="${make_opt} ${*}"
-exec vim +SetPyMake "${make_opt}" +copen
+exec vim +SetPyMake "${make_opt}" +copen +cc1 "+normal zv"

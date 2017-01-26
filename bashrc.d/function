@@ -77,3 +77,27 @@ function space() {
   [[ -z "$neg" ]] && lines="$arg" || lines="$((lines - ${arg}))"
   seq "$lines" | tr -dC \\n
 }
+
+# quickly access vimrc.
+# If you source another vimrc from this one, do "vimrc 1" to go straight to it.
+# "vimrc 2", "vimrc 3", etc to go to the second or third sourced file
+function vimrc() {
+  local OPTS=()
+  if [[ "$#" != 0 ]] ; then
+    local n
+    case "$1" in
+      0|*[^0-9]*) n=1 ;;
+      *)  n="$1" ;;
+    esac
+    while [[ "$((n--))" > 0 ]] ; do
+      OPTS=("${OPTS[@]}" '+/^source')
+    done
+    OPTS=("${OPTS[@]}" '+normal $gf')
+  fi
+  vim ~/.vimrc "${OPTS[@]}"
+}
+
+# quickly access git help
+function :help() {
+  vim "+help $1" "+2close"
+}

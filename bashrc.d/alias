@@ -33,6 +33,4 @@ alias hasvim="find . -name '[._]*.swp' -o -name .swp"
 
 # in case accidentally type vim commands into bash terminal
 alias :q=true
-
-# quick access to vimrc
-alias vimrc="vim ~/.vimrc"
+alias ':h=:help'
