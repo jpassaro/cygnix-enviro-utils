@@ -24,9 +24,10 @@ alias ackh="ack --type=html"
 alias ackn="ack --nopager" # suppress pager
 alias ackl='ack --pager="less -FRX"' # force pager
 alias vi="vim"
+alias view="vim -R"
 
 # enables "fuck" command to correct your last command
-eval "$(thefuck --alias)"
+which thefuck >/dev/null 2>&1 && eval "$(thefuck --alias)" || echo 'please install thefuck!'
 
 # look for vim swap files in current file tree
 alias hasvim="find . -name '[._]*.swp' -o -name .swp"

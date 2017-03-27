@@ -1,3 +1,44 @@
 #!/bin/bash
 
 [[ -z "$(which brew)" ]] || source_pragma_once $(brew --prefix)/etc/bash_completion
+
+source_pragma_once /usr/local/etc/git-completion.sh
+
+# from vim wikia
+_vim_search() {
+    ex -N -u NONE -i NONE \
+          -c 'let &tags="'$2'"' \
+          -c 'echo "\\n"' \
+          -c 'for tag in taglist("^".escape("'$1'","."))|echo tag["name"]|endfor' \
+          -cq \
+        | tr -s '\r' '\n' | grep '^[a-zA-Z_]'
+}
+
+_vim() {
+    local cur prev
+
+    COMPREPLY=()
+    cur=${2}
+    prev=${3}
+
+    case "${prev}" in
+        -t)
+            local tagsdir=$PWD
+            while [[ "$tagsdir" && ! -f "$tagsdir/tags" ]]; do
+                tagsdir=${tagsdir%/*}
+            done
+            [[ -f "$tagsdir/tags" ]] || return
+
+            COMPREPLY=( $(_vim_search "$cur" "$tagsdir/tags" ) )
+            return
+            ;;
+        *)
+            # Perform usual completion mode
+            ;;
+    esac
+}
+
+
+excludelist='*.@(o|O|so|SO|so.!(conf)|SO.!(CONF)|a|A|rpm|RPM|deb|DEB|gif|GIF|jp?(e)g|JP?(E)G|mp3|MP3|mp?(e)g|MP?(E)G|avi|AVI|asf|ASF|ogg|OGG|class|CLASS)'
+# complete -F _vim_search -f -X "${excludelist}" vi vim
+complete -f vi vim  # restore default

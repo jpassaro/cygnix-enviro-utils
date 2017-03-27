@@ -5,7 +5,7 @@
 
 function _can_add() {
   [[ -n "$1" && "$#" == 1 ]] && [[  "$PATH" == *?:"$1":?* || "$PATH" == "$1":?*
-                                    || "$PATH" == *?:"$1" || ! -d "$1" ]]
+                                    || "$PATH" == *?:"$1" ]]
 }
 
 function prepend-path() {
@@ -16,7 +16,8 @@ function append-path() {
   for x ; do _can_add "$x" || export PATH="$PATH":"$x" ; done
 }
 
-prepend-path /usr/local/bin ~/bin
+if [[ "$PATH" != */usr/local/bin*:/usr/bin* ]] ; then
+  export PATH="/usr/local/bin:${PATH}"
+fi
+prepend-path ~/bin
 source_pragma_once $HOME/bashrc.d/*-path
-echo -n PATH= ; printenv PATH
-

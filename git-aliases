@@ -3,7 +3,7 @@
 	br = branch
 	st = status
 	wip = commit --no-verify -am WIP
-	last = reset --soft HEAD~
+	last = reset HEAD~
 	ci = commit
 	di = diff
 	mb = merge-base

@@ -1,5 +1,5 @@
 #!/bin/bash
-export EDITOR=vi
+export EDITOR=vim
 
 # PS1
 
@@ -14,32 +14,34 @@ fi
 
 # add git to ps1
 
-if [[ -e "${HOME}"/bashrc.d/git-prompt.sh ]] ; then
-  source "${HOME}"/bashrc.d/git-prompt.sh
-  # in bold grey, parenthesized git prompt
-  PS1="$PS1"'\[\e[1;30m\]$(__git_ps1 "(%s)")\[\e[m\]'
-  # git prompt consists of:
-  # branch name;
-  # '*' for dirty state;
-  # '+' for staged/uncommitted changes;
-  # '%' for untracked files;
-  # '=<>' if upstream is set for same as, behind, or ahead of upstream.
-  GIT_PS1_SHOWDIRTYSTATE=x
-  GIT_PS1_SHOWUPSTREAM=auto
-  GIT_PS1_SHOWUNTRACKEDFILES=x
-  # git prompt suppressed if you happen to navigate into an ignored
-  # subdirectory.
-  GIT_PS1_HIDE_IF_PWD_IGNORED=x
-  # default char to separate branch name from dirty state details is space.
-  #GIT_PS1_STATESEPARATOR=
-else
-  echo No bashrc.d/git-prompt.sh found: consider copying or linking from local git /etc resources
-fi
+for prompthome in ~/bashrc.d /usr/local/etc /etc ; do
+  if [[ -e "${prompthome}/git-prompt.sh" ]] ; then
+    echo "found ${prompthome}/git-prompt.sh"
+    source "${prompthome}/git-prompt.sh"
+    # in bold grey, parenthesized git prompt
+    PS1="$PS1"'\[\e[1;30m\]$(__git_ps1 "(%s)")\[\e[m\]'
+    # git prompt consists of:
+    # branch name;
+    # '*' for dirty state;
+    # '+' for staged/uncommitted changes;
+    # '%' for untracked files;
+    # '=<>' if upstream is set for same as, behind, or ahead of upstream.
+    GIT_PS1_SHOWDIRTYSTATE=x
+    GIT_PS1_SHOWUPSTREAM=auto
+    GIT_PS1_SHOWUNTRACKEDFILES=x
+    # git prompt suppressed if you happen to navigate into an ignored
+    # subdirectory.
+    GIT_PS1_HIDE_IF_PWD_IGNORED=x
+    # default char to separate branch name from dirty state details is space.
+    #GIT_PS1_STATESEPARATOR=
+    break
+  else
+    echo "${prompthome}/git-prompt.sh missing"
+  fi
+done
 
-if [[ -e "${HOME}"/bashrc.d/git-completion.bash ]] ; then
-  source "${HOME}"/bashrc.d/git-completion.bash
-else
-  echo No bashrc.d/git-completion.bash found: consider copying or linking from local git /etc resources
+if [[ -z "$GIT_PS1_SHOWDIRTYSTATE" ]] ; then
+  echo 'No git-prompt.sh found anywhere!'
 fi
 
 # finish up PS1 with a blue dollar sign
@@ -49,7 +51,7 @@ PS1="$PS1"'\[\e[1;34m\]$\[\e[m\] '
 # LESSOPEN
 # allow less to view gzip and several other non-ascii filetypes
 _lesspipe="$(which lesspipe.sh)"
-[[ ! -x "$_lesspipe" ]] || export LESSOPEN="|${_lesspipe} %s"
+[[ -n "$_lesspipe" ]] && export LESSOPEN="|${_lesspipe} %s" || echo 'Please install lesspipe for enhanced less reader'
 
 source_pragma_once ~/bashrc.d/*-env
 

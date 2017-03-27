@@ -101,6 +101,23 @@ Plugin 'tpope/vim-unimpaired'
 " with ack.vim.
 Plugin 'tpope/vim-dispatch'
 
+" adds endif, done, etc in bash and vimL, one day jinja.
+Plugin 'tpope/vim-endwise'
+
+" autocomplete; untested
+" been having performance problems, don't know if this is why but can't hurt
+" Plugin 'davidhalter/jedi-vim'
+
+" instead we try this which seems to be more popular. Requires MacVim.
+" holy shit, real performance issues... maybe my computer sucks
+" Plugin 'Valloric/YouCompleteMe'
+
+" syntastic is working pretty well... mostly replaces vim-flake8 too!
+Plugin 'vim-syntastic/syntastic'
+
+" compiler settings for eslint
+Plugin 'salomvary/vim-eslint-compiler'
+
 " All Plugins must be added before the following line
 call vundle#end()            " required
 filetype plugin indent on    " required
@@ -113,7 +130,8 @@ syntax on
 
 "define BadWhitespace before using in a match
 highlight BadWhitespace ctermbg=red guibg=darkred
-autocmd BufRead,BufNewFile *.py,*.pyw,*.c,*.h match BadWhitespace /\s\+$/
+autocmd ColorScheme * highlight BadWhitespace ctermbg=red guibg=darkred
+autocmd BufRead,BufNewFile * match BadWhitespace /\s\+$/
 
 " shortcut for unfolding a fold.
 " nnoremap <space> za
@@ -198,17 +216,6 @@ map <F10> :echo "hi<" . synIDattr(synID(line("."),col("."),1),"name") . '> trans
 command SetPyMake setlocal makeprg=f8diff makeef=/tmp/flake.err errorformat="%f:%l:%c: %m\,%f:%l: %m"
 autocmd Filetype python SetPyMake
 
-" the following is convoluted because we have to create an autocmd that itself
-" creates another autocmd. This failed a few times but this works.
-" The result is that if your python file ends with a line matching the regex
-" below (e.g. "# autoflake"), then on every save, we'll run Flake8 on the
-" whole thing.
-autocmd BufReadPost *.py if getline('$') =~ '^\s*\#.*autoflake' | call AutoFlake() | endif
-function AutoFlake()
-    " sets Flake8 to automatically run upon writing a file
-    autocmd BufWrite <buffer> call Flake8()
-endfunction
-
 " my convention is to save temporary git files as "./.log"
 autocmd BufRead,BufNewFile .log setf gitcommit
 
@@ -220,7 +227,7 @@ function GitNoCommit()
         echo "you're working on .log right now you lumbering halfwit."
         return
     endif
-    1,/^#/-1 write! .log
+    write! .log
     %delete
     write
     quit
@@ -242,6 +249,16 @@ autocmd BufRead,BufNewFile Dockerfile.* setlocal filetype=dockerfile
 " vizualizes fold structure
 autocmd FileType python set foldcolumn=4
 
+" function DeleteBackward(count, newline) abort
+"     exec "normal! ". a:count . "X"
+"     if a:newline
+"         normal! i<CR><Esc>
+"         repeat#set("\<Plug>JpassaroDeleteBackwardNewline", count)
+"     else
+"         repeat#set("\<Plug>JpassaroDeleteBackward", count)
+"     endif
+" endfunction
+" nnoremap <silent> <Plug>JPassaroDeleteBackward :<C-U>call DeleteBackward(v:count1)
 " delete backward then start an insert.
 " TODO: try and figure out how to use repeat.vim on this.
 nnoremap <unique> S Xi
@@ -315,34 +332,47 @@ function OperatorSetSearchBackward(type)
     call SetSearchFromSelection(a:type, 0)
 endfunction
 
-" let's start using this...
-colors zenburn
+" tried zenburn... it was okay but not always.
+" I'm currently liking slate for html...
+colorscheme slate
 
-" prevents open quickfix window from keeping vim open
-autocmd BufEnter * if &buftype == "quickfix" && winbufnr(2) == -1 | quit | fi
+function! NewlineBefore() abort
+    if col('.') > 1
+        while col('.') > 1 && getline('.')[col('.')-2] =~ '\s'
+            normal! h
+        endwhile
+        execute "normal! i\<cr>"
+        silent! call repeat#set("\<Plug>PassaroNewlineBefore")
+    endif
+endfunction
 
-" " vim-unimpaired provides mappings for [e and ]e. normally, [e inserts [count]
-" " newlines above this line, ]e inserts them below. However as implemented, if
-" " folds are active, this causes all the folds to be recalculated, which
-" " results in all folds closing. The following is my workaround. But instead
-" " I decided to try implementing it in the plugin...
-" " these variants will cause re-folding
-" nmap [E <Plug>unimpairedMoveUp
-" nmap ]E <Plug>unimpairedMoveDown
-" xmap [E <Plug>unimpairedMoveSelectionUp
-" xmap ]E <Plug>unimpairedMoveSelectionDown
-" " these do not, though they do have the unfortunate side effect of
-" " recalculating the folds which can occasion a noticeable pause. Also it
-" " doesn't respect [count]. TODO: refactor to a function, then <Plug> mappings,
-" " then autocmds to map [e and ]e to those mappings
-" autocmd FileType python nmap <buffer> <silent> ]e :<C-U>set fdm=manual<CR>:<C-U>exe "normal ".v:count1."]E"<CR>:<C-U>set fdm=expr<CR>
-" autocmd FileType python xmap <buffer> <silent> ]e :<C-U>set fdm=manual<CR>:<C-U>exe "normal ".v:count1."]E"<CR>:<C-U>set fdm=expr<CR>
-" autocmd FileType python nmap <buffer> <silent> [e :<C-U>set fdm=manual<CR>:<C-U>exe "normal ".v:count1."[E"<CR>:<C-U>set fdm=expr<CR>
-" autocmd FileType python xmap <buffer> <silent> [e :<C-U>set fdm=manual<CR>:<C-U>exe "normal ".v:count1."[E"<CR>:<C-U>set fdm=expr<CR>
+nnoremap <unique> <Plug>PassaroNewlineBefore :<C-U>call NewlineBefore()<CR>
 
 " Another unimpaired-style mapping to create newlines.
-nnoremap <unique> [<CR> i<CR><Esc>
+nnoremap <unique> [<CR> :<C-U>call NewlineBefore()<CR>
 nnoremap <unique> ]<CR> a<CR><Esc>
 
 " tell ack.vim to use dispatch
 let g:ack_use_dispatch = 1
+let g:dispatch_use_shell_escape = 1
+
+" syntastic settings
+let g:syntastic_always_populate_loc_list = 1
+let g:syntastic_javascript_checkers = ['eslint']
+let g:syntastic_python_checkers = ['flake8']
+let g:syntastic_python_flake8_args = '--select=E901,F821,F401,F841,F812'
+
+
+function OverridePermissiveFlake8()
+    let lastline = getline('$')
+    if lastline =~? '^\s*\#.*autoflake'
+        let b:syntastic_python_flake8_args = ''
+    elseif lastline =~? '^\s*#.*dirtyflake'
+        let b:syntastic_python_flake8_args = '--select=E901'
+    endif
+endfunction
+autocmd FileType python call OverridePermissiveFlake8()
+
+autocmd FileType javascript compiler eslint
+
+autocmd BufRead,BufNewFile *.har set filetype=json

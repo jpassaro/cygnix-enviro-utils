@@ -101,3 +101,11 @@ function vimrc() {
 function :help() {
   vim "+help $1" "+2close"
 }
+
+function py() {
+  if [[ -x venv/bin/python ]] ; then venv/bin/python "$@" ; else  python "$@" ; fi
+}
+
+function pi() {
+  if [[ -x venv/bin/pip ]] ; then venv/bin/pip "$@" ; else  pip "$@" ; fi
+}

@@ -6,7 +6,16 @@ source_pragma_once ~/bashrc.d/env
 
 SSH_ENV="$HOME/.ssh/environment"
 
-function start_agent {
+function random-wait() {
+    local secs="$((RANDOM % 7))"
+    case "$secs" in
+      [0123]) ;;
+      *) secs=4 ;;
+    esac
+    sleep "$secs"
+}
+
+function start-agent {
      echo "Initialising new SSH agent..."
      /usr/bin/ssh-agent > "${SSH_ENV}"
      echo succeeded
@@ -15,16 +24,20 @@ function start_agent {
      /usr/bin/ssh-add
 }
 
+function check-env-file() {
+    [[ -f "${SSH_ENV}" ]] && source "${SSH_ENV}" || return 1
+    # ps ${SSH_AGENT_PID} doesn't work under cywgin
+    if ps ${CYGWIN:+-p} ${SSH_AGENT_PID} | grep -m1 ssh-agent$ > /dev/null ; then
+      echo "previous agent ${SSH_AGENT_PID} is still running"
+    else
+      rm -f "${SSH_ENV}"
+      return 1
+    fi
+}
+
 # Source SSH settings, if applicable
 
-if [ -f "${SSH_ENV}" ]; then
-     . "${SSH_ENV}" # > /dev/null
-
-     # ps ${SSH_AGENT_PID} doesn't work under cywgin
-     if ! ps ${CYGWIN:+-p} ${SSH_AGENT_PID} | grep -m1 ssh-agent$ > /dev/null
-     then start_agent
-     else echo previous agent ${SSH_AGENT_PID} is still running
-     fi
-else
-     start_agent;
-fi
+while ! check-env-file ; do
+     random-wait
+     check-env-file || start-agent
+done
