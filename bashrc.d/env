@@ -14,10 +14,9 @@ fi
 
 # add git to ps1
 
-for prompthome in ~/bashrc.d /usr/local/etc /etc ; do
+for prompthome in ~/bashrc.d /usr/local/etc{/bash_completion.d,} /etc ; do
   if [[ -e "${prompthome}/git-prompt.sh" ]] ; then
-    echo "found ${prompthome}/git-prompt.sh"
-    source "${prompthome}/git-prompt.sh"
+    source_pragma_once "${prompthome}/git-prompt.sh"
     # in bold grey, parenthesized git prompt
     PS1="$PS1"'\[\e[1;30m\]$(__git_ps1 "(%s)")\[\e[m\]'
     # git prompt consists of:
@@ -35,8 +34,8 @@ for prompthome in ~/bashrc.d /usr/local/etc /etc ; do
     # default char to separate branch name from dirty state details is space.
     #GIT_PS1_STATESEPARATOR=
     break
-  else
-    echo "${prompthome}/git-prompt.sh missing"
+  # else
+  #   echo "${prompthome}/git-prompt.sh missing"
   fi
 done
 

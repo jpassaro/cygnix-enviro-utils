@@ -2,10 +2,11 @@
 	co = checkout
 	br = branch
 	st = status
-	wip = commit --no-verify -am WIP
 	last = reset HEAD~
 	ci = commit
 	di = diff
 	mb = merge-base
+	reb = rebase
+	rebi = rebase -i
 [core]
 	excludesfile = ~/.gitignore

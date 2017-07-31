@@ -35,6 +35,8 @@ function source_pragma_once() {
 if [ -d $HOME/bashrc.d ] ; then
   echo $HOME/bashrc.d found
   source_pragma_once $HOME/bashrc.d/*
+else
+  echo "no bashrc.d found"
 fi
 
 MY_BASHRC_FILE="${BASH_SOURCE[0]}"

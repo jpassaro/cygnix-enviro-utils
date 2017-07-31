@@ -3,6 +3,7 @@ set nocompatible              " required
 filetype off                  " required
 
 " set the runtime path to include Vundle and initialize
+let g:vundle_default_git_proto = 'ssh'
 set rtp+=~/.vim/bundle/Vundle.vim
 call vundle#begin()
 "call vundle#begin('~/custom/bundle/location')
@@ -13,19 +14,20 @@ Plugin 'gmarik/Vundle.vim'
 " my plugins
 
 " really good python folds
+" but, sadly, slow things down in a 2000+ line file
 Plugin 'tmhedberg/SimpylFold'
 
 " decent python indenting
 Plugin 'vim-scripts/indentpython.vim'
 
-" inherited from the vimscript from the link at top. I don't really use this.
-Plugin 'vim-scripts/mru.vim'
+" inherited from the vimscript from the link at top. I don't actively use this.
+" Plugin 'vim-scripts/mru.vim'
 
 " likewise... though now that I read the docs and try the color scheme, I may
 " want to try this out!
-Plugin 'jnurmine/Zenburn'
+" Plugin 'jnurmine/Zenburn'
 
-" A jinja plugin. No real complaints.
+" A jinja plugin. Abandoned because it doesn't handle nested comments properly
 Plugin 'Glench/Vim-Jinja2-Syntax'
 
 " Plugin for ES6 which Zeconomy uses extensively.
@@ -48,7 +50,7 @@ Plugin 'mileszs/ack.vim'
 " to delete surround parentheses (and keep interior content), cSbb to put
 " content on separate line(s) from parens.
 " So, so useful.
-Plugin 'tpope/vim-surround.git'
+Plugin 'jpassaro/vim-surround.git'
 
 " Spelling utilities. I mostly use for :Subvert.
 Plugin 'tpope/vim-abolish.git'
@@ -118,12 +120,35 @@ Plugin 'vim-syntastic/syntastic'
 " compiler settings for eslint
 Plugin 'salomvary/vim-eslint-compiler'
 
+" workflow helper, for SQL especially
+Plugin 'krisajenkins/vim-pipe'
+
+" syntax highlighter for postgres-specific SQL
+Plugin 'krisajenkins/vim-postgresql-syntax'
+
+" recommended by SimpylFold to speed up folding (it's pretty bad for large
+" files...
+Plugin 'Konfekt/FastFold'
+
+" graphviz -- digraphs
+Plugin 'wannesm/wmgraphviz.vim'
+
+" read coverage report
+Plugin 'mgedmin/coverage-highlight.vim'
+
+" mscgen syntax
+Plugin 'goodell/vim-mscgen'
+
+" possible improvement on previous jinja plugin. Abandoned in favor of custom
+" fix in .vim/after/syntax/jinja.vim
+" Plugin 'mitsuhiko/vim-jinja'
+
 " All Plugins must be added before the following line
 call vundle#end()            " required
 filetype plugin indent on    " required
 
 " \w, \b, \e, a\w, i\w ... etc, motions for moving inside a camel case word.
-call camelcasemotion#CreateMotionMappings('<leader>')
+silent! call camelcasemotion#CreateMotionMappings('<leader>')
 
 " syntax highlighting! I think.
 syntax on
@@ -236,7 +261,8 @@ endfunction
 " helpful wildcard settings
 set wildmode=full wildmenu
 " displays full list of wildcard matches as you tab through them
-set splitright
+
+" set splitright
 
 " search code base for whole-word matches of current word. Kind of like "*"
 " across a whole project instead of a file.
@@ -376,3 +402,24 @@ autocmd FileType python call OverridePermissiveFlake8()
 autocmd FileType javascript compiler eslint
 
 autocmd BufRead,BufNewFile *.har set filetype=json
+
+function! LoanCalc() abort
+    normal! G
+    read !python ~/.vim/loan-calc.py %
+endfunction
+
+autocmd FileType json command! LoanCalc :call LoanCalc()<CR>
+
+let g:SimpylFold_fold_import = 0
+
+let g:WMGraphviz_output = 'png'
+
+autocmd filetype dot let b:vimpipe_command="dot-pipe -o"
+
+" unimpaired: ]<C-Q> doesn't work for unknown reasons, providing an alternative
+nmap [Z <Plug>unimpairedQPFile
+nmap ]Z <Plug>unimpairedQNFile
+
+" used with builtin python indenter, see :help ft-pythong-indent
+" let g:pyindent_open_paren = '&sw'
+" let g:pyindent_continue = '&sw'

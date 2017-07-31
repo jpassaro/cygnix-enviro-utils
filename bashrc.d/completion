@@ -2,7 +2,7 @@
 
 [[ -z "$(which brew)" ]] || source_pragma_once $(brew --prefix)/etc/bash_completion
 
-source_pragma_once /usr/local/etc/git-completion.sh
+source_pragma_once /usr/local/etc/bash_completion.d/git-completion.bash
 
 # from vim wikia
 _vim_search() {
@@ -41,4 +41,5 @@ _vim() {
 
 excludelist='*.@(o|O|so|SO|so.!(conf)|SO.!(CONF)|a|A|rpm|RPM|deb|DEB|gif|GIF|jp?(e)g|JP?(E)G|mp3|MP3|mp?(e)g|MP?(E)G|avi|AVI|asf|ASF|ogg|OGG|class|CLASS)'
 # complete -F _vim_search -f -X "${excludelist}" vi vim
-complete -f vi vim  # restore default
+# complete -f vi vim  # restore default  # but apparently this doesn't work either...
+# complete -r vi vim

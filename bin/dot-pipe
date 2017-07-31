@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# generates png from a .dot file; if imgcat is available, it is used to print
+# the image on the command line, otherwise the image is opened in an external app.
+
+# Mac only; intended for use in conjunction with the "vim-pipe" plugin.
+
+if [[ "$1" == -o ]] ; then
+  force_open=x
+  shift
+fi
+dot -Tpng "$@" | if [[ -z "$force_open" && -n "$(which imgcat)" ]] ; then imgcat ; else
+  fname="$(mktemp -d)/tmp-file.png"
+  cat >"$fname"
+  open "$fname"
+fi
