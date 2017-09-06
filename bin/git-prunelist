@@ -1,4 +1,11 @@
 #!/bin/bash
+
+## lists branches whose upstream at "origin" has been deleted.
+## Such branches are candidates for deletion, assuming they have been merged.
+## Users should assure the above is true before executing a deletion.
+## Only supported option is -n, which skips the git fetch command that keeps
+## this information up to date.
+
 if [[ "$1" != "-n" ]] ; then
   git fetch --prune
 fi

@@ -1,3 +1,7 @@
 #!/bin/bash
 
+# creates a quick WIP commit. You should install hooks to ensure such
+# commits are not pushed.
+# All options are passed to git commit.
+
 git add -A && git commit --all --no-verify --message="WIP" "$@"

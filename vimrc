@@ -3,7 +3,9 @@ set nocompatible              " required
 filetype off                  " required
 
 " set the runtime path to include Vundle and initialize
-let g:vundle_default_git_proto = 'ssh'
+" let g:vundle_default_git_proto = 'ssh'
+" ^^ instead of that, use git config to replace https with ssh. See
+" git-aliases
 set rtp+=~/.vim/bundle/Vundle.vim
 call vundle#begin()
 "call vundle#begin('~/custom/bundle/location')
