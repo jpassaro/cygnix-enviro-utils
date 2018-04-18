@@ -1,0 +1,16 @@
+#!/usr/bin/env python3
+
+import json
+import sys
+
+import yaml
+
+
+if __name__ == '__main__':
+    if sys.argv[1:2] == ['-y']:
+        yaml.dump(json.load(sys.stdin), sys.stdout, default_flow_style=False)
+    else:
+        json.dump(yaml.load(sys.stdin), sys.stdout, indent=2, default=str)
+
+
+# vi: ft=python

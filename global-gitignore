@@ -1,3 +1,11 @@
 [._]*.sw[op]
-.swp
+.sw[op]
 .log
+
+.direnv
+.envrc
+.ackrc
+
+_scratch/*
+
+**/.DS_Store

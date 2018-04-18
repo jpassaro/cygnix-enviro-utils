@@ -1,7 +1,5 @@
 #!/bin/bash
 
-source_pragma_once ~/.sleeprc ##enable the builtin version of sleep
-
 function addhost(){
     for x in "$@" ; do
       echo adding $x
@@ -46,7 +44,15 @@ function create_alias() {
 }
 
 function code() {
-  local suff="${1:-wc}"
+  local suff="$1"
+  if [[ -z "$suff" ]] ; then
+    if [[ -d ~/code/"${PASSARO_CODE_LOC}" ]] ; then
+      c ~/code/"${PASSARO_CODE_LOC}"
+      return 0
+    else
+      local suff="-wc"
+    fi
+  fi
   local folders=(~/code/*"$suff")
   local numf="${#folders[@]}"
   case "$numf" in
@@ -114,12 +120,22 @@ function _condition_venv() {
   return 1
 }
 
+function _exec_venv() {
+  local prg="$(_condition_venv "$1")"
+  local result="$?"
+  if [[ "$result" == 0 ]] ; then
+    shift
+    "$prg" "$@"
+  fi
+  return "$result"
+}
+
 function py() {
-  prg="$(_condition_venv python)" && "$prg" "$@"
+  _exec_venv python "$@"
 }
 
 function pi() {
-  prg="$(_condition_venv pip)" && "$prg" "$@"
+  _exec_venv pip "$@"
 }
 
 function loggit() {
@@ -176,5 +192,23 @@ function lesslog() {
 }
 
 function activate() {
-  prg="$(_condition_venv activate)" && source "$prg"
+  local prg="$(_condition_venv activate)" && source "$prg"
+}
+
+function bring() {
+  mv -v "$@" .
+}
+
+function remind() {
+  sleeptime="${1:?usage: remind SLEEPTIME message text}"
+  (
+    sleep "$sleeptime"
+    shift
+    echo -ne '\e]9;'"$*"'\007'
+  ) &
+}
+
+# list functions
+function functions() {
+  declare -f | sed '/^{ *$/,/^} *$/ d'
 }

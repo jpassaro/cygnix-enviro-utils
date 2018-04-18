@@ -26,8 +26,21 @@ alias ackl='ack --pager="less -FRX"' # force pager
 alias vi="vim"
 alias view="vim -R"
 
+function check-for-package() {
+  local target="$1"
+  local package="$2"
+  if which "$target" >/dev/null 2>&1 ; then
+    return 0
+  elif which brew >/dev/null 2>&1 ; then
+    echo "$target" not found, please install "${package:-it}"
+  else
+    echo brew not found, "$package" must be installed some other way
+  fi
+  return 1
+}
+
 # enables "fuck" command to correct your last command
-which thefuck >/dev/null 2>&1 && eval "$(thefuck --alias)" || echo 'please install thefuck!'
+if check-for-package thefuck ; then eval "$(thefuck --alias)" ; fi
 
 # look for vim swap files in current file tree
 alias hasvim="find . -name '[._]*.swp' -o -name .swp"
@@ -38,3 +51,7 @@ alias ':h=:help'
 
 # combined with vimpipe for sql, v useful
 alias vsql='vim +"set ft=sql"'
+
+alias pydoc='python -m pydoc'
+
+if check-for-package gsleep ; then alias sleep=gsleep ; fi

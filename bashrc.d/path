@@ -17,7 +17,9 @@ function append-path() {
 }
 
 if [[ "$PATH" != */usr/local/bin*:/usr/bin* ]] ; then
-  export PATH="/usr/local/bin:${PATH}"
+  export PATH="/usr/local/bin:${PATH}"  # avoid the duplicate check of prepend-path
 fi
 prepend-path ~/bin
-source_pragma_once $HOME/bashrc.d/*-path
+for x in $(shopt -s nullglob ; echo $HOME/bashrc.d/*-path ) ; do
+  source_pragma_once "$x"
+done

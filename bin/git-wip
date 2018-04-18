@@ -4,4 +4,4 @@
 # commits are not pushed.
 # All options are passed to git commit.
 
-git add -A && git commit --all --no-verify --message="WIP" "$@"
+git add --all && git commit --all --no-verify --message="WIP" "$@"

@@ -1,4 +1,13 @@
 #!/bin/bash
 # pushes the current HEAD branch to the origin under its own name.
 # All options are passed to git push.
-exec git push -u origin "$(git symbolic-ref HEAD)" "$@"
+
+current_branch="$(git symbolic-ref -q HEAD)"
+
+if [[ -z "$(git for-each-ref --format='%(upstream:short)' $current_branch)" ]] ; then
+  git push -u origin "$current_branch" "$@" && git pr --offline
+else
+  echo >&2 this branch already is being tracked, git push should suffice
+  exit 1
+fi
+

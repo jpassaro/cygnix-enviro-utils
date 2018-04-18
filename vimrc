@@ -19,7 +19,7 @@ Plugin 'gmarik/Vundle.vim'
 " but, sadly, slow things down in a 2000+ line file
 Plugin 'tmhedberg/SimpylFold'
 
-" decent python indenting
+" good python indenting
 Plugin 'vim-scripts/indentpython.vim'
 
 " inherited from the vimscript from the link at top. I don't actively use this.
@@ -126,7 +126,7 @@ Plugin 'salomvary/vim-eslint-compiler'
 Plugin 'krisajenkins/vim-pipe'
 
 " syntax highlighter for postgres-specific SQL
-Plugin 'krisajenkins/vim-postgresql-syntax'
+"Plugin 'krisajenkins/vim-postgresql-syntax'
 
 " recommended by SimpylFold to speed up folding (it's pretty bad for large
 " files...
@@ -144,6 +144,12 @@ Plugin 'goodell/vim-mscgen'
 " possible improvement on previous jinja plugin. Abandoned in favor of custom
 " fix in .vim/after/syntax/jinja.vim
 " Plugin 'mitsuhiko/vim-jinja'
+
+" support for direnv files and settings
+Plugin 'direnv/direnv.vim'
+
+" new and improved python syntax
+Plugin 'vim-python/python-syntax'
 
 " All Plugins must be added before the following line
 call vundle#end()            " required
@@ -191,7 +197,7 @@ au BufEnter /private/tmp/crontab.* setlocal backupcopy=yes
 set hlsearch " highlights a completed search
 set incsearch " jumps to and highlights a search as you type
 " use \n to temporarily suppress search highlighting
-nnoremap <Leader>n :noh<CR>
+nnoremap <Leader>n :<C-U>noh<CR>:<CR>
 
 " set a useful statusline
 set ruler laststatus=2
@@ -388,7 +394,7 @@ let g:dispatch_use_shell_escape = 1
 let g:syntastic_always_populate_loc_list = 1
 let g:syntastic_javascript_checkers = ['eslint']
 let g:syntastic_python_checkers = ['flake8']
-let g:syntastic_python_flake8_args = '--select=E901,F821,F401,F841,F812'
+" let g:syntastic_python_flake8_args = '--select=E901,F821,F401,F841,F812'
 
 
 function OverridePermissiveFlake8()
@@ -425,3 +431,25 @@ nmap ]Z <Plug>unimpairedQNFile
 " used with builtin python indenter, see :help ft-pythong-indent
 " let g:pyindent_open_paren = '&sw'
 " let g:pyindent_continue = '&sw'
+
+" suggested by vim_use mailing list
+set t_u7=
+set t_RV=
+
+" for vim-python/python-syntax
+let g:python_highlight_all = 1
+let g:python_highlight_string_templates = 0
+
+" enable vim-pipe on selections
+vnoremap <silent> <LocalLeader>r :<C-U>'<,'> call VimPipe()<CR>
+nnoremap <silent> <LocalLeader>r :<C-U>. call VimPipe()<CR>
+let g:vimpipe_invoke_map = '<LocalLeader>R'
+
+" vim-pipe mysql
+function SetupMysqlVimpipe(db, host, user, password)
+    let b:vimpipe_command = "mysql " . a:db
+                \ . " --host=" . a:host
+                \ . " --user=" . a:user
+                \ . " --password='" . a:password
+                \ . "' --table"
+endfunction

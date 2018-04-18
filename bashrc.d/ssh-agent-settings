@@ -4,40 +4,44 @@
 
 source_pragma_once ~/bashrc.d/env
 
-SSH_ENV="$HOME/.ssh/environment"
-
-function random-wait() {
-    local secs="$((RANDOM % 7))"
-    case "$secs" in
-      [0123]) ;;
-      *) secs=4 ;;
-    esac
-    sleep "$secs"
-}
+SSH_ENV="$HOME/.ssh/agent-setup"
+SSH_ENV_LOCK="$HOME/.ssh/agent-setup-lock"
 
 function start-agent {
-     echo "Initialising new SSH agent..."
-     /usr/bin/ssh-agent > "${SSH_ENV}"
-     echo succeeded
-     chmod 600 "${SSH_ENV}"
-     . "${SSH_ENV}" #> /dev/null
-     /usr/bin/ssh-add
+  echo executing start-agent
+     if mkdir "$SSH_ENV_LOCK" >/dev/null 2>&1 ; then
+       echo "Initialising new SSH agent..."
+       /usr/bin/ssh-agent > "${SSH_ENV}"
+       echo succeeded
+       chmod 600 "${SSH_ENV}"
+       . "${SSH_ENV}" #> /dev/null
+       /usr/bin/ssh-add
+     else
+       echo somebody beat me to the punch, trying again
+       check-env-file || start-agent
+     fi
 }
 
 function check-env-file() {
-    [[ -f "${SSH_ENV}" ]] && source "${SSH_ENV}" || return 1
+  echo executing check-env-file
+    if [[ -f "${SSH_ENV}" ]] ; then
+      source "${SSH_ENV}"
+    else
+      rm -rf "$SSH_ENV" "$SSH_ENV_LOCK"
+      return 1
+    fi
     # ps ${SSH_AGENT_PID} doesn't work under cywgin
-    if ps ${CYGWIN:+-p} ${SSH_AGENT_PID} | grep -m1 ssh-agent$ > /dev/null ; then
+    echo checking for agent pid "$SSH_AGENT_PID"
+    if ps ${CYGWIN:+-p} ${SSH_AGENT_PID} | grep -m1 ssh-agent$ > /dev/null
+    then
       echo "previous agent ${SSH_AGENT_PID} is still running"
     else
-      rm -f "${SSH_ENV}"
+      echo clearing out-of-date settings files
+      rm -rf "${SSH_ENV}" "$SSH_ENV_LOCK"
       return 1
     fi
 }
 
 # Source SSH settings, if applicable
 
-while ! check-env-file ; do
-     random-wait
-     check-env-file || start-agent
-done
+check-env-file || start-agent
