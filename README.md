@@ -52,6 +52,7 @@ Good things to brew install:
 * `thefuck`
 * `ssh-copy-id`
 * `pstree`
+* `ascii`
 
 # Copyright
 
