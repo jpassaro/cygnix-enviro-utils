@@ -81,10 +81,10 @@ class CheckPR:
             branch = self.repo.active_branch
         else:
             for branch in self.repo.branches:
-                if branch.name == branchname:
+                if branch.name == self.branchname:
                     break
             else:
-                abort(f'No branch {branchname} found.')
+                abort(f'No branch {self.branchname} found.')
 
         tracking = branch.tracking_branch()
         if tracking is None:
