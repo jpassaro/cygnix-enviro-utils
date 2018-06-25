@@ -1,0 +1,119 @@
+#!/usr/bin/env python3
+"""utfdump
+
+a tool to translate utf bytes and print them as readable unicode integers,
+basically the same as hexdump if hexdump decoded utf-8.
+"""
+
+# TODO: opt-out-able abbreviation of repeating lines like hexdump
+# TODO: options for BUFSIZE, LINE_LENGTH
+# TODO: options to format chars and char counts (e.g. decimal)
+# TODO: options to toggle display of raw data and char count
+
+import os
+import sys
+
+BUFSIZE = 1024
+LINE_LENGTH = 12
+SEP_LENGTH = (4, 4)
+PLACEHOLDER = '\uFFFD'  # shrug
+
+
+def main(f):
+    count = 0
+    leftover = ""
+    for unicode in read(f):
+        count, leftover = dump(count, leftover + unicode)
+    if leftover:
+        dumpline(count, leftover)
+    printcount(count + len(leftover))
+    print()
+
+
+def dump(count, unicode):
+    idx = 0
+    while idx + LINE_LENGTH <= len(unicode):
+        todump = unicode[idx:idx + LINE_LENGTH]
+        dumpline(count, todump)
+        idx += len(todump)
+        count += len(todump)
+    return count, unicode[idx:]
+
+
+def dumpline(count, line):
+    printcount(count)
+    printsep(SEP_LENGTH[0])
+    printcodes(line)
+    printsep(SEP_LENGTH[1])
+    printdata(line)
+    print()
+
+
+def printsep(length):
+    print(' ' * length, end='')
+
+
+def printcount(idx):
+    print('{:08x}'.format(idx), end='')
+    # 8 is good enough for hexdump ergo good enough for me
+
+
+def printcodes(line):
+    padding = [tohex(None) for _ in range(LINE_LENGTH - len(line))]
+    print(*map(tohex, line), *padding, sep=' ', end='')
+
+
+def printdata(line):
+    print('|', *map(printable, line), '|', sep='', end='\n')
+
+
+def tohex(char):
+    # 7 = length of x10ffff, the largest UTF-8 encodeable value, therefore
+    # exact length of all strings returned by this function
+    if char is None:
+        return ' ' * 7
+    data = 'x{:04X}'.format(ord(char))  # 4 seems reasonably pretty/standard
+    data = (' ' * max(0, 7 - len(data))) + data
+    return data
+
+
+def printable(char):
+    code = ord(char)
+    if code < 0x20 or 0x80 <= code <= 0x9f:
+        return PLACEHOLDER
+    return char
+
+
+def read(f):
+    buf = bytearray(BUFSIZE)
+    leftover = bytearray(0)
+    bytesread = None
+    while bytesread is None or bytesread > 0:
+        bytestodecode = bytesread = f.readinto1(buf)
+        lastbyte = buf[bytestodecode - 1]
+        # we may be in the middle of a character, so backtrack to the
+        # rightmost of these:
+        # a) a byte < 0x80, which is a true codepoint;
+        # b) a byte to the left of one >= 0xc0, which must end a codepoint
+        # if we find neither, return ""
+        while bytestodecode > 0 and lastbyte >= 0x80:
+            bytestodecode -= 1
+            if lastbyte >= 0xc0:
+                break
+        yield decode(leftover + buf[:bytestodecode])
+        leftover = buf[bytestodecode:bytesread]
+    if leftover:
+        yield decode(leftover)
+
+
+def decode(barray):
+    return bytes(barray).decode('utf-8')
+
+
+if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        f = open(sys.argv[1], 'rb')
+    else:
+        f = sys.stdin.buffer
+    with f:
+        main(f)
