@@ -284,13 +284,13 @@ endif
 
 " mark the right border with a subtle grey. That's 80 in python/vimL, 72 in
 " commit messages, for now the biggest places I care about line length.
-autocmd Filetype python,gitcommit,vim highlight ColorColumn ctermbg=235
+autocmd Filetype python,gitcommit,vim,bash highlight ColorColumn ctermbg=235
 " soft limit, no real need to enforce.
-autocmd Filetype python,vim setlocal colorcolumn=+2 textwidth=78
+autocmd Filetype python,vim,bash setlocal colorcolumn=+2 textwidth=78
 " no autowrap on text
 autocmd Filetype python setlocal formatoptions-=t
 " continue comment on <Enter> in Insert mode
-autocmd Filetype python setlocal formatoptions+=r
+autocmd Filetype python,bash setlocal formatoptions+=r
 " strict limit; textwidth=72 from distro plugin, and it also sets
 " formatoptions to my liking
 autocmd Filetype gitcommit setlocal colorcolumn=+0 " textwidth is already 72
