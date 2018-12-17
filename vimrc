@@ -6,157 +6,189 @@ filetype off                  " required
 " let g:vundle_default_git_proto = 'ssh'
 " ^^ instead of that, use git config to replace https with ssh. See
 " git-aliases
-set rtp+=~/.vim/bundle/Vundle.vim
-call vundle#begin()
-"call vundle#begin('~/custom/bundle/location')
+let s:vundlepath=expand('~/.vim/bundle/Vundle.vim')
+if isdirectory(s:vundlepath)
+    let &rtp .= ','.s:vundlepath
+    call vundle#begin()
+    "call vundle#begin('~/custom/bundle/location')
 
-" required
-Plugin 'gmarik/Vundle.vim'
+    " required
+    Plugin 'gmarik/Vundle.vim'
 
-" my plugins
+    " my plugins
 
-" really good python folds
-" but, sadly, slow things down in a 2000+ line file
-Plugin 'tmhedberg/SimpylFold'
+    " really good python folds
+    " but, sadly, slow things down in a 2000+ line file
+    Plugin 'tmhedberg/SimpylFold'
 
-" good python indenting
-Plugin 'vim-scripts/indentpython.vim'
+    " good python indenting
+    Plugin 'vim-scripts/indentpython.vim'
 
-" inherited from the vimscript from the link at top. I don't actively use this.
-" Plugin 'vim-scripts/mru.vim'
+    " inherited from the vimscript from the link at top. I don't actively use this.
+    " Plugin 'vim-scripts/mru.vim'
 
-" likewise... though now that I read the docs and try the color scheme, I may
-" want to try this out!
-" Plugin 'jnurmine/Zenburn'
+    " likewise... though now that I read the docs and try the color scheme, I may
+    " want to try this out!
+    " Plugin 'jnurmine/Zenburn'
 
-" A jinja plugin. Abandoned because it doesn't handle nested comments properly
-Plugin 'Glench/Vim-Jinja2-Syntax'
+    " A jinja plugin. Abandoned because it doesn't handle nested comments properly
+    Plugin 'Glench/Vim-Jinja2-Syntax'
 
-" Plugin for ES6 which Zeconomy uses extensively.
-Plugin 'isRuslan/vim-es6'
+    " Plugin for ES6 which Zeconomy uses extensively.
+    Plugin 'isRuslan/vim-es6'
 
-" Git utilities. :Gdiff and :Gblame are very useful.
-Plugin 'tpope/vim-fugitive'
+    " Git utilities. :Gdiff and :Gblame are very useful.
+    Plugin 'tpope/vim-fugitive'
 
-" I use ack regularly in bash to inspect code; and this is an
-" invaluable navigation aid if I actually want to edit around the results.
-" Perhaps needless to say you have to have ack to use. Command :Ack.
-" Only pitfall, sometimes: https://github.com/mileszs/ack.vim/issues/199
-" One of my most-used plugins.
-Plugin 'mileszs/ack.vim'
+    " I use ack regularly in bash to inspect code; and this is an
+    " invaluable navigation aid if I actually want to edit around the results.
+    " Perhaps needless to say you have to have ack to use. Command :Ack.
+    " Only pitfall, sometimes: https://github.com/mileszs/ack.vim/issues/199
+    " One of my most-used plugins.
+    Plugin 'mileszs/ack.vim'
 
-" Utilities for surrounding braces. Vim comes with a few text object utilities
-" along these lines but those just help you specify a selection or a motion;
-" this goes further and lets you manipulate the surrounding braces. Frequently
-" used: ys{motion}b to surround the contents of motion with parentheses, ds)
-" to delete surround parentheses (and keep interior content), cSbb to put
-" content on separate line(s) from parens.
-" So, so useful.
-Plugin 'jpassaro/vim-surround.git'
+    " Utilities for surrounding braces. Vim comes with a few text object utilities
+    " along these lines but those just help you specify a selection or a motion;
+    " this goes further and lets you manipulate the surrounding braces. Frequently
+    " used: ys{motion}b to surround the contents of motion with parentheses, ds)
+    " to delete surround parentheses (and keep interior content), cSbb to put
+    " content on separate line(s) from parens.
+    " So, so useful.
+    Plugin 'jpassaro/vim-surround'
 
-" Spelling utilities. I mostly use for :Subvert.
-Plugin 'tpope/vim-abolish.git'
+    " Spelling utilities. I mostly use for :Subvert.
+    Plugin 'tpope/vim-abolish'
 
-" in the tpope/* utilities, some complex commands are defined; this basically
-" instructs the "." to treat each one as a single command. Very useful.
-Plugin 'tpope/vim-repeat.git'
+    " in the tpope/* utilities, some complex commands are defined; this basically
+    " instructs the "." to treat each one as a single command. Very useful.
+    Plugin 'tpope/vim-repeat'
 
-" prereq for many custom text objects that I find invaluable. I don't really
-" use it directly.
-Plugin 'kana/vim-textobj-user'
+    " prereq for many custom text objects that I find invaluable. I don't really
+    " use it directly.
+    Plugin 'kana/vim-textobj-user'
 
-" indent-based text objects. ai for everything at this indent level or above;
-" ii restricts further to the current paragraph. super useful.
-Plugin 'kana/vim-textobj-indent'
+    " indent-based text objects. ai for everything at this indent level or above;
+    " ii restricts further to the current paragraph. super useful.
+    Plugin 'kana/vim-textobj-indent'
 
-" al means whole line; il means line minus surrounding whitespace.
-" Occasionally useful.
-Plugin 'kana/vim-textobj-line'
+    " al means whole line; il means line minus surrounding whitespace.
+    " Occasionally useful.
+    Plugin 'kana/vim-textobj-line'
 
-" text objects based on arguments to a function. ia is the current argument,
-" aa is that plus whitespace and one comma if present. Do not use outside
-" braces.  However it seems to play reasonably nicely with {} and [].
-" Very important.
-Plugin 'b4winckler/vim-angry'
+    " text objects based on arguments to a function. ia is the current argument,
+    " aa is that plus whitespace and one comma if present. Do not use outside
+    " braces.  However it seems to play reasonably nicely with {} and [].
+    " Very important.
+    Plugin 'b4winckler/vim-angry'
 
-" name explains itself. example: *C*amelCaseMotion, after \w, navigates to
-" Camel*C*aseMotion. Works with snake_case as well. Provides text objects for
-" inner words as well. So, so useful.
-Plugin 'bkad/CamelCaseMotion'
+    " name explains itself. example: *C*amelCaseMotion, after \w, navigates to
+    " Camel*C*aseMotion. Works with snake_case as well. Provides text objects for
+    " inner words as well. So, so useful.
+    Plugin 'bkad/CamelCaseMotion'
 
-" Lets you run flake8 on your script. Works well and very useful; not sure why
-" I'm so unexcited to document it.
-Plugin 'nvie/vim-flake8'
+    " Lets you run flake8 on your script. Works well and very useful; not sure why
+    " I'm so unexcited to document it.
+    Plugin 'nvie/vim-flake8'
 
-" Useful largely for highlighting csv file. Has many commands beginning with
-" CSV, found them well-documented the few times I've needed them.
-Plugin 'chrisbra/csv.vim'
+    " Useful largely for highlighting csv file. Has many commands beginning with
+    " CSV, found them well-documented the few times I've needed them.
+    Plugin 'chrisbra/csv.vim'
 
-" A bunch of ]-mappings. [q / ]q move you through quickfix list, [f / ]f move
-" through arg files, &c. [e / ]e moves current line or selection up or down by
-" [count] lines; [<space> / ]<space> adds lines above or before this line
-" instead of calling o<Esc> or O<Esc>. Saves a lot of time.
-Plugin 'tpope/vim-unimpaired'
+    " A bunch of ]-mappings. [q / ]q move you through quickfix list, [f / ]f move
+    " through arg files, &c. [e / ]e moves current line or selection up or down by
+    " [count] lines; [<space> / ]<space> adds lines above or before this line
+    " instead of calling o<Esc> or O<Esc>. Saves a lot of time.
+    Plugin 'tpope/vim-unimpaired'
 
-" runs make and shit asynchronously. ack.vim has this as an optional
-" dependency; it improves performance very noticeably and seems to solve an
-" extremely annoying problem I was running into occasionally
-" (https://github.com/mileszs/ack.vim/issues/199). Highly recommend, at least
-" with ack.vim.
-Plugin 'tpope/vim-dispatch'
+    " runs make and shit asynchronously. ack.vim has this as an optional
+    " dependency; it improves performance very noticeably and seems to solve an
+    " extremely annoying problem I was running into occasionally
+    " (https://github.com/mileszs/ack.vim/issues/199). Highly recommend, at least
+    " with ack.vim.
+    Plugin 'tpope/vim-dispatch'
 
-" adds endif, done, etc in bash and vimL, one day jinja.
-Plugin 'tpope/vim-endwise'
+    " adds endif, done, etc in bash and vimL, one day jinja.
+    Plugin 'tpope/vim-endwise'
 
-" autocomplete; untested
-" been having performance problems, don't know if this is why but can't hurt
-" Plugin 'davidhalter/jedi-vim'
+    " autocomplete; untested
+    " been having performance problems, don't know if this is why but can't hurt
+    " Plugin 'davidhalter/jedi-vim'
 
-" instead we try this which seems to be more popular. Requires MacVim.
-" holy shit, real performance issues... maybe my computer sucks
-" Plugin 'Valloric/YouCompleteMe'
+    " instead we try this which seems to be more popular. Requires MacVim.
+    " holy shit, real performance issues... maybe my computer sucks
+    " Plugin 'Valloric/YouCompleteMe'
 
-" syntastic is working pretty well... mostly replaces vim-flake8 too!
-Plugin 'vim-syntastic/syntastic'
+    " syntastic is working pretty well... mostly replaces vim-flake8 too!
+    Plugin 'vim-syntastic/syntastic'
 
-" compiler settings for eslint
-Plugin 'salomvary/vim-eslint-compiler'
+    " compiler settings for eslint
+    Plugin 'salomvary/vim-eslint-compiler'
 
-" workflow helper, for SQL especially
-Plugin 'krisajenkins/vim-pipe'
+    " workflow helper, for SQL especially
+    Plugin 'krisajenkins/vim-pipe'
 
-" syntax highlighter for postgres-specific SQL
-"Plugin 'krisajenkins/vim-postgresql-syntax'
+    " syntax highlighter for postgres-specific SQL
+    "Plugin 'krisajenkins/vim-postgresql-syntax'
 
-" recommended by SimpylFold to speed up folding (it's pretty bad for large
-" files...
-Plugin 'Konfekt/FastFold'
+    " recommended by SimpylFold to speed up folding (it's pretty bad for large
+    " files...
+    Plugin 'Konfekt/FastFold'
 
-" graphviz -- digraphs
-Plugin 'wannesm/wmgraphviz.vim'
+    " graphviz -- digraphs
+    Plugin 'wannesm/wmgraphviz.vim'
 
-" read coverage report
-Plugin 'mgedmin/coverage-highlight.vim'
+    " read coverage report
+    Plugin 'mgedmin/coverage-highlight.vim'
 
-" mscgen syntax
-Plugin 'goodell/vim-mscgen'
+    " mscgen syntax
+    Plugin 'goodell/vim-mscgen'
 
-" possible improvement on previous jinja plugin. Abandoned in favor of custom
-" fix in .vim/after/syntax/jinja.vim
-" Plugin 'mitsuhiko/vim-jinja'
+    " possible improvement on previous jinja plugin. Abandoned in favor of custom
+    " fix in .vim/after/syntax/jinja.vim
+    " Plugin 'mitsuhiko/vim-jinja'
 
-" support for direnv files and settings
-Plugin 'direnv/direnv.vim'
+    " support for direnv files and settings
+    Plugin 'direnv/direnv.vim'
 
-" new and improved python syntax
-Plugin 'vim-python/python-syntax'
+    " new and improved python syntax
+    Plugin 'vim-python/python-syntax'
 
-" All Plugins must be added before the following line
-call vundle#end()            " required
+    " more tpope: xml autofill
+    Plugin 'tpope/vim-ragtag'
+
+    " maybe puts git line status in the 'gutter'?
+    Plugin 'airblade/vim-gitgutter'
+
+    " adds useful stuff like :Chmod
+    Plugin 'tpope/vim-eunuch'
+
+    " cross-editor text properties
+    Plugin 'editorconfig/editorconfig-vim'
+
+    " better statusline plugin
+    Plugin 'itchyny/lightline.vim'
+
+    " All Plugins must be added before the following line
+    call vundle#end()            " required
+else
+    echoerr 'Vundle was not found. Consider executing "git clone gh:gmarik/Vundle.vim ~/.vim/bundle/Vundle.vim"'
+    unlet s:vundlepath
+endif
+
 filetype plugin indent on    " required
 
+function CheckVundle(featurename)
+    let result = exists('s:vundlepath')
+    if ! ( result || empty(a:featurename) )
+        echoerr 'need vundle installed to support' a:featurename
+    endif
+    return result
+endfunction
+
 " \w, \b, \e, a\w, i\w ... etc, motions for moving inside a camel case word.
-silent! call camelcasemotion#CreateMotionMappings('<leader>')
+if CheckVundle('camel case mappings')
+    silent! call camelcasemotion#CreateMotionMappings('<leader>')
+endif
 
 " syntax highlighting! I think.
 syntax on
