@@ -231,14 +231,55 @@ set incsearch " jumps to and highlights a search as you type
 " use \n to temporarily suppress search highlighting
 nnoremap <Leader>n :<C-U>noh<CR>:<CR>
 
-" set a useful statusline
-set ruler laststatus=2
+set laststatus=2
+if CheckVundle('fancy status line')
+    let g:lightline = {
+                \ 'colorscheme': 'Tomorrow_Night_Eighties',
+                \ 'active': {
+                \    'left': [
+                \       ['mode'],
+                \       ['readonly', 'filename', 'modified'],
+                \       ['branchname', 'timestamp']
+                \    ],
+                \    'right': [
+                \       ['jpdimensions'],
+                \       ['lineinfo', 'percent'],
+                \       ['charvaluehex', 'fileformat', 'filetype'],
+                \    ]
+                \  },
+                \  'component': {
+                \    'charvaluehex': '0x%B',
+                \    'jpdimensions': '(%{winwidth(0)}x%{winheight(0)})',
+                \    'percent': '%P',
+                \    'fileformat': '%{&ff==#"unix"?"":&ff}',
+                \    'filetype': '%{&ft}'
+                \  },
+                \  'component_visible_condition': {
+                \    'fileformat': '&ff==#"unix" || &ff',
+                \    'filetype': '&ft'
+                \  },
+                \  'component_function': {
+                \    'timestamp': 'JPtimestamp',
+                \    'branchname': 'JPshortGitHead'
+                \  }
+                \}
+    function JPtimestamp()
+        return strftime('%e %b %T')
+    endfunction
+    if ! exists('g:jpmaxgitbrlen')
+        let g:jpmaxgitbrlen = 12
+    endif
+    function JPshortGitHead()
+        return fugitive#head()[0 : g:jpmaxgitbrlen]
+    endfunction
+else
+    " set a useful statusline
+    set ruler
 
-" timestamp in ruler pulled from vim wikia
-" window dimensions in ruler entirely my own (-: it took some doing!
-" TODO add git branch
-" TODO use let instead of set, for clarity and to avoid escaping spaces
-set rulerformat=%47(%{strftime('%e\ %b\ %T\ %p')}\ %5l,%-6(%c%V%)\ %P%10((%{winwidth(0)}x%{winheight(0)})%)%)
+    " timestamp in ruler pulled from vim wikia
+    " window dimensions in ruler entirely my own (-: it took some doing!
+    set rulerformat=%47(%{strftime('%b\ %T\ %p')}\ %5l,%-6(%c%V%)\ %P%10((%{winwidth(0)}x%{winheight(0)})%)%)
+endif
 
 
 " mark the right border with a subtle grey. That's 80 in python/vimL, 72 in
