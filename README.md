@@ -11,16 +11,18 @@ will not make it up here).
 
 The very basics:
 * `/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"`
-* `brew install git bash`
+* `brew install bash`
 * add /usr/local/bin/bash to /etc/shells
 * `chsh /usr/local/bin/bash`
 * start new terminal
-* `ssh-keygen` and add resulting public key to github, jenkins, anywhere else
+* `ssh-keygen` and add resulting public key to github and anywhere else
+* `brew install git --with-openssl --with-curl`
 * `git clone git@github.com:jpassaro/cygnix-enviro-utils.git ~/code/login-utils`
 * `ln -sv ~/code/login-utils/bashrc.d ~/bashrc.d`
 * `ln -sv ~/code/login-utils/global-gitignore ~/.gitignore`
 * `git config --global include.path ~/code/login-utils/git-config`
 * `mkdir -p ~/bin ~/.ssh`
+* `chmod 700 ~/.ssh`
 * `echo source ~/code/login-utils/bashrc >>~/.bash_profile && source ~/.bash_profile`
 
 For long-term / optional stuff:
@@ -36,6 +38,7 @@ Host gh
 Good things to brew install:
 * `coreutils`
 * `findutils`
+* `gnu-{set,tar,time,units}`
 * `less`
 * `lesspipe`
 * `ack` -- also `ln -sv ~/code/login-utils/ackrc ~/.ackrc`
@@ -47,12 +50,13 @@ Good things to brew install:
 * `python` (a few executables depend on it)
 * `python@2` if any of your projects use python2 (mac's python2 is Too Old)
 * `graphviz` -- see also bin/dot-pipe for a nice vim integration
-* `bash-completion` (bash completions for brew commands)
+* `bash-completion` (lots of nice bash completions)
 * `httpie`
 * `thefuck`
 * `ssh-copy-id`
 * `pstree`
 * `ascii`
+* `awscli`
 
 # Copyright
 
