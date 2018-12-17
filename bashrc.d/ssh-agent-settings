@@ -7,7 +7,27 @@ source_pragma_once ~/bashrc.d/env
 SSH_ENV="$HOME/.ssh/agent-setup"
 SSH_ENV_LOCK="/tmp/ssh-agent-setup-lock"
 
-function start-agent {
+# tries to start the ssh agent, using the atomicity of mkdir to guard
+# against race conditions and ensure there is only one agent running.
+# If it succeeds in creating the directory, it won the race and so
+# creates an SSH agent. It leaves the directory open
+# If it fails to acquire the lock by creating the lock directory, it
+# waits SSH_ENV_WAIT seconds then attempts to use the SSH agent created
+# by the other process.
+# If this fails, it may mean SSH_ENV_WAIT is too short.
+# Another more troubling possibility is that there was no competing
+# process creating an SSH agent at all. This should only happen if:
+# 1. SSH_ENV_LOCK survives a reboot (unlikely since it is in /tmp);
+# 2. the agent has died; or
+# 3. the agent exists but the SSH_ENV file pointing to it has been
+# removed.
+# In case of 1 or 2, the lock should be released by rmdir-ing
+# SSH_ENV_LOCK, then this function should be run again. If 3 happens,
+# ideally you should kill the "rogue" agent, then do both of the above.
+function maybe-start-agent {
+  if check-env-file ; then
+    return
+  fi
   if mkdir "$SSH_ENV_LOCK" >/dev/null 2>&1 ; then
     echo "Initialising new SSH agent..."
     /usr/bin/ssh-agent > "${SSH_ENV}"
@@ -17,36 +37,40 @@ function start-agent {
     /usr/bin/ssh-add
   else
     echo 'avoided a ssh-agent race condition! trying again in a moment'
-    sleep 1
+    sleep "${SSH_ENV_WAIT:-1}"
     if ! check-env-file ; then
+      cat <<-END_OF_MESSAGE >&2
+        ------------------OH NO!---------------------------
+        This has proven complicated. Please kill any existing ssh-agents
+        and execute the following:
+
+        $ rmdir $SSH_ENV_LOCK ; ${FUNCNAME[0]}
+
+        Then you should execute check-env-file in all sessions.
+
+        See ~/bashrc.d/ssh-agent-settings for more about what has happened.
+END_OF_MESSAGE
       return 1
     fi
   fi
 }
 
 function check-env-file() {
-  if [[ -f "${SSH_ENV}" ]] ; then
-    source "${SSH_ENV}"
-  else
+  if [[ ! -f "${SSH_ENV}" ]] ; then
     return 1
   fi
+  source "${SSH_ENV}"
+  echo checking for ssh-agent pid "$SSH_AGENT_PID"
   # ps ${SSH_AGENT_PID} doesn't work under cywgin
-  echo checking for agent pid "$SSH_AGENT_PID"
   if ps ${CYGWIN:+-p} ${SSH_AGENT_PID} | grep -m1 ssh-agent$ > /dev/null
   then
-    echo "previous agent ${SSH_AGENT_PID} is still running"
+    echo "previous ssh-agent ${SSH_AGENT_PID} is still running"
   else
+    echo "no ssh-agent found"
     return 1
   fi
 }
 
 # Source SSH settings, if applicable
 
-check-env-file || start-agent || {
-  echo -- ------------------OH NO\!---------------------------
-  echo This has proven complicated. Please do the following:
-  echo
-  echo -e '\t' "rmdir ${SSH_ENV_LOCK} ; check-env-file || start-agent"
-  echo
-  echo Then you should execute check-env-file in all open terminals.
-}
+maybe-start-agent
