@@ -1,5 +1,5 @@
 [._]*.sw[op]
-.sw[op]
+.sw[opn]
 .log
 
 .direnv
