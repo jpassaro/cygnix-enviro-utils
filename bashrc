@@ -5,7 +5,13 @@
 # User dependent .bashrc file
 
 # If not running interactively, don't do anything
-[[ "$-" != *i* ]] && return
+[[ "$-" == *i* ]] || return
+
+if [[ "${BASH_VERSINFO[0]}" -lt 4 ]] ; then
+  echo >&2 "Your bash version ($BASH_VERSION) is too low."
+  echo >&2 "You need to upgrade to at least 4 to use john's login utils."
+  return
+fi
 
 # source all relevant subscripts. possible examples:
 # - bashrc.d/paths
