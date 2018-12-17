@@ -36,7 +36,7 @@ alias ':h=:help'
 # combined with vimpipe for sql, v useful
 alias vsql='vim +"set ft=sql"'
 
-alias pydoc='python -m pydoc'
+alias pydoc='python3 -m pydoc'
 
 if check-for-package gsleep coreutils ; then
   alias sleep=gsleep
