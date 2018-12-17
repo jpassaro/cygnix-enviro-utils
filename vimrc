@@ -529,3 +529,9 @@ endfunction
 " i am getting so tired of syntax errors when sh files use bash
 " constructions...
 let g:bash_is_sh = 1
+
+" make sure there is time to finish syntax highlighting
+set redrawtime=4000 " usually 2000
+
+" how long gitgutter has to wait before updating lines
+set updatetime=250
