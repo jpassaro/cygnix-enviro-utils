@@ -22,9 +22,20 @@ GH_PATTERN = re.compile(r'''
 @click.option('--against', default='master')
 @click.option('-u', '--upstream', default='origin')
 @click.option('-w', '--open-page', is_flag=True)
+@click.option('--create', type=click.Choice(('no', 'maybe', 'force')),
+              default='no')
 @click.option('-n', '--offline', is_flag=True)
-def cli(**kwargs):
-    CheckPR(**kwargs).print_available_links()
+def cli(create, **kwargs):
+    check = CheckPR(**kwargs)
+    links = check.available_links()
+    has_open_pr = links and check.print_available_links(links)
+    if create != 'no' or not has_open_pr:
+        if create == 'no':
+            check.prompt_new()
+        elif not (create == 'maybe' and has_open_pr):
+            if has_open_pr:
+                click.echo('Force create. This may not be a great idea')
+            check.create()
 
 
 class CheckPR:
@@ -38,27 +49,41 @@ class CheckPR:
         self.offline = offline
         self._read_git_props()
 
-    def print_available_links(self):
-        printed = False
-        for pr in self._available_links():
+    def available_links(self):
+        results = () if self.offline else self._request_prs()
+        def augment(pr):
             link = pr.get('_links', {}).get('html', {}).get('href')
             if link:
-                baseref = pr.get('base', {}).get('ref')
-                state = pr.get('state')
-                click.echo(
-                    f'Pull request against {baseref} ({state}) at {link}')
-                if baseref == self.against and state == 'open':
-                    printed = True
-                    self._maybe_open(link)
-        if not printed:
-            compare_url = (f'https://github.com/{self._slug}/compare'
-                           f'/{self.against}...{self.remote_name}')
-            click.echo(f'Open a new pull request against {self.against}:'
-                       f' {compare_url}')
-            self._maybe_open(compare_url)
+                pr['_jp_link'] = link
+                return pr
+            return None
+        return [*filter(None, map(augment, results))]
 
-    def _available_links(self):
-        return () if self.offline else self._request_prs()
+    def print_available_links(self, links=None):
+        if links is None:
+            links = self.available_links()
+        match = False
+        for pr in links:
+            link = pr.get('_jp_link')
+            baseref = pr.get('base', {}).get('ref')
+            state = pr.get('state')
+            click.echo(
+                f'Pull request against {baseref} ({state}) at {link}')
+            if baseref == self.against and state == 'open':
+                match = True
+                self._maybe_open(link)
+        return match
+
+    def prompt_new(self):
+        link = (f'https://github.com/{self._slug}/pull/new'
+                       f'/{self.against}...{self.remote_name}')
+        click.echo(f'Open a new pull request against {self.against}:'
+                   f' {link}')
+        self._maybe_open(link)
+
+    def create(self):
+        click.echo('Creating new pull request not supported yet.')
+        self.prompt_new()
 
     def _request_prs(self):
         api = f'https://api.github.com/repos/{self._slug}/pulls'
