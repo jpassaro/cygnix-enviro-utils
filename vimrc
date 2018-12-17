@@ -444,20 +444,19 @@ endfunction
 colorscheme slate
 
 function! NewlineBefore() abort
-    if col('.') > 1
-        while col('.') > 1 && getline('.')[col('.')-2] =~ '\s'
-            normal! h
-        endwhile
-        execute "normal! i\<cr>"
-        silent! call repeat#set("\<Plug>PassaroNewlineBefore")
-    endif
+    let l:nlcount = v:count1
+    while col('.') >= 2 && getline('.')[col('.')-2] =~ '\s'
+        normal! h
+    endwhile
+    execute "normal! " . l:nlcount . "i\<cr>"
+    silent! call repeat#set("\<Plug>PassaroNewlineBefore")
 endfunction
 
 nnoremap <unique> <Plug>PassaroNewlineBefore :<C-U>call NewlineBefore()<CR>
 
 " Another unimpaired-style mapping to create newlines.
 nnoremap <unique> [<CR> :<C-U>call NewlineBefore()<CR>
-nnoremap <unique> ]<CR> a<CR><Esc>
+nnoremap <unique> ]<CR> a<CR><Esc><C-O>
 
 " tell ack.vim to use dispatch
 let g:ack_use_dispatch = 1
