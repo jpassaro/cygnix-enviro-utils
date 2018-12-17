@@ -2,8 +2,12 @@
 
 # several useful bash options available via `set` and `shopt`.
 
-# Don't use ^D to exit
-set -o ignoreeof
+# Don't use ^D to exit, unless this is a nested bash process
+if [[ "$SHLVL" == 1 ]] ; then
+  set -o ignoreeof
+else
+  set +o ignoreeof
+fi
 
 # extended globbing
 shopt -s globstar # allows ** for recursive globbing
