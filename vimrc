@@ -525,3 +525,7 @@ function SetupMysqlVimpipe(db, host, user, password)
                 \ . " --password='" . a:password
                 \ . "' --table"
 endfunction
+
+" i am getting so tired of syntax errors when sh files use bash
+" constructions...
+let g:bash_is_sh = 1
