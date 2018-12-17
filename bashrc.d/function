@@ -7,14 +7,6 @@ function addhost(){
     done
 }
 
-# obselete
-function cdsrc() {
-  local envi="$1" ; shift
-  c "$SRC/${envi}/projects" "$@"
-  return $?
-}
-
-
 function c(){
   local DIR="$1"
   shift
