@@ -1,8 +1,6 @@
 --ignore-dir=is:.idea
---ignore-dir=is:log
 --ignore-dir=is:.direnv
 --ignore-dir=is:htmlcov
---ignore-dir=is:dist
 --ignore-dir=is:target
 --ignore-dir=is:_scratch
 --type-set
