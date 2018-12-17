@@ -32,6 +32,7 @@ function c(){
 }
 
 # Mac-only
+# TODO create conditional on mac
 function ppid() {
   local PID=$$ ; ps -p $(cat /proc/$PID/ppid)
 }
@@ -182,6 +183,7 @@ function logname() {
   fi
   ls -t "${pattern}"-* | sed -n "${num}p"
 }
+
 function lesslog() {
   local lname="$(logname "$@")"
   local rv="$?"
@@ -199,6 +201,8 @@ function bring() {
   mv -v "$@" .
 }
 
+# likely mac-only and very possibly iterm2-only. TODO verify that, check for
+# it before defining the function
 function remind() {
   sleeptime="${1:?usage: remind SLEEPTIME message text}"
   (

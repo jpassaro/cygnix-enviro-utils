@@ -4,6 +4,10 @@
 
 source_pragma_once /usr/local/etc/bash_completion.d/git-completion.bash
 
+# the remainder of this is snippets taken from vim wikia for completing on
+# vim -t. These were apparently defective at some point and I had to comment
+# them out. Leaving the functions in case this is wanted in the future.
+
 # from vim wikia
 _vim_search() {
     ex -N -u NONE -i NONE \
@@ -40,6 +44,9 @@ _vim() {
 
 
 excludelist='*.@(o|O|so|SO|so.!(conf)|SO.!(CONF)|a|A|rpm|RPM|deb|DEB|gif|GIF|jp?(e)g|JP?(E)G|mp3|MP3|mp?(e)g|MP?(E)G|avi|AVI|asf|ASF|ogg|OGG|class|CLASS)'
+
+# TODO run conditioned on an envvar that can be set before sourcing in .bashrc
+
 # complete -F _vim_search -f -X "${excludelist}" vi vim
 # complete -f vi vim  # restore default  # but apparently this doesn't work either...
 # complete -r vi vim

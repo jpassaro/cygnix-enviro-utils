@@ -4,22 +4,31 @@
 # Each one checks for duplicate entries and that the directory exists.
 
 function _can_add() {
-  [[ -n "$1" && "$#" == 1 ]] && [[  "$PATH" == *?:"$1":?* || "$PATH" == "$1":?*
-                                    || "$PATH" == *?:"$1" ]]
+  [[ -n "$1" && "$#" == 1 ]] \
+    && [[  "$PATH" == *?:"$1":?*
+      || "$PATH" == "$1":?*
+      || "$PATH" == *?:"$1" ]]
 }
 
 function prepend-path() {
-  for x ; do _can_add "$x" || export PATH="$x":"$PATH" ; done
+  for x ; do
+    _can_add "$x" || export PATH="$x":"$PATH"
+  done
 }
 
 function append-path() {
-  for x ; do _can_add "$x" || export PATH="$PATH":"$x" ; done
+  for x ; do
+    _can_add "$x" || export PATH="$PATH":"$x"
+  done
 }
 
 if [[ "$PATH" != */usr/local/bin*:/usr/bin* ]] ; then
-  export PATH="/usr/local/bin:${PATH}"  # avoid the duplicate check of prepend-path
+  # it must come first, even if it was already there
+  export PATH="/usr/local/bin:${PATH}"
 fi
 prepend-path ~/bin
+
+# TODO create a mechanism to source the correct choice of mac-*, cyg-*, linux-*
 for x in $(shopt -s nullglob ; echo $HOME/bashrc.d/*-path ) ; do
   source_pragma_once "$x"
 done

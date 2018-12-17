@@ -6,6 +6,8 @@ export EDITOR=vim
 # iterm integration seems to mess this up if called afterward
 source_pragma_once ~/.iterm2_shell_integration.bash
 
+# TODO test this PS1 stuff on linux
+
 # green datetime; bold red cwd
 PS1='[\l] \[\e[0;32m\]\D{%F %T}\[\e[m\] \[\e[1;31m\]\W\[\e[m\] '
 
@@ -29,14 +31,14 @@ for prompthome in ~/bashrc.d /usr/local/etc{/bash_completion.d,} /etc ; do
     # in bold grey, parenthesized git prompt
     PS1="$PS1"'\[\e[1;30m\]$(__git_ps1 "(%s)")\[\e[m\]'
     # git prompt consists of:
-    # branch name;
+    # branch name (automatic);
     # '*' for dirty state;
     # '+' for staged/uncommitted changes;
-    # '%' for untracked files;
-    # '=<>' if upstream is set for same as, behind, or ahead of upstream.
     GIT_PS1_SHOWDIRTYSTATE=x
-    GIT_PS1_SHOWUPSTREAM=auto
+    # '%' for untracked files;
     GIT_PS1_SHOWUNTRACKEDFILES=x
+    # '=<>' if upstream is set for same as, behind, or ahead of upstream.
+    GIT_PS1_SHOWUPSTREAM=auto
     # git prompt suppressed if you happen to navigate into an ignored
     # subdirectory.
     GIT_PS1_HIDE_IF_PWD_IGNORED=x
@@ -60,5 +62,5 @@ fi
 
 source_pragma_once ~/bashrc.d/*-env
 
-# patch an iTerm2 issue that causes vim to misassign light/dark color scheme
+# work around an iTerm2 issue that causes vim to misassign light/dark color scheme
 [[ -n "$COLORFGBG" ]] || export COLORFGBG="15;0"
