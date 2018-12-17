@@ -51,15 +51,15 @@ function code() {
   case "$numf" in
     1) ;;
     *)
-        echo >/dev/tty "$numf" folders found for \*"$suff", please be more specific:
+        echo >&2 "$numf" folders found for "*$suff", please be more specific:
 	for folder in "${folders[@]}" ; do
-           echo >/dev/tty -e "\\t$folder"
+           printf >&2 "\\t$folder\\n"
         done
 	return 2 ;;
   esac
   for folder in "${folders[@]}" ; do
     [[ -d "$folder" ]] && c "$folder" || \
-         { echo >/dev/tty 'No folder found for *'"$suff" ; return 1 ;}
+         { echo >&2 "No folder found for *$suff" ; return 1 ;}
     [[ ! -d .git ]] || git status
   done
 }
