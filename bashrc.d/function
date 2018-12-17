@@ -216,3 +216,8 @@ function remind() {
 function functions() {
   declare -f | sed '/^{ *$/,/^} *$/ d'
 }
+
+# look for vim swap files in current file tree
+function hasvim() {
+  find . -maxdepth ${1:-5} -name '[._]*.sw*' -o -name .sw*
+}

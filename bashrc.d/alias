@@ -29,9 +29,6 @@ alias view="vim -R"
 # enables "fuck" command to correct your last command
 if check-for-package thefuck ; then eval "$(thefuck --alias)" ; fi
 
-# look for vim swap files in current file tree
-alias hasvim="find . -name '[._]*.swp' -o -name .swp"
-
 # in case accidentally type vim commands into bash terminal
 alias :q=true
 alias ':h=:help'
