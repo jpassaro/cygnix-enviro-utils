@@ -54,8 +54,9 @@ PS1="$PS1"'\[\e[1;34m\]$\[\e[m\] '
 
 # LESSOPEN
 # allow less to view gzip and several other non-ascii filetypes
-_lesspipe="$(which lesspipe.sh)"
-[[ -n "$_lesspipe" ]] && export LESSOPEN="|${_lesspipe} %s" || echo 'Please install lesspipe for enhanced less reader'
+if check-for-package lesspipe.sh 'lesspipe.sh, a smarter less reader' ; then
+  export LESSOPEN="|$(which lesspipe.sh) %s"
+fi
 
 source_pragma_once ~/bashrc.d/*-env
 

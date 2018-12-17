@@ -45,6 +45,17 @@ function source_pragma_once() {
   done
 }
 
+function check-for-package() {
+  local target="$1"
+  local package="$2"
+  if which "$target" >/dev/null 2>&1 ; then
+    return 0
+  else
+    echo "$target" not found, please install "${package:-it}"
+    return 1
+  fi
+}
+
 if [ -d $HOME/bashrc.d ] ; then
   echo $HOME/bashrc.d found
   source_pragma_once $HOME/bashrc.d/*

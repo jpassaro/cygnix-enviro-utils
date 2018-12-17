@@ -26,19 +26,6 @@ alias ackl='ack --pager="less -FRX"' # force pager
 alias vi="vim"
 alias view="vim -R"
 
-function check-for-package() {
-  local target="$1"
-  local package="$2"
-  if which "$target" >/dev/null 2>&1 ; then
-    return 0
-  elif which brew >/dev/null 2>&1 ; then
-    echo "$target" not found, please install "${package:-it}"
-  else
-    echo brew not found, "$package" must be installed some other way
-  fi
-  return 1
-}
-
 # enables "fuck" command to correct your last command
 if check-for-package thefuck ; then eval "$(thefuck --alias)" ; fi
 
@@ -54,4 +41,10 @@ alias vsql='vim +"set ft=sql"'
 
 alias pydoc='python -m pydoc'
 
-if check-for-package gsleep ; then alias sleep=gsleep ; fi
+if check-for-package gsleep coreutils ; then
+  alias sleep=gsleep
+fi
+
+if check-for-package zbarimg 'zbar for QR-code scanning' ; then
+  alias qrdecode='zbarimg -Sdisable -Sqr.enable -q --raw'
+fi
