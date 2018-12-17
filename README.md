@@ -19,7 +19,7 @@ The very basics:
 * `git clone git@github.com:jpassaro/cygnix-enviro-utils.git ~/code/login-utils`
 * `ln -sv ~/code/login-utils/bashrc.d ~/bashrc.d`
 * `ln -sv ~/code/login-utils/global-gitignore ~/.gitignore`
-* `git config --global include.path ~/code/login-utils/git-aliases`
+* `git config --global include.path ~/code/login-utils/git-config`
 * `mkdir -p ~/bin ~/.ssh`
 * `echo source ~/code/login-utils/bashrc >>~/.bash_profile && source ~/.bash_profile`
 

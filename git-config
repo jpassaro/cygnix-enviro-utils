@@ -1,0 +1,30 @@
+[alias]
+	co = checkout
+	br = branch
+	st = status
+	last = reset HEAD~
+	ci = commit
+	di = diff
+	mb = merge-base
+	reb = rebase
+	rebi = rebase -i
+[core]
+	excludesfile = ~/.gitignore
+[url "https://github.com/"]
+	insteadOf = git@github.com:
+[user]
+	name = John Passaro
+	email = john.a.passaro@gmail.com
+[merge]
+	conflictstyle = diff3
+[notes]
+	rewriteRef = refs/notes/commits
+[sendemail]
+	smtpEncryption = tls
+	smtpServer = smtp.gmail.com
+	smtpUser = john.a.passaro@gmail.com
+#	smtpPass = haha nice try
+
+# set up via git config include.path
+
+# vi: ft=gitconfig
