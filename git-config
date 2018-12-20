@@ -10,6 +10,7 @@
 	rebi = rebase -i
 [core]
 	excludesfile = ~/.gitignore
+	abbrev = 12
 [url "https://github.com/"]
 	insteadOf = git@github.com:
 [user]
@@ -24,6 +25,8 @@
 	smtpServer = smtp.gmail.com
 	smtpUser = john.a.passaro@gmail.com
 #	smtpPass = haha nice try
+[pretty]
+    ref = %h (\"%s\", %ad)
 
 # set up via git config include.path
 
