@@ -24,6 +24,7 @@ GH_PATTERN = re.compile(r'''
 @click.option('-w', '--open-page', is_flag=True)
 @click.option('--create', type=click.Choice(('no', 'maybe', 'force')),
               default='no')
+@click.option('-m', '--message', multiple=True)
 @click.option('-n', '--offline', is_flag=True)
 def cli(create, **kwargs):
     check = CheckPR(**kwargs)
@@ -40,13 +41,14 @@ def cli(create, **kwargs):
 
 class CheckPR:
     def __init__(self, *, api_token, branchname, against, upstream, open_page,
-                 offline):
+                 offline, message):
         self.api_token = api_token
         self.branchname = branchname
         self.against = against
         self.upstream = upstream
-        self.should_open_page = open_page
+        self.should_open_page = self.open_page = open_page
         self.offline = offline
+        self.message = message
         self._read_git_props()
 
     def available_links(self):
@@ -76,31 +78,43 @@ class CheckPR:
 
     def prompt_new(self):
         link = (f'https://github.com/{self._slug}/pull/new'
-                       f'/{self.against}...{self.remote_name}')
+                       f'/{self.against}...{self._pr_head}')
         click.echo(f'Open a new pull request against {self.against}:'
                    f' {link}')
         self._maybe_open(link)
 
     def create(self):
-        click.echo('Creating new pull request not supported yet.')
-        self.prompt_new()
+        print('creating new pull request...')
+        message = '\n\n'.join(self.message)
+        if not message:
+            message = self._branch.commit.message
+            print('No message supplied.\nUsing head commit message:')
+            print(message)
+            input('Press Ctrl-C to abort, or Enter to continue')
+        subject, sep, body = message.partition('\n')
+        data = {'title': subject, 'head': self._pr_head, 'base': self.against}
+        body = body.strip()
+        if body:
+            data['body'] = body
+        location = self._apireq('POST', json=data).json().get('html_url')
+        if not location:
+            abort('POST returned success but did not give a location')
+        print('New pull request created:', location)
+        self._maybe_open(location, self.open_page)
 
     def _request_prs(self):
-        api = f'https://api.github.com/repos/{self._slug}/pulls'
-        params = {'head': f'{self.owner}:{self.remote_name}', 'state': 'all'}
-        headers = {'Authorization': f'token {self.api_token}'}
-        resp = requests.get(api, params=params, headers=headers)
-        resp.raise_for_status()
-        return resp.json()
+        params = {'head': self._pr_head, 'state': 'all'}
+        return self._apireq('GET', params=params).json()
 
-    def _maybe_open(self, link):
-        if self.should_open_page:
+    def _maybe_open(self, link, force=False):
+        if self.should_open_page or force:
             self.should_open_page = False
             webbrowser.open(link)
 
     def _read_git_props(self):
         self.repo = git.Repo()
-        self._parse_gh_url()
+        owner, repo_name = self._parse_gh_url(self.upstream)
+        self._slug = f'{owner}/{repo_name}'
 
         if self.branchname is None:
             branch = self.repo.active_branch
@@ -111,24 +125,31 @@ class CheckPR:
             else:
                 abort(f'No branch {self.branchname} found.')
 
+        self._branch = branch
         tracking = branch.tracking_branch()
         if tracking is None:
             abort('This branch is not tracked. Please push first.')
         if tracking.commit != branch.commit:
             click.echo('Mismatch between tracking and local, you may want to push',
                        err=True)
-        self.remote_name = tracking.remote_head
+        owner, _ = self._parse_gh_url(tracking.remote_name)
+        self._pr_head = f'{owner}:{tracking.remote_head}'
 
-    def _parse_gh_url(self):
-        gh_base = self.repo.remote(self.upstream).url
+    def _parse_gh_url(self, remote_name):
+        gh_base = self.repo.remote(remote_name).url
         gh_match = GH_PATTERN.match(gh_base)
         if gh_match is None:
-            abort(f'Remote url {gh_base} suggests this is not a github repo.')
-        self.owner, self.repo_name = gh_match.groups()
+            abort(f'Remote url {gh_base} is not a github repo.')
+        return gh_match.groups()
 
-    @property
-    def _slug(self):
-        return f'{self.owner}/{self.repo_name}'
+    def _apireq(self, method, **kwargs):
+        api = f'https://api.github.com/repos/{self._slug}/pulls'
+        kwargs.setdefault('headers', {})['Authorization'] \
+                = f'token {self.api_token}'
+        result = requests.request(method, api, **kwargs)
+        result.raise_for_status()
+        return result
+
 
 
 def _is_github(remote_url):
