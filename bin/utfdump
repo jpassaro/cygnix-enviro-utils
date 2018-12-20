@@ -5,115 +5,175 @@ a tool to translate utf bytes and print them as readable unicode integers,
 basically the same as hexdump if hexdump decoded utf-8.
 """
 
-# TODO: opt-out-able abbreviation of repeating lines like hexdump
-# TODO: options for BUFSIZE, LINE_LENGTH
-# TODO: options to format chars and char counts (e.g. decimal)
-# TODO: options to toggle display of raw data and char count
+# TODO: options to format codepoints and counts (e.g. decimal or octal)
 
 import os
+import shutil
 import sys
 
-BUFSIZE = 1024
-LINE_LENGTH = 12
-SEP_LENGTH = (4, 4)
-PLACEHOLDER = '\uFFFD'  # shrug
+import click
 
 
-def main(f):
-    count = 0
-    leftover = ""
-    for unicode in read(f):
-        count, leftover = dump(count, leftover + unicode)
-    if leftover:
-        dumpline(count, leftover)
-    printcount(count + len(leftover))
-    print()
+FIELD_LENGTH = 7  # length of x10ffff, largest utf-8 encodable value
 
 
-def dump(count, unicode):
-    idx = 0
-    while idx + LINE_LENGTH <= len(unicode):
-        todump = unicode[idx:idx + LINE_LENGTH]
-        dumpline(count, todump)
-        idx += len(todump)
-        count += len(todump)
-    return count, unicode[idx:]
+class UtfDump:
+    buffer = None
+    count_length = None
+    count_sep = None
+    raw_data_delim = None
+    raw_data_sep = None
+    min_hex_digits = None
+    placeholder = None
+    print_all = None
+    line_length = None
+    _lastline = None
+
+    def __init__(self, *, buffer, count_length, count_sep, min_hex_digits,
+                 raw_data_delim, raw_data_sep, placeholder, print_all,
+                 line_length):
+        self.buffer = buffer
+        self.count_length = count_length
+        self.count_sep = count_sep
+        self.raw_data_delim = raw_data_delim
+        self.raw_data_sep = raw_data_sep
+        self.min_hex_digits = min_hex_digits
+        self.placeholder = placeholder
+        self.print_all = print_all
+
+        if line_length is None or line_length <= 0:
+            availablelength = shutil.get_terminal_size().columns
+            if count_length:
+                availablelength -= count_length + count_sep
+            length_per_char = FIELD_LENGTH
+            if raw_data_delim:
+                availablelength -= raw_data_sep + (2 * len(raw_data_delim))
+                length_per_char += 2  # because emojis can be 2 wide
+            self.line_length = availablelength // length_per_char
+
+        donothing = lambda *args: None
+        if not count_length:
+            self.printcount = donothing
+        if not raw_data_delim:
+            self.printdata = donothing
 
 
-def dumpline(count, line):
-    printcount(count)
-    printsep(SEP_LENGTH[0])
-    printcodes(line)
-    printsep(SEP_LENGTH[1])
-    printdata(line)
-    print()
+    def dumpfile(self, f):
+        count = 0
+        leftover = ""
+        buffer = bytearray(self.buffer)
+        for unicode in map(self.decode, self.read_bytes(f, buffer)):
+            count, leftover = self.dump(count, leftover + unicode)
+        if leftover:
+            self.dumpline(count, leftover)
+        self.printcount(count + len(leftover), False)
+        print()
+
+    @staticmethod
+    def decode(barray):
+        return bytes(barray).decode('utf-8')
+
+    def dump(self, count, unicode):
+        idx = 0
+        while idx + self.line_length <= len(unicode):
+            todump = unicode[idx:idx + self.line_length]
+            self.dumpline(count, todump)
+            idx += len(todump)
+            count += len(todump)
+        return count, unicode[idx:]
+
+    def dumpline(self, count, line):
+        if self.print_all or self._lastline is None or line != self._lastline:
+            self.printcount(count)
+            self.printcodes(line)
+            self.printdata(line)
+            self._lastline = line
+            self._showedrepeat = False
+        elif not self._showedrepeat:
+            echon('*')
+            self._showedrepeat = True
+        else:
+            return
+        print()
+
+    def printcount(self, idx, withsep=True):
+        output = f'{idx:0{self.count_length}x}'
+        if len(output) > self.count_length:
+            sys.exit(f'Got at least {idx} bytes which is more than'
+                     f' --count-length={self.count_length} can support')
+        echon(output)
+        if withsep:
+            echon(' ' * self.count_sep)
+
+    PAD = ' ' * FIELD_LENGTH
+
+    def printcodes(self, line):
+        padding = (self.PAD,) * (self.line_length - len(line))
+        echon(*map(self.tohex, line), *padding)
+
+    def printdata(self, line):
+        echon(' ' * self.raw_data_sep, self.raw_data_delim,
+              *map(self.printable, line), self.raw_data_delim, sep='')
+
+    def tohex(self, char):
+        if char is None:
+            return ' ' * FIELD_LENGTH
+        data = ord(char)
+        data = f'x{data:0{self.min_hex_digits}x}'
+        data = f'{data:<{FIELD_LENGTH}}'  # right justified
+        return data
+
+    def printable(self, char):
+        code = ord(char)
+        if code < 0x20 or 0x80 <= code <= 0x9f:
+            return self.placeholder
+        return char
+
+    @staticmethod
+    def read_bytes(f, buf):
+        unprocessed = bytearray(0)
+        bytesread = None
+        while bytesread is None or bytesread > 0:
+            bytesread = f.readinto1(buf)
+            unprocessed.extend(buf[:bytesread])
+            bytestodecode = len(unprocessed)
+            # we may be in the middle of a character, so backtrack to the
+            # rightmost of these:
+            # a) a byte < 0x80, which is a true codepoint;
+            # b) a byte to the left of one >= 0xc0, which must end a codepoint
+            # if we find neither, return ""
+            while bytestodecode > 0:
+                lastbyte = unprocessed[bytestodecode - 1]
+                if lastbyte < 0x80:
+                    break
+                bytestodecode -= 1
+                if lastbyte >= 0xc0:
+                    break
+            yield unprocessed[:bytestodecode]
+            del unprocessed[:bytestodecode]
+        if unprocessed:
+            yield unprocessed
 
 
-def printsep(length):
-    print(' ' * length, end='')
+@click.command()
+@click.option('-b', '--buffer', type=int, default=1024)
+@click.option('-c', '--count-length', type=int, default=8)
+@click.option('--count-sep', type=int, default=4)
+@click.option('--raw-data-delim', default='|')
+@click.option('--raw-data-sep', type=int, default=4)
+@click.option('--min-hex-digits', type=int, default=4)
+@click.option('--placeholder', default='\uFFFD')
+@click.option('--line-length', type=int, default=-1)
+@click.option('-v', '--print-all/--no-print-all')
+@click.argument('f', type=click.File('rb'), default='-')
+def cli(f, **kwargs):
+    UtfDump(**kwargs).dumpfile(f)
 
 
-def printcount(idx):
-    print('{:08x}'.format(idx), end='')
-    # 8 is good enough for hexdump ergo good enough for me
-
-
-def printcodes(line):
-    padding = [tohex(None) for _ in range(LINE_LENGTH - len(line))]
-    print(*map(tohex, line), *padding, sep=' ', end='')
-
-
-def printdata(line):
-    print('|', *map(printable, line), '|', sep='', end='\n')
-
-
-def tohex(char):
-    # 7 = length of x10ffff, the largest UTF-8 encodeable value, therefore
-    # exact length of all strings returned by this function
-    if char is None:
-        return ' ' * 7
-    data = 'x{:04X}'.format(ord(char))  # 4 seems reasonably pretty/standard
-    data = (' ' * max(0, 7 - len(data))) + data
-    return data
-
-
-def printable(char):
-    code = ord(char)
-    if code < 0x20 or 0x80 <= code <= 0x9f:
-        return PLACEHOLDER
-    return char
-
-
-def read(f):
-    buf = bytearray(BUFSIZE)
-    leftover = bytearray(0)
-    bytesread = None
-    while bytesread is None or bytesread > 0:
-        bytestodecode = bytesread = f.readinto1(buf)
-        lastbyte = buf[bytestodecode - 1]
-        # we may be in the middle of a character, so backtrack to the
-        # rightmost of these:
-        # a) a byte < 0x80, which is a true codepoint;
-        # b) a byte to the left of one >= 0xc0, which must end a codepoint
-        # if we find neither, return ""
-        while bytestodecode > 0 and lastbyte >= 0x80:
-            bytestodecode -= 1
-            if lastbyte >= 0xc0:
-                break
-        yield decode(leftover + buf[:bytestodecode])
-        leftover = buf[bytestodecode:bytesread]
-    if leftover:
-        yield decode(leftover)
-
-
-def decode(barray):
-    return bytes(barray).decode('utf-8')
+def echon(*args, **kwargs):
+    kwargs['end'] = ''
+    print(*args, **kwargs)
 
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        f = open(sys.argv[1], 'rb')
-    else:
-        f = sys.stdin.buffer
-    with f:
-        main(f)
+    cli()
