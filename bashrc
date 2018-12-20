@@ -1,6 +1,8 @@
 #!/bin/bash
-## the above for vim filetype detection; however,
-## this file should be installed as, or sourced from, your ~/.bashrc
+# shellcheck disable=SC1090
+## the hashbang is given for filetype detection; however,
+## this file should be installed as, or sourced from, your ~/.bashrc,
+## and not run directly.
 
 # User dependent .bashrc file
 
@@ -23,14 +25,13 @@ fi
 
 unset PRAGMA_IMPORTED  # previously was in reload-profile only, trying it here
 declare -A PRAGMA_IMPORTED
-let PRAGMA_INDEX=0
+PRAGMA_INDEX=0
 
 function source_pragma_once() {
   local sourceable
-  local source_result
   for sourceable ; do
     if [[ -z "${PRAGMA_IMPORTED[$sourceable]}" &&
-         "$(basename $sourceable)" != _* ]]
+         "$(basename "$sourceable")" != _* ]]
     then
       if [[ -e "$sourceable" ]] ; then
         PRAGMA_IMPORTED["$sourceable"]=$((PRAGMA_INDEX++))
@@ -46,19 +47,32 @@ function source_pragma_once() {
 }
 
 function check-for-package() {
+  local optional
+  while [[ "$1" == -* ]] ; do
+    case "$1" in
+      --optional)
+        optional=yes
+        shift
+        ;;
+      *)
+        echo unrecognized option "$1"
+        return 1
+        ;;
+    esac
+  done
   local target="$1"
   local package="$2"
-  if which "$target" >/dev/null 2>&1 ; then
+  if command -v "$target" >/dev/null 2>&1 ; then
     return 0
-  else
+  elif [[ -z "$optional" ]] ; then
     echo "$target" not found, please install "${package:-it}"
-    return 1
   fi
+  return 1
 }
 
-if [ -d $HOME/bashrc.d ] ; then
-  echo $HOME/bashrc.d found
-  source_pragma_once $HOME/bashrc.d/*
+if [ -d "$HOME/bashrc.d" ] ; then
+  echo "$HOME/bashrc.d" found
+  source_pragma_once "$HOME/bashrc.d"/*
 else
   echo "no bashrc.d found"
 fi
@@ -67,12 +81,11 @@ MY_BASHRC_FILE="${BASH_SOURCE[0]}"
 
 function reload-profile() {
   # unset PRAGMA_IMPORTED # currently trying at top of file
+  # shellcheck source=./bashrc
   source "$MY_BASHRC_FILE"
 }
 
 # must be last for some reason...
-if which -s direnv ; then
+if check-for-package --optional direnv ; then
   eval "$(direnv hook bash)"
-else
-  echo "Please install direnv."
 fi

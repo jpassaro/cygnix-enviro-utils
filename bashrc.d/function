@@ -1,8 +1,9 @@
 #!/bin/bash
+# shellcheck disable=SC1090
 
 function addhost(){
     for x in "$@" ; do
-      echo adding $x
+      echo adding "$x"
       sed "s/%HOST%/$x/" ~/.ssh/config_template >>~/.ssh/config
     done
 }
@@ -17,16 +18,16 @@ function c(){
   fi
   echo "$DIR" >&2
   if [[ -z "$*" ]] ; then
-    cd "$DIR"
+    cd "$DIR" || return 1  # make shellcheck happy; this should never happen
   else
     ( cd "$DIR" && "$@" )
   fi
 }
 
-# Mac-only
+# not supported on mac
 # TODO create conditional on mac
 function ppid() {
-  local PID=$$ ; ps -p $(cat /proc/$PID/ppid)
+  local PID=$$ ; ps --pid "$(cat /proc/$PID/ppid)"
 }
 
 function create_alias() {
@@ -53,13 +54,17 @@ function code() {
     *)
         echo >&2 "$numf" folders found for "*$suff", please be more specific:
 	for folder in "${folders[@]}" ; do
-           printf >&2 "\\t$folder\\n"
+           printf >&2 "\\t%s\\n" "$folder"
         done
 	return 2 ;;
   esac
   for folder in "${folders[@]}" ; do
-    [[ -d "$folder" ]] && c "$folder" || \
-         { echo >&2 "No folder found for *$suff" ; return 1 ;}
+    if [[ -d "$folder" ]] ; then
+      c "$folder"
+    else
+      echo >&2 "No folder found for *$suff"
+      return 1
+    fi
     [[ ! -d .git ]] || git status
   done
 }
@@ -73,7 +78,7 @@ function space() {
   [[ "${arg}" != /* ]] || { div=x ; arg="${arg##/}" ; }
   [[ "${arg}" != *[^0-9]* ]] || return 1 ;
   [[ -z "$div" ]] || arg="$((LINES / arg))"
-  [[ -z "$neg" ]] && lines="$arg" || lines="$((lines - ${arg}))"
+  [[ -z "$neg" ]] && lines="$arg" || lines="$((lines - arg))"
   seq "$lines" | tr -dC \\n
 }
 
@@ -88,9 +93,10 @@ function vimrc() {
       0|*[^0-9]*) n=1 ;;
       *)  n="$1" ;;
     esac
-    while [[ "$((n--))" > 0 ]] ; do
+    while [[ "$((n--))" -gt 0 ]] ; do
       OPTS=("${OPTS[@]}" '+/^source')
     done
+    # shellcheck disable=SC2016
     OPTS=("${OPTS[@]}" '+normal $gf')
   fi
   vim ~/.vimrc "${OPTS[@]}"
@@ -114,8 +120,9 @@ function _condition_venv() {
 }
 
 function _exec_venv() {
-  local prg="$(_condition_venv "$1")"
-  local result="$?"
+  local prg result
+  prg="$(_condition_venv "$1")"
+  result="$?"
   if [[ "$result" == 0 ]] ; then
     shift
     "$prg" "$@"
@@ -132,7 +139,7 @@ function pi() {
 }
 
 function loggit() {
-  if [[ -n "$(set +o | fgrep 'set +o pipefail')" ]] ; then
+  if set +o | grep -Fq 'set +o pipefail' ; then
     function loggit__exit() {
       trap - RETURN
       unset -f loggit__exit
@@ -158,7 +165,7 @@ function logname() {
         echo "two numbers provided" >&2
         return 1
       fi
-    elif [[ -z "$prefix" && -n "$arg" ]] ; then
+    elif [[ -z "$prefix" ]] ; then
       prefix="$arg"
     else
       echo "bad input" >&2
@@ -173,12 +180,19 @@ function logname() {
   if [[ -n "$prefix" ]] ; then
     pattern="${pattern}-${prefix}"
   fi
-  ls -t "${pattern}"-* | sed -n "${num}p"
+  local x
+  for x in "${pattern}"-* ; do
+    if [[ "$((--n))" -le 0 ]] ; then
+      echo "$x"
+      return
+    fi
+  done
 }
 
 function lesslog() {
-  local lname="$(logname "$@")"
-  local rv="$?"
+  local lname rv
+  lname="$(logname "$@")"
+  rv="$?"
   if [[ "$rv" != 0 ]] ; then
     return "$rv"
   fi
@@ -186,7 +200,8 @@ function lesslog() {
 }
 
 function activate() {
-  local prg="$(_condition_venv activate)" && source "$prg"
+  local prg
+  prg="$(_condition_venv activate)" && source "$prg"
 }
 
 function bring() {
@@ -211,5 +226,22 @@ function functions() {
 
 # look for vim swap files in current file tree
 function hasvim() {
-  find . -maxdepth ${1:-5} -name '[._]*.sw*' -o -name .sw*
+  find . -maxdepth "${1:-5}" -name '[._]*.sw*' -o -name '.sw*'
 }
+
+# create pgrep-like function
+if ! check-for-package --optional pgrep ; then
+  function pgrep() {
+    if [[ "$#" != 1 || -z "$1" ]] ; then
+      echo >&2 usage: pgrep process-pattern
+      echo >&2 'for more, you should install real pgrep'
+      return 1
+    elif [[ "$1" == -* ]] ; then
+      echo >&2 Options not supported, you should install real pgrep
+      return 1
+    fi
+    # shellcheck disable=SC2009
+    ps -ef | grep -q "$1"
+  }
+  echo >&2 'Consider installing pgrep; we create a shabby ps+grep replacement instead'
+fi

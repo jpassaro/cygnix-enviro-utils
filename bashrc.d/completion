@@ -1,6 +1,6 @@
 #!/bin/bash
 
-[[ -z "$(which brew)" ]] || source_pragma_once $(brew --prefix)/etc/bash_completion
+[[ -z "$(command -v brew)" ]] || source_pragma_once "$(brew --prefix)"/etc/bash_completion
 
 source_pragma_once /usr/local/etc/bash_completion.d/git-completion.bash
 
@@ -11,9 +11,9 @@ source_pragma_once /usr/local/etc/bash_completion.d/git-completion.bash
 # from vim wikia
 _vim_search() {
     ex -N -u NONE -i NONE \
-          -c 'let &tags="'$2'"' \
+          -c 'let &tags="'"$2"'"' \
           -c 'echo "\\n"' \
-          -c 'for tag in taglist("^".escape("'$1'","."))|echo tag["name"]|endfor' \
+          -c 'for tag in taglist("^".escape("'"$1"'","."))|echo tag["name"]|endfor' \
           -cq \
         | tr -s '\r' '\n' | grep '^[a-zA-Z_]'
 }
@@ -33,7 +33,7 @@ _vim() {
             done
             [[ -f "$tagsdir/tags" ]] || return
 
-            COMPREPLY=( $(_vim_search "$cur" "$tagsdir/tags" ) )
+            mapfile -t COMPREPLY < <(_vim_search "$cur" "$tagsdir/tags" )
             return
             ;;
         *)
@@ -43,7 +43,7 @@ _vim() {
 }
 
 
-excludelist='*.@(o|O|so|SO|so.!(conf)|SO.!(CONF)|a|A|rpm|RPM|deb|DEB|gif|GIF|jp?(e)g|JP?(E)G|mp3|MP3|mp?(e)g|MP?(E)G|avi|AVI|asf|ASF|ogg|OGG|class|CLASS)'
+#excludelist='*.@(o|O|so|SO|so.!(conf)|SO.!(CONF)|a|A|rpm|RPM|deb|DEB|gif|GIF|jp?(e)g|JP?(E)G|mp3|MP3|mp?(e)g|MP?(E)G|avi|AVI|asf|ASF|ogg|OGG|class|CLASS)'
 
 # TODO run conditioned on an envvar that can be set before sourcing in .bashrc
 

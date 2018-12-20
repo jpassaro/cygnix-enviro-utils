@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2034
 export EDITOR=vim
 
 # PS1
@@ -19,10 +20,14 @@ done
 
 # set terminal title: user, host, cwd, terminal size
 if [[ "$TERM" == xterm* ]] ; then
+  # use single quote to tell PS1 to recheck these variables each time
+  # shellcheck disable=SC2016
   TITLEBAR='\[\033]0;\u@\h:\w - ${COLUMNS}x${LINES}\007\]'
   PS1="$TITLEBAR$PS1"
   unset TITLEBAR
 fi
+
+# shellcheck disable=SC2034
 
 # add git to ps1
 for prompthome in ~/bashrc.d /usr/local/etc{/bash_completion.d,} /etc ; do
@@ -57,7 +62,8 @@ PS1="$PS1"'\[\e[1;34m\]$\[\e[m\] '
 # LESSOPEN
 # allow less to view gzip and several other non-ascii filetypes
 if check-for-package lesspipe.sh 'lesspipe.sh, a smarter less reader' ; then
-  export LESSOPEN="|$(which lesspipe.sh) %s"
+  LESSOPEN="|$(command -v lesspipe.sh) %s"
+  export LESSOPEN
 fi
 
 source_pragma_once ~/bashrc.d/*-env

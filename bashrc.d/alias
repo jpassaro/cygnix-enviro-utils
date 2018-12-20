@@ -42,6 +42,6 @@ if check-for-package gsleep coreutils ; then
   alias sleep=gsleep
 fi
 
-if check-for-package zbarimg 'zbar for QR-code scanning' ; then
+if check-for-package --optional zbarimg 'zbar for QR-code scanning' ; then
   alias qrdecode='zbarimg -Sdisable -Sqr.enable -q --raw'
 fi

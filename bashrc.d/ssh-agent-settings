@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC1090
 # ssh-agent
 # shamelessly adapted (plagiarized) from some stack exchange thread
 
@@ -62,8 +63,8 @@ function check-env-file() {
   source "${SSH_ENV}"
   echo checking for ssh-agent pid "$SSH_AGENT_PID"
   # ps ${SSH_AGENT_PID} doesn't work under cywgin
-  if ps ${CYGWIN:+-p} ${SSH_AGENT_PID} | grep -m1 ssh-agent$ > /dev/null
-  then
+  # shellcheck disable=SC2009  # because we are okay grepping ps output here
+  if ps ${CYGWIN:+-p} "${SSH_AGENT_PID}" | grep -qm1 ssh-agent$ ; then
     echo "previous ssh-agent ${SSH_AGENT_PID} is still running"
   else
     echo "no ssh-agent found"

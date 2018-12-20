@@ -29,6 +29,6 @@ fi
 prepend-path ~/bin
 
 # TODO create a mechanism to source the correct choice of mac-*, cyg-*, linux-*
-for x in $(shopt -s nullglob ; echo $HOME/bashrc.d/*-path ) ; do
+for x in $(shopt -s nullglob ; echo "$HOME/bashrc.d"/*-path ) ; do
   source_pragma_once "$x"
 done

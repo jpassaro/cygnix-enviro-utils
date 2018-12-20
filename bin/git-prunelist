@@ -9,4 +9,4 @@
 if [[ "$1" != "-n" ]] ; then
   git fetch --prune
 fi
-git branch -r | awk '{print $1}' | egrep -vf /dev/fd/0 <(git branch -vv | grep origin)
+git branch -r | awk '{print $1}' | grep -vEf /dev/fd/0 <(git branch -vv | grep origin)
