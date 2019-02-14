@@ -229,6 +229,75 @@ function hasvim() {
   find . -maxdepth "${1:-5}" -name '[._]*.sw*' -o -name '.sw*'
 }
 
+function _backup_progress_log() {
+  local target="${1-.progress/log.txt}"
+  local match
+  match="$(ggrep -Pom1 '^Date: \d{4}-\d{2}-\d{2}' "$target")"
+  if [[ "$?" != 0 ]] ; then
+    echo >&2 'no date found in progress log, could not back up'
+    return 1
+  fi
+  cp -vf "$target" "${target}.${match#Date: }"
+}
+
+function progress() {
+  if [[ ! -f .progress/log.txt ]] ; then
+    echo >&2 no progress log found, create one by calling progress-init
+    return 1
+  fi
+  if ! git config jp.progress.promptnext >/dev/null ; then
+    echo >&2 "Please set git config jp.progress.promptnext to use this"
+    return 1
+  fi
+  local -a sw
+  sw=(.progress/.log.txt.sw*)
+  if [[ "${#sw[@]}" != 0 && -f "${sw[0]}" ]] ; then
+    echo >&2 you have progress log open already: "${sw[@]}"
+    return 1
+  fi
+  _backup_progress_log
+  vi .progress/log.txt || return "$?"
+  space
+  _backup_progress_log
+  echo 'Good work today!'
+  echo
+  sed -n '/{START LOG}/,/{END LOG}/ p' .progress/log.txt
+  echo
+  echo
+  git config jp.progress.promptnext
+}
+
+function progress-init() {
+  if [[ -f .progress/log.txt ]] ; then
+    echo >&2 .progress/log.txt already exists. Skipping.
+    return 1
+  fi
+  mkdir -p .progress || return "$?"
+  echo creating .progress/log.txt
+  cat <<-EOF >.progress/log.txt
+	# This is your Progress Log.
+	# Place whatever frontmatter you like here.
+	# Use :ProgressNext to start a new session.
+
+	{START LOG}
+	Date: $(date +%F)
+
+	What was my goal for today? @goalsfortoday
+
+
+	What did I achieve? @actualaccomplishment
+
+
+	What am I tackling next? @nextdaygoals
+
+
+	{END LOG}
+	Floating notes:
+
+	EOF
+  echo Finished. Remember to add .progress/log.txt to .git/info/exclude
+}
+
 # create pgrep-like function
 if ! check-for-package --optional pgrep ; then
   function pgrep() {

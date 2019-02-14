@@ -535,3 +535,49 @@ set redrawtime=4000 " usually 2000
 
 " how long gitgutter has to wait before updating lines
 set updatetime=250
+
+autocmd BufRead,BufNewFile .progress/log.txt call SetUpProgressLog()
+
+function SetUpProgressLog()
+    if exists('b:jp_progress_log_setup')
+        return
+    endif
+    let b:jp_progress_log_setup = 1
+    autocmd BufWritePost <buffer> call SaveProgressCopy()
+    "map <buffer> <Leader>r :<C-U>call ResetProgressLog()<CR>
+    command -buffer ProgressNext call ResetProgressLog()
+endfunction
+
+function ProgressLogDate()
+    if ! search('^\vDate: \zs\d{4}-\d{2}-\d{2}%(.*/)@!', 'cw')
+        throw '(jpvimrc) Unable to find a "Date:" line (does it have slash?)'
+    endif
+endfunction
+
+function SaveProgressCopy()
+    let oldlnum = line('.')
+    let oldcnum = col('.')
+    let oldreg = @@
+    let oldregtype = getregtype('"')
+    try
+        call ProgressLogDate()
+        let backup = expand('%') . '.' . expand('<cfile>')
+        exec "write!" backup
+    finally
+        call cursor(oldlnum, oldcnum)
+        call setreg('"', oldreg, oldregtype)
+    endtry
+endfunction
+
+function ResetProgressLog() abort
+    silent write
+    call ProgressLogDate()
+    exec "normal!" "C" . strftime("%Y-%m-%d")
+    exec "/@goalsfortoday$/+1,/@nextdaygoals$/ delete _"
+    call search('{END LOG}')
+    exec "normal" "O\r"
+                \ . "What did I achieve? @actualaccomplishment\r\r\r"
+                \ . "What am I tackling next? @nextdaygoals\r\r\r"
+    call search('@actualaccomplishment$', 'b')
+    normal! j
+endfunction
