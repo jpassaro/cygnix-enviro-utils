@@ -168,6 +168,12 @@ if isdirectory(s:vundlepath)
     " better statusline plugin
     Plugin 'itchyny/lightline.vim'
 
+    " typescript
+    Plugin 'leafgarland/typescript-vim'
+
+    " date increments (primarily for .progress/log)
+    Plugin 'tpope/vim-speeddating'
+
     " All Plugins must be added before the following line
     call vundle#end()            " required
 else
@@ -535,6 +541,10 @@ set redrawtime=4000 " usually 2000
 
 " how long gitgutter has to wait before updating lines
 set updatetime=250
+
+autocmd BufEnter */mothersback/ts/*.ts let b:syntastic_checkers = ["tsc", "tslint"]
+
+autocmd BufRead,BufNewFile *.njx set filetype=jinja
 
 autocmd BufRead,BufNewFile .progress/log.txt call SetUpProgressLog()
 
