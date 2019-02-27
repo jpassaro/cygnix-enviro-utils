@@ -34,3 +34,12 @@ def from_entries_multi:
         }
     )
 ;
+
+def recurse_type:
+  if type == "object"
+  then map_values(recurse_type)
+  elif type == "array"
+  then map(recurse_type) | unique
+  else type
+  end
+;
