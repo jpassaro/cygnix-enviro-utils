@@ -314,3 +314,10 @@ if ! check-for-package --optional pgrep ; then
   }
   echo >&2 'Consider installing pgrep; we create a shabby ps+grep replacement instead'
 fi
+
+# emojis / unicode
+
+function shrug() {
+  # ¯\_(ツ)_/¯
+  echo $'\uAF\\_(\u30C4)_/\uAF'
+}
