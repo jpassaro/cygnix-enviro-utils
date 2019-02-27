@@ -7,7 +7,8 @@
 	di = diff
 	mb = merge-base
 	reb = rebase
-	rebi = rebase -i
+	rebi = rebase --interactive
+	sho = show --no-patch
 [core]
 	excludesfile = ~/.gitignore
 	abbrev = 12
@@ -32,4 +33,4 @@
 
 # set up via git config include.path
 
-# vi: ft=gitconfig
+# vi: ft=gitconfig noexpandtab
