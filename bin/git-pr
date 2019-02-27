@@ -22,7 +22,7 @@ GH_PATTERN = re.compile(r'''
 @click.option('--against', default='master')
 @click.option('-u', '--upstream', default='origin')
 @click.option('-w', '--open-page', is_flag=True)
-@click.option('--create', type=click.Choice(('no', 'maybe', 'force')),
+@click.option('--create', type=click.Choice(('no', '', None, 'maybe', 'force')),
               default='no')
 @click.option('-m', '--message', multiple=True)
 @click.option('-n', '--offline', is_flag=True)
@@ -30,6 +30,8 @@ def cli(create, **kwargs):
     check = CheckPR(**kwargs)
     links = check.available_links()
     has_open_pr = links and check.print_available_links(links)
+    if create is None or create == '':
+        create = 'maybe'
     if create != 'no' or not has_open_pr:
         if create == 'no':
             check.prompt_new()
