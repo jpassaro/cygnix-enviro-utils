@@ -1,0 +1,12 @@
+#!/usr/bin/env python3
+
+import click
+from qrtools.qrtools import QR
+
+@click.command
+@click.argument('f', type=click.Path(exists=True, readable=True))
+def cli(f):
+    qr = QR()
+    qr.decode(f)
+    click.echo(qr.data)
+
