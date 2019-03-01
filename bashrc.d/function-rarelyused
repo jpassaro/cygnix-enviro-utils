@@ -1,0 +1,89 @@
+#!/bin/bash
+# shellcheck disable=SC1090
+
+source_pragma_once ~/bashrc.d/function
+
+function addhost(){
+    for x in "$@" ; do
+      echo adding "$x"
+      sed "s/%HOST%/$x/" ~/.ssh/config_template >>~/.ssh/config
+    done
+}
+
+# not supported on mac
+# TODO create conditional on mac
+function ppid() {
+  local PID=$$ ; ps --pid "$(cat /proc/$PID/ppid)"
+}
+
+function create_alias() {
+  for x ; do
+    echo alias "'$x'" >>~/bashrc.d/alias
+    source ~/bashrc.d/alias
+  done
+}
+
+function loggit() {
+  if set +o | grep -Fq 'set +o pipefail' ; then
+    function loggit__exit() {
+      trap - RETURN
+      unset -f loggit__exit
+      set +o pipefail
+    }
+    trap loggit__exit RETURN
+    set -o pipefail
+  fi
+  name="$1"
+  shift
+  "$@" 2>&1 | tee /tmp/log-"${name}-$(gdate --iso=seconds | sed 's/-[^-]*$//;y/T:/_-/').log"
+}
+
+function logname() {
+  local prefix=
+  local num=
+  while [[ -n "$1" ]] ; do
+    local arg="$1"
+    if [[ "$arg" =~ ^[1-9][0-9]*$ ]] ; then
+      if [[ -z "$num" ]] ; then
+        num="$arg"
+      else
+        echo "two numbers provided" >&2
+        return 1
+      fi
+    elif [[ -z "$prefix" ]] ; then
+      prefix="$arg"
+    else
+      echo "bad input" >&2
+      return 1
+    fi
+    shift
+  done
+  if [[ -z "$num" ]] ; then
+    num=1
+  fi
+  local pattern=/tmp/log
+  if [[ -n "$prefix" ]] ; then
+    pattern="${pattern}-${prefix}"
+  fi
+  local x
+  for x in "${pattern}"-* ; do
+    if [[ "$((--num))" -le 0 ]] ; then
+      echo "$x"
+      return
+    fi
+  done
+}
+
+function lesslog() {
+  local lname rv
+  lname="$(logname "$@")"
+  rv="$?"
+  if [[ "$rv" != 0 ]] ; then
+    return "$rv"
+  fi
+  less "$lname"
+}
+
+function bring() {
+  mv -v "$@" .
+}

@@ -1,6 +1,8 @@
 #!/bin/bash
 
-[[ -z "$(command -v brew)" ]] || source_pragma_once "$(brew --prefix)"/etc/bash_completion
+if check-for-package --optional brew ; then
+  source_pragma_once "$(brew --prefix)"/etc/bash_completion
+fi
 
 source_pragma_once /usr/local/etc/bash_completion.d/git-completion.bash
 

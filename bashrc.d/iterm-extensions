@@ -1,0 +1,42 @@
+#!/bin/bash
+# shellcheck disable=SC1090
+
+  function jp_iterm_send_prompt() {
+    iterm2_begin_osc
+    printf '%s;%s' "$1" "$2"
+    iterm2_end_osc
+  }
+
+  function iterm_growl() {
+    jp_iterm_send_prompt 9 "$1"
+  }
+
+  function iterm_bounce() {
+    jp_iterm_send_prompt 1337 "RequestAttention=${1:-yes}"
+  }
+
+  function iterm_fireworks() {
+    iterm_bounce fireworks
+  }
+
+  function remind() {
+    sleeptime="${1:?usage: remind SLEEPTIME[m|s] message text}"
+    (
+      sleep "$sleeptime"
+      shift
+      iterm_growl "$*"
+      iterm_bounce
+    ) &
+  }
+
+  function iterm_badge_format() {
+    jp_iterm_send_prompt 1337 "SetBadgeFormat=$(echo -n "$1" | base64)"
+  }
+
+  iterm_badge_format '\(user.badge)'
+  iterm2_set_user_var tty "$(basename "$(tty)")"
+  iterm2_set_user_var badge ''
+
+  function badge() {
+    iterm2_set_user_var badge "$1"
+  }

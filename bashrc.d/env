@@ -3,61 +3,7 @@
 export EDITOR=vim
 
 # PS1
-
-# iterm integration seems to mess this up if called afterward
-source_pragma_once ~/.iterm2_shell_integration.bash
-
-# TODO test this PS1 stuff on linux
-
-# green datetime; bold red cwd
-PS1='[\l] \[\e[0;32m\]\D{%F %T}\[\e[m\] \[\e[1;31m\]\W\[\e[m\] '
-
-# add angle-brackets for each nested bash
-for ((i=1 ; i < SHLVL ; i++)) ; do
-  echo shlvl=$i
-  PS1=">$PS1"
-done
-
-# set terminal title: user, host, cwd, terminal size
-if [[ "$TERM" == xterm* ]] ; then
-  # use single quote to tell PS1 to recheck these variables each time
-  # shellcheck disable=SC2016
-  TITLEBAR='\[\033]0;\u@\h:\w - ${COLUMNS}x${LINES}\007\]'
-  PS1="$TITLEBAR$PS1"
-  unset TITLEBAR
-fi
-
-# shellcheck disable=SC2034
-
-# add git to ps1
-for prompthome in ~/bashrc.d /usr/local/etc{/bash_completion.d,} /etc ; do
-  if [[ -e "${prompthome}/git-prompt.sh" ]] ; then
-    source_pragma_once "${prompthome}/git-prompt.sh"
-    # in bold grey, parenthesized git prompt
-    PS1="$PS1"'\[\e[1;30m\]$(__git_ps1 "(%s)")\[\e[m\]'
-    # git prompt consists of:
-    # branch name (automatic);
-    # '*' for dirty state;
-    # '+' for staged/uncommitted changes;
-    GIT_PS1_SHOWDIRTYSTATE=x
-    # '%' for untracked files;
-    GIT_PS1_SHOWUNTRACKEDFILES=x
-    # '=<>' if upstream is set for same as, behind, or ahead of upstream.
-    GIT_PS1_SHOWUPSTREAM=auto
-    # git prompt suppressed if you happen to navigate into an ignored
-    # subdirectory.
-    GIT_PS1_HIDE_IF_PWD_IGNORED=x
-    # default char to separate branch name from dirty state details is space.
-    #GIT_PS1_STATESEPARATOR=
-    break
-  fi
-done
-if [[ -z "$GIT_PS1_SHOWDIRTYSTATE" ]] ; then
-  echo 'No git-prompt.sh found anywhere!'
-fi
-
-# finish up PS1 with a blue dollar sign
-PS1="$PS1"'\[\e[1;34m\]$\[\e[m\] '
+source_pragma_once ~/bashrc.d/prompts
 
 # LESSOPEN
 # allow less to view gzip and several other non-ascii filetypes

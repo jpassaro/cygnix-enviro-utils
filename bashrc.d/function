@@ -1,12 +1,7 @@
 #!/bin/bash
 # shellcheck disable=SC1090
 
-function addhost(){
-    for x in "$@" ; do
-      echo adding "$x"
-      sed "s/%HOST%/$x/" ~/.ssh/config_template >>~/.ssh/config
-    done
-}
+source_pragma_once ~/bashrc.d/function-rarelyused
 
 function c(){
   local DIR="$1"
@@ -22,19 +17,6 @@ function c(){
   else
     ( cd "$DIR" && "$@" )
   fi
-}
-
-# not supported on mac
-# TODO create conditional on mac
-function ppid() {
-  local PID=$$ ; ps --pid "$(cat /proc/$PID/ppid)"
-}
-
-function create_alias() {
-  for x ; do
-    echo alias "'$x'" >>~/bashrc.d/alias
-    source ~/bashrc.d/alias
-  done
 }
 
 function code() {
@@ -53,10 +35,10 @@ function code() {
     1) ;;
     *)
         echo >&2 "$numf" folders found for "*$suff", please be more specific:
-	for folder in "${folders[@]}" ; do
-           printf >&2 "\\t%s\\n" "$folder"
+        for folder in "${folders[@]}" ; do
+           printf >&2 '\t%s\n' "$folder"
         done
-	return 2 ;;
+        return 2 ;;
   esac
   for folder in "${folders[@]}" ; do
     if [[ -d "$folder" ]] ; then
@@ -107,6 +89,21 @@ function :help() {
   vim "+help $1" "+silent only"
 }
 
+# venv utilities
+function activate() {
+  local prg
+  prg="$(_condition_venv activate)" && source "$prg"
+}
+
+function py() {
+  _exec_venv python "$@"
+}
+
+function pi() {
+  _exec_venv pip "$@"
+}
+
+# used by venv utilities above
 function _condition_venv() {
   for venv in venv .venv ; do
     local prg="${venv}/bin/${1}"
@@ -130,100 +127,17 @@ function _exec_venv() {
   return "$result"
 }
 
-function py() {
-  _exec_venv python "$@"
-}
-
-function pi() {
-  _exec_venv pip "$@"
-}
-
-function loggit() {
-  if set +o | grep -Fq 'set +o pipefail' ; then
-    function loggit__exit() {
-      trap - RETURN
-      unset -f loggit__exit
-      set +o pipefail
-    }
-    trap loggit__exit RETURN
-    set -o pipefail
-  fi
-  name="$1"
-  shift
-  "$@" 2>&1 | tee /tmp/log-"${name}-$(gdate --iso=seconds | sed 's/-[^-]*$//;y/T:/_-/').log"
-}
-
-function logname() {
-  local prefix=
-  local num=
-  while [[ -n "$1" ]] ; do
-    local arg="$1"
-    if [[ "$arg" =~ ^[1-9][0-9]*$ ]] ; then
-      if [[ -z "$num" ]] ; then
-        num="$arg"
-      else
-        echo "two numbers provided" >&2
-        return 1
-      fi
-    elif [[ -z "$prefix" ]] ; then
-      prefix="$arg"
-    else
-      echo "bad input" >&2
-      return 1
-    fi
-    shift
-  done
-  if [[ -z "$num" ]] ; then
-    num=1
-  fi
-  local pattern=/tmp/log
-  if [[ -n "$prefix" ]] ; then
-    pattern="${pattern}-${prefix}"
-  fi
-  local x
-  for x in "${pattern}"-* ; do
-    if [[ "$((--n))" -le 0 ]] ; then
-      echo "$x"
-      return
-    fi
-  done
-}
-
-function lesslog() {
-  local lname rv
-  lname="$(logname "$@")"
-  rv="$?"
-  if [[ "$rv" != 0 ]] ; then
-    return "$rv"
-  fi
-  less "$lname"
-}
-
-function activate() {
-  local prg
-  prg="$(_condition_venv activate)" && source "$prg"
-}
-
-function bring() {
-  mv -v "$@" .
-}
-
-# likely mac-only and very possibly iterm2-only. TODO verify that, check for
-# it before defining the function
-function remind() {
-  sleeptime="${1:?usage: remind SLEEPTIME message text}"
-  (
-    sleep "$sleeptime"
-    shift
-    echo -ne '\e]9;'"$*"'\007'
-  ) &
-}
+# iterm2 extension functions
+if [[ -n "$ITERM_SHELL_INTEGRATION_INSTALLED" ]] ; then
+  source_pragma_once ~/bashrc.d/iterm-extensions
+fi
 
 # list functions
 function functions() {
   declare -f | sed '/^{ *$/,/^} *$/ d'
 }
 
+# progress log!
 source_pragma_once ~/bashrc.d/progress-log
 
 # look for vim swap files in current file tree
@@ -249,7 +163,6 @@ if ! check-for-package --optional pgrep ; then
 fi
 
 # emojis / unicode
-
 function shrug() {
   # ¯\_(ツ)_/¯
   echo $'\uAF\\_(\u30C4)_/\uAF'
