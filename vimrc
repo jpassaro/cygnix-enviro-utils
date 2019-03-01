@@ -545,7 +545,7 @@ set updatetime=250
 
 autocmd BufEnter */mothersback/ts/*.ts let b:syntastic_checkers = ["tsc", "tslint"]
 
-autocmd BufRead,BufNewFile *.njx set filetype=jinja
+autocmd BufRead,BufNewFile *.njk set filetype=jinja
 
 autocmd BufRead,BufNewFile .progress/log.txt call SetUpProgressLog()
 
@@ -614,3 +614,5 @@ function ResetProgressLog() abort
     call search(g:jpvimrc_progress_todayactual . '$', 'b')
     call cursor(1 + line('.'), 0) " equiv: normal j
 endfunction
+
+autocmd FileType jinja call RagtagInit()
