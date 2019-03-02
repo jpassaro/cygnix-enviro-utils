@@ -26,8 +26,3 @@ if [[ "$PATH" != */usr/local/bin*:/usr/bin* ]] ; then
   # it must come first, even if it was already there
   export PATH="/usr/local/bin:${PATH}"
 fi
-
-# TODO create a mechanism to source the correct choice of mac-*, cyg-*, linux-*
-for x in $(shopt -s nullglob ; echo "$HOME/bashrc.d"/*-path ) ; do
-  source_pragma_once "$x"
-done

@@ -1,8 +1,6 @@
 #!/bin/bash
 # shellcheck disable=SC1090
 
-source_pragma_once "$MY_BASHRC_D"/function-rarelyused
-
 function c(){
   local DIR="$1"
   shift
@@ -131,9 +129,6 @@ function _exec_venv() {
 function functions() {
   declare -f | sed '/^{ *$/,/^} *$/ d'
 }
-
-# progress log!
-source_pragma_once "$MY_BASHRC_D"/progress-log
 
 # look for vim swap files in current file tree
 function hasvim() {
