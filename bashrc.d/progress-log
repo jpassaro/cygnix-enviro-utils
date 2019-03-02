@@ -1,0 +1,80 @@
+#!/bin/bash
+# shellcheck disable=SC1090
+
+
+if check-for-package ggrep 'gnu grep as "ggrep"' ; then
+  function _backup_progress_log() {
+    local target="$1"
+    local match
+    match="$(ggrep -Pom1 '^Date: \d{4}-\d{2}-\d{2}[._+=:-]?[\w-]*' "$target")" || {
+      echo >&2 'no date found in progress log, could not back up'
+      return 1
+    }
+    cp -vf "$target" "${target}.shbak.${match#Date: }"
+  }
+
+  function _do_progress() {
+    local log="${1:-$(git config --get --default .progress/log.txt jp.progress.log)}"
+    if [[ ! -f "$log" ]] ; then
+      echo >&2 no progress log found, create one by calling progress-init
+      return 1
+    fi
+    if ! git config jp.progress.promptnext >/dev/null ; then
+      echo >&2 "Please set git config jp.progress.promptnext to use this"
+      return 1
+    fi
+    local -a sw=("$(dirname "$log")/.$(basename "$log").sw"*)
+    if [[ "${#sw[@]}" != 0 && -f "${sw[0]}" ]] ; then
+      echo >&2 you have progress log open already: "${sw[@]}"
+      return 1
+    fi
+    _backup_progress_log "$log" || return "$?"
+    vi "$log" || return "$?"
+    space -1
+    _backup_progress_log "$log" || return "$?"
+    echo 'Good work today!'
+    echo
+    sed -n '/{START LOG}/,/{END LOG}/ p' "$log"
+    echo
+    echo
+    git config jp.progress.promptnext || true
+  }
+
+  if ! command -v progress >/dev/null ; then
+    function progress() {
+      _do_progress "$@"
+    }
+  fi
+fi
+
+function progress-init() {
+  local log="${1:-.progress/log.txt}"
+  if [[ -f "$log" ]] ; then
+    echo >&2 "$log" already exists. Skipping.
+    return 1
+  fi
+  mkdir -p "$(dirname "$log")" || return "$?"
+  echo creating "$log"
+  cat >"$log" <<-EOF
+	# This is your Progress Log.
+	# Place whatever frontmatter you like here.
+	# Use :ProgressNext to start a new session.
+
+	{START LOG}
+	Date: $(date +%F)
+
+	>>>What was my goal for today? @goalsfortoday
+
+
+	>>>What did I achieve? @actualaccomplishment
+
+
+	>>>What am I tackling next? @nextdaygoals
+
+
+	{END LOG}
+	Floating notes:
+
+	EOF
+  echo Finished. You may need to add "$log" to .git/info/exclude ...
+}

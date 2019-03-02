@@ -9,3 +9,5 @@
 _scratch/*
 
 **/.DS_Store
+
+.progress/
