@@ -59,4 +59,4 @@ Good things to brew install:
 
 # Copyright
 
-All code is copyright John Passaro 2017 and released under the GPL. See LICENSE.
+All code is copyright John Passaro 2017-2019 and released under the GPL. See LICENSE.
