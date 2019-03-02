@@ -18,7 +18,6 @@ The very basics:
 * `ssh-keygen` and add resulting public key to github and anywhere else
 * `brew install git --with-openssl --with-curl`
 * `git clone git@github.com:jpassaro/cygnix-enviro-utils.git ~/code/login-utils`
-* `ln -sv ~/code/login-utils/bashrc.d ~/bashrc.d`
 * `ln -sv ~/code/login-utils/global-gitignore ~/.gitignore`
 * `git config --global include.path ~/code/login-utils/git-config`
 * `mkdir -p ~/bin ~/.ssh`

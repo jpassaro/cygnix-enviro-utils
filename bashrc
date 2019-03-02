@@ -27,6 +27,9 @@ unset PRAGMA_IMPORTED  # previously was in reload-profile only, trying it here
 declare -A PRAGMA_IMPORTED
 PRAGMA_INDEX=0
 
+MY_BASHRC_FILE="${BASH_SOURCE[0]}"
+MY_BASHRC_D="${MY_BASHRC_FILE}.d"
+
 function source_pragma_once() {
   local sourceable
   for sourceable ; do
@@ -38,7 +41,7 @@ function source_pragma_once() {
         echo "sourcing $sourceable"
         source "$sourceable"
       elif [[ "$sourceable" == */bashrc.d/* ]] ; then
-        echo "could not find ${sourceable##*/bashrc.d}, is ~/bashrc.d symlinked correctly?"
+        echo "could not find ${sourceable##*/bashrc.d/} in ${MY_BASHRC_D}"
       else
         echo "$sourceable could not be found, consider installing it"
       fi
@@ -70,14 +73,12 @@ function check-for-package() {
   return 1
 }
 
-if [ -d "$HOME/bashrc.d" ] ; then
-  echo "$HOME/bashrc.d" found
-  source_pragma_once "$HOME/bashrc.d"/*
+if [ -d "$MY_BASHRC_D" ] ; then
+  echo "$MY_BASHRC_D" found
+  source_pragma_once "$MY_BASHRC_D"/*
 else
   echo "no bashrc.d found"
 fi
-
-MY_BASHRC_FILE="${BASH_SOURCE[0]}"
 
 function reload-profile() {
   # unset PRAGMA_IMPORTED # currently trying at top of file

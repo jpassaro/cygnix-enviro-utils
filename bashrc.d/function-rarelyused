@@ -1,7 +1,7 @@
 #!/bin/bash
 # shellcheck disable=SC1090
 
-source_pragma_once ~/bashrc.d/function
+source_pragma_once "$MY_BASHRC_D"/function
 
 function addhost(){
     for x in "$@" ; do
@@ -18,8 +18,8 @@ function ppid() {
 
 function create_alias() {
   for x ; do
-    echo alias "'$x'" >>~/bashrc.d/alias
-    source ~/bashrc.d/alias
+    echo alias "'$x'" >>"$MY_BASHRC_D"/alias
+    source "$MY_BASHRC_D"/alias
   done
 }
 

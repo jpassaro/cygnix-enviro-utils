@@ -3,7 +3,7 @@
 # ssh-agent
 # shamelessly adapted (plagiarized) from some stack exchange thread
 
-source_pragma_once ~/bashrc.d/env
+source_pragma_once "$MY_BASHRC_D"/env
 
 SSH_ENV="$HOME/.ssh/agent-setup"
 SSH_ENV_LOCK="/tmp/ssh-agent-setup-lock"
@@ -41,16 +41,16 @@ function maybe-start-agent {
     sleep "${SSH_ENV_WAIT:-1}"
     if ! check-env-file ; then
       cat <<-END_OF_MESSAGE >&2
-        ------------------OH NO!---------------------------
-        This has proven complicated. Please kill any existing ssh-agents
-        and execute the following:
+	------------------OH NO!---------------------------
+	This has proven complicated. Please kill any existing ssh-agents
+	and execute the following:
 
-        $ rmdir $SSH_ENV_LOCK ; ${FUNCNAME[0]}
+	$ rmdir $SSH_ENV_LOCK ; ${FUNCNAME[0]}
 
-        Then you should execute check-env-file in all sessions.
+	Then you should execute check-env-file in all sessions.
 
-        See ~/bashrc.d/ssh-agent-settings for more about what has happened.
-END_OF_MESSAGE
+	See ${BASH_SOURCE[0]} for more about what has happened.
+	END_OF_MESSAGE
       return 1
     fi
   fi
