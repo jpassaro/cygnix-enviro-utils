@@ -576,15 +576,40 @@ function SaveProgressCopy()
     endtry
 endfunction
 
+if ! exists('g:jpvimrc_progress_todaygoal')
+    let g:jpvimrc_progress_todaygoal = '@goalsfortoday'
+endif
+if ! exists('g:jpvimrc_progress_todayactual')
+    let g:jpvimrc_progress_todayactual = '@actualaccomplishment'
+endif
+if ! exists('g:jpvimrc_progress_tmrwgoal')
+    let g:jpvimrc_progress_tmrwgoal = '@nextdaygoals'
+endif
+
+function SearchForwardOrBust(patt)
+    if ! search('.\+' . a:patt . '$')
+        throw '(jpvimrc) did not find "' . a:patt . '" ahead of current cursor'
+    endif
+    return line('.')
+endfunction
+
 function ResetProgressLog() abort
+    let todaygoal = g:jpvimrc_progress_todaygoal
+    let todayactual = g:jpvimrc_progress_todayactual
+    let tmrwgoal = g:jpvimrc_progress_tmrwgoal
     silent write
     call ProgressLogDate()
     exec "normal!" "C" . strftime("%Y-%m-%d")
-    exec "/@goalsfortoday$/+1,/@nextdaygoals$/ delete _"
-    call search('{END LOG}')
-    exec "normal" "O\r"
-                \ . "What did I achieve? @actualaccomplishment\r\r\r"
-                \ . "What am I tackling next? @nextdaygoals\r\r\r"
-    call search('@actualaccomplishment$', 'b')
-    normal! j
+    let  toinsert = ['']
+    let  deletestart = 1 + SearchForwardOrBust(todaygoal)
+    call extend(toinsert, [getline(SearchForwardOrBust(todayactual)), '', ''])
+    let  deleteend = SearchForwardOrBust(tmrwgoal)
+    call extend(toinsert, [getline('.'), '', ''])
+
+    call deletebufline('%', deletestart, deleteend)
+
+    call search('{END LOG}', 'cw')
+    call append(line('.') - 1, toinsert)
+    call search(g:jpvimrc_progress_todayactual . '$', 'b')
+    call cursor(1 + line('.'), 0) " equiv: normal j
 endfunction
