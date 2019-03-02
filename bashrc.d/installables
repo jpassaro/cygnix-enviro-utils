@@ -1,0 +1,124 @@
+#!/bin/bash
+
+source_pragma_once "$MY_BASHRC_D"/path  # we need prepend-path
+
+mkdir -p ~/bin
+prepend-path ~/bin
+
+function check-installables() {
+  local bin_folder thisfunc="${FUNCNAME[0]}"
+  if ! bin_folder="$(cd "$MY_BASHRC_D"/../bin && pwd -P)" ; then
+    echo >&2 could not locate "$MY_BASHRC_D"/../bin
+    return 1
+  fi
+
+  if [[ "$1" == quiet ]] ; then
+
+      function _when_missing() {
+        true
+      }
+      function _when_eligible() {
+        true
+      }
+      function _after() {
+          echo "${1:+$1 installables can be added.}"\
+            "${2:+$2 new scripts can be added to version control.}"\
+            "Call ${thisfunc} for more."
+      }
+
+  elif [[ "$1" == ignored ]] ; then
+
+      find ~/bin -maxdepth 1 -type f -empty -perm 644
+      return 0
+
+  elif [[ "$1" == interactive ]] ; then
+
+      local num_installed=0 num_ignored=0 num_added=0
+      function _when_missing() {
+        local reply installable="${1}"
+        local source="${bin_folder}/${installable}" target=~/bin/"$installable"
+        read -r -p "Do you want to install ${installable}? [(y)es/(S)KIP/(n)ever] " reply
+        case "${reply,,}" in
+          y*)
+            echo installing "$installable"
+            ln -sv "$source" "$target"
+            ((num_installed++))
+            ;;
+          n*)
+            echo "okay, we will ignore ${installable} from now on, rm ${target} to reverse this decision."
+            touch "$target"
+            chmod 644 "$target"
+            ((num_ignored++))
+            ;;
+          *)
+            echo skipping "$installable"
+            ;;
+        esac
+      }
+      function _when_eligible() {
+        local reply eligible="${1}" existing="$2"
+        local target="${bin_folder}/${eligible}" source=~/bin/"$eligible"
+        local prompt="Do you want to add ${eligible} to source control?"
+        prompt="${prompt}${existing:+ (may overwrite ${existing})}"
+        read -r -p "${prompt} [y/N] " reply
+        case "${reply,,}" in
+          y*)
+            echo adding "$eligible"
+            mv -v "$source" "$target"
+            ln -sv "$target" "$source"
+            ((num_added++))
+            ;;
+          *)
+            echo skipping "$eligible"
+            ;;
+        esac
+      }
+      function _after() {
+        echo "${1:+Checked ${1} missing executables, installed ${num_installed}, permanently ignored ${num_ignored}.}"\
+          "${2:+Checked ${2} eligible new executables, added ${num_added} to source control.}"
+      }
+
+  else
+
+      function _when_missing() {
+        echo "$1" can be installed
+      }
+      function _when_eligible() {
+        echo "$1" can be added to source control "${2:+(but it may overwrite $2)}"
+      }
+      function _after() {
+        echo "Call '${thisfunc} interactive' to interactively act on this."
+        echo "Call '${thisfunc} ignored' to see which scripts are already being ignored."
+      }
+
+  fi
+
+  local path basename num_missing=0 num_eligible=0
+  for path in "$bin_folder"/* ; do
+    [[ -x "$path" ]] || continue
+    basename="${path##*/}"
+    [[ -e ~/bin/"$basename" ]] || {
+      _when_missing "$basename"
+      ((num_missing++))
+    }
+  done
+  local existing
+  for path in ~/bin/* ; do
+    [[ -f "$path" && -x "$path" && ! -L "$path" ]] || continue
+    basename="${path##*/}"
+    existing="${bin_folder}/${basename}"
+    [[ -e "$existing" ]] || existing=''
+    _when_eligible "$basename" "$existing"
+    ((num_eligible++))
+  done
+  [[ "${num_missing}" -gt 0 ]] || num_missing=
+  [[ "${num_eligible}" -gt 0 ]] || num_eligible=
+  if [[ -n "${num_missing}${num_eligible}" ]] ; then
+    echo
+    _after "$num_missing" "$num_eligible"
+    echo
+  fi
+  unset -f _when_missing _when_eligible _after
+}
+
+check-installables quiet | sed 's/..*/>>> & <<</'
