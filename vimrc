@@ -567,15 +567,12 @@ endfunction
 function SaveProgressCopy()
     let oldlnum = line('.')
     let oldcnum = col('.')
-    let oldreg = @@
-    let oldregtype = getregtype('"')
     try
         call ProgressLogDate()
-        let backup = expand('%') . '.' . expand('<cfile>')
+        let backup = expand('%') . '.vimbak.' . expand('<cfile>')
         exec "write!" backup
     finally
         call cursor(oldlnum, oldcnum)
-        call setreg('"', oldreg, oldregtype)
     endtry
 endfunction
 
