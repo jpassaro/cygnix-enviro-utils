@@ -45,3 +45,9 @@ fi
 if check-for-package --optional zbarimg 'zbar for QR-code scanning' ; then
   alias qrdecode='zbarimg -Sdisable -Sqr.enable -q --raw'
 fi
+
+if check-for-package uniname 'uniutils (includes uniname for unicode analysis)'
+then
+  # suppress its extremely annoying paging behavior
+  alias uniname='uniname -p'
+fi
