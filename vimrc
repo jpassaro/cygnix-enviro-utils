@@ -473,6 +473,7 @@ let g:syntastic_always_populate_loc_list = 1
 let g:syntastic_javascript_checkers = ['eslint']
 let g:syntastic_python_checkers = ['flake8']
 " let g:syntastic_python_flake8_args = '--select=E901,F821,F401,F841,F812'
+let g:syntastic_sh_shellcheck_args = '-x'
 
 
 function OverridePermissiveFlake8()
