@@ -85,8 +85,3 @@ function reload-profile() {
   # shellcheck source=./bashrc
   source "$MY_BASHRC_FILE"
 }
-
-# must be last for some reason...
-if check-for-package --optional direnv ; then
-  eval "$(direnv hook bash)"
-fi

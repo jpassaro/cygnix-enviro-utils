@@ -5,6 +5,20 @@ export EDITOR=vim
 # PS1
 source_pragma_once "$MY_BASHRC_D"/prompts
 
+# commands manipulating COMMAND_PROMPT
+# (note): these both caution against manipulating COMMAND_PROMPT after they have run.
+# Since they both actually do this, we have a quandary!
+# At a glance they both make cursory attempts to behave nicely if that does not
+# prove to be the case.
+# direnv goes farther than iterm2 and actually insists on being called last.
+# we will honor that.
+
+source_pragma_once "$MY_BASHRC_D"/iterm-extensions
+
+if check-for-package --optional direnv ; then
+  eval "$(direnv hook bash)"
+fi
+
 # LESSOPEN
 # allow less to view gzip and several other non-ascii filetypes
 if check-for-package lesspipe.sh 'lesspipe.sh, a smarter less reader' ; then

@@ -127,11 +127,6 @@ function _exec_venv() {
   return "$result"
 }
 
-# iterm2 extension functions
-if [[ -n "$ITERM_SHELL_INTEGRATION_INSTALLED" ]] ; then
-  source_pragma_once "$MY_BASHRC_D"/iterm-extensions
-fi
-
 # list functions
 function functions() {
   declare -f | sed '/^{ *$/,/^} *$/ d'
