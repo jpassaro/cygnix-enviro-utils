@@ -381,68 +381,77 @@ nnoremap <unique> zS Xi<CR><Esc>
 " Inspired by something on the msgboard that points out you don't always want
 " the usual "*" behavior of navigating to the next match in order to get the
 " highlighting.
-" Note: The direction bit doesn't work right now. I think vim resets
-" v:searchforward after a function. TODO: see if I can override
-function SetSearch(patt, direction, ...)
-    let thing = a:patt
-    if a:0
-        let thing = escape(thing, '\')
-    endif
-    let @/ = thing
-    let v:searchforward = a:direction
-endfunction
 
 " highlight matches of the current word
-nnoremap <silent> z* :call SetSearch(expand("<cword>"), 1, 1)<CR>:set hls<CR>
+nmap <silent> z* <Plug>JpvimrcNohi:call SetSearch(expand("<cword>"))<CR>:let v:searchforward = 1<CR>
 " highlight matches of the current word when they appear as a word
-nnoremap <silent> Z* :call SetSearch("<".expand("<cword>").">", 1, 1)<CR>:set hls<CR>
-" like z* but set search direction to backward
-nnoremap <silent> z# :call SetSearch(expand("<cword>"), 0, 1)<CR>:set hls<CR>
-" like Z* but set search direction to backward
-nnoremap <silent> Z# :call SetSearch('\<'.expand("<cword>").'\>', 0, 1)<CR>:set hls<CR>
+nmap <silent> Z* <Plug>JpvimrcNohi:call SetSearch("<".expand("<cword>").">")<CR>:let v:searchforward = 1<CR>
+" like the above but with cWORD instead of cword (i.e. iW instead of iw)
+nmap <silent> <Leader>z* <Plug>JpvimrcNohi:call SetSearch(expand("<cWORD>"))<CR>:let v:searchforward = 1<CR>
+nmap <silent> <Leader>Z* <Plug>JpvimrcNohi:call SetSearch("<".expand("<cWORD>").">")<CR>:let v:searchforward = 1<CR>
+" like the above but set search direction to backward
+nmap <silent> z# <Plug>JpvimrcNohi:call SetSearch(expand("<cword>"))<CR>:let v:searchforward = 0<CR>
+nmap <silent> Z# <Plug>JpvimrcNohi:call SetSearch('\<'.expand("<cword>").'\>')<CR>:let v:searchforward = 0<CR>
+nmap <silent> <Leader>z# <Plug>JpvimrcNohi:call SetSearch(expand("<cWORD>"))<CR>:let v:searchforward = 0<CR>
+nmap <silent> <Leader>Z# <Plug>JpvimrcNohi:call SetSearch("<".expand("<cWORD>").">")<CR>:let v:searchforward = 0<CR>
 
-" to use with motion operators and visual mode
-" doesn't work with linewise selection/motions or block selection
-function SetSearchFromSelection(type, direction, ...)
-    let sel_save = &selection
-    let reg_save = @@
-    let proceed = 1
-    if a:0
-        silent exe "normal! gvy"
-    elseif a:type == 'char'
-        silent exe "normal! `[v`]y"
-    else
-        proceed = 0
-    endif
-
-    if proceed == 1
-        call SetSearch('\V' . @@, a:direction)
-    endif
-
-    let &selection = sel_save
-    let @@ = reg_save
-
-    let &hlsearch = 1
-endfunction
+" search for next/last use of cWORD
+nmap <silent> <Leader>* <Leader>z*n
+nmap <silent> <Leader># <Leader>z#n
 
 " search for next/last instance of selection. Normally keeps you in visual and
 " just moves cursor to next word, which is sensible but rarely useful for me.
-vnoremap <silent> * :<C-U>call SetSearchFromSelection(visualmode(), 1, 1)<CR>n<CR>
-vnoremap <silent> # :<C-U>call SetSearchFromSelection(visualmode(), 0, 1)<CR>n<CR>
+vmap <silent> z* <Plug>JpvimrcNohi:call SetSearchFromSelection(visualmode())<CR>:let v:searchforward = 1<CR>
+vmap <silent> z# <Plug>JpvimrcNohi:call SetSearchFromSelection(visualmode())<CR>:let v:searchforward = 0<CR>
+" like the above mappings but navigate as well.
+vmap <silent> * z*n
+vmap <silent> # z#n
 
-" like the above mappings but without navigating.
-vnoremap <silent> z* :<C-U>call SetSearchFromSelection(visualmode(), 1, 1)<CR>:set hls<CR>
-vnoremap <silent> z# :<C-U>call SetSearchFromSelection(visualmode(), 0, 1)<CR>:set hls<CR>
-
-" place text under motions into search register and highlight them. only words
+" place text under motions into search register and highlight them. only works
 " with character-wise motions.
-nnoremap <silent> =* :set operatorfunc=OperatorSetSearchForward<CR>g@
-nnoremap <silent> =# :set operatorfunc=OperatorSetSearchBackward<CR>g@
-function OperatorSetSearchForward(type)
-    call SetSearchFromSelection(a:type, 1)
+nmap <silent> =* <Plug>JpvimrcNohi:<C-U>set operatorfunc=SetSearchFromSelection<CR>g@
+" this doesn't work because i can't call let v:searchforward afterward
+"nmap <silent> =# <Plug>JpvimrcNohi:<C-U>set operatorfunc=SetSearchBackward<CR>g@
+nmap <silent> =# :echoerr '(jpvimrc) searching backward from a motion is not supported'<CR>
+
+" this is undone at the end of a function, so it has to be done directly in
+" the mapping. Likewise the :let v:searchforward = ?
+map <silent> <Plug>JpvimrcNohi :<C-U>set nohlsearch<CR>
+
+" set the search pattern and direction and activate hlsearch
+function SetSearch(patt)
+    let thing = a:patt
+    let @/ = thing
+    set hlsearch
 endfunction
-function OperatorSetSearchBackward(type)
-    call SetSearchFromSelection(a:type, 0)
+
+" to use with motion operators and visual mode
+" doesn't work with linewise selection/motions or block selection
+function s:setSearchFromSelection(type)
+    let sel_save = &selection
+    let reg_save = @@
+    try
+        if a:type == 'v' " visualmode() in char mode
+            silent exe "normal! gvy"
+        elseif a:type == 'char' " from g@ for character motions
+            silent exe "normal! `[v`]y"
+        else
+            throw '(jpvimrc) cannot set search pattern from a non-char selection'
+        endif
+
+        call SetSearch('\V' . @@)
+    finally
+        let &selection = sel_save
+        let @@ = reg_save
+    endtry
+endfunction
+
+function SetSearchFromSelection(type) abort
+    try
+        call s:setSearchFromSelection(a:type)
+    catch /^(jpvimrc)/
+        echoerr v:exception
+    endtry
 endfunction
 
 " tried zenburn... it was okay but not always.
