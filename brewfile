@@ -1,0 +1,145 @@
+tap "homebrew/bundle"
+tap "homebrew/cask"
+tap "homebrew/core"
+tap "homebrew/science"
+tap "homebrew/services"
+tap "universal-ctags/universal-ctags"
+
+# Search tool like grep, but optimized for programmers
+brew "ack"
+
+# List ASCII idiomatic names and octal/decimal code-point forms
+brew "ascii"
+
+# Interpreted, interactive, object-oriented programming language
+brew "python"
+
+# Official Amazon AWS command-line interface
+brew "awscli"
+
+# Bourne-Again SHell, a UNIX command interpreter
+brew "bash"
+
+# Programmable completion for Bash 3.2
+brew "bash-completion"
+
+# Enables you to reproduce the CircleCI environment locally
+brew "circleci"
+
+# GNU File, Shell, and Text utilities
+brew "coreutils"
+
+# Load/unload environment variables based on $PWD
+# brew "direnv"
+
+# Collection of GNU find, xargs, and locate
+brew "findutils"
+
+# GNU debugger
+brew "gdb", args: ["with-python"]
+
+# Interpreter for PostScript and PDF -- not strictly necessary
+# brew "ghostscript"
+
+# Command-line utility for uploading Gists
+brew "gist"
+
+# Distributed revision control system
+brew "git", args: ["with-openssl"]
+
+# GNU implementation of the famous stream editor
+brew "gnu-sed"
+
+# GNU version of the tar archiving utility
+brew "gnu-tar"
+
+# GNU implementation of time utility
+brew "gnu-time"
+
+# GNU unit conversion tool
+brew "gnu-units"
+
+# GNU Pretty Good Privacy (PGP) package
+brew "gnupg"
+
+# Graph visualization software from AT&T and Bell Labs
+brew "graphviz"
+
+# GNU grep, egrep and fgrep
+brew "grep"
+
+# User-friendly cURL replacement (command-line HTTP client)
+brew "httpie"
+
+# Highly capable, feature-rich programming language
+brew "perl"
+
+# Tools and libraries to manipulate images in many formats
+brew "imagemagick", args: ["with-fontconfig", "with-ghostscript", "with-pango", "with-perl", "with-x11"]
+
+# GNU utilities for networking
+brew "inetutils"
+
+# Lightweight and flexible command-line JSON processor
+brew "jq"
+
+# Pager program similar to more
+brew "less"
+
+# Input filter for the pager less
+brew "lesspipe"
+
+# Python generator for the console
+brew "lorem"
+
+# Java-based project management
+# brew "maven"
+
+# Platform built on V8 to build network applications
+brew "node"
+
+# Password manager
+brew "pass"
+
+# Show ps output as a tree
+brew "pstree"
+
+# Password generator
+brew "pwgen"
+
+# Command-line YAML and XML processor that wraps jq
+brew "python-yq"
+
+# Tools for and transforming and inspecting PDF files
+brew "qpdf"
+
+# Command-line tool for the Amazon S3 service
+brew "s3cmd"
+
+# Static analysis and lint tool, for (ba)sh scripts
+brew "shellcheck"
+
+# SOund eXchange: universal sound sample translator
+brew "sox"
+
+# Add a public key to a remote machine's authorized_keys file
+brew "ssh-copy-id"
+
+# Programatically correct mistyped console commands
+brew "thefuck"
+
+# Manipulate and analyze Unicode text
+brew "uniutils"
+
+# Vi 'workalike' with many additional features
+brew "vim"
+
+# Suite of barcodes-reading tools
+brew "zbar"
+
+cask "iterm2"
+cask "xquartz"
+# some casks that are likely to be useful
+# cask "gimp"
+# cask "slack"
+# cask "wireshark"
