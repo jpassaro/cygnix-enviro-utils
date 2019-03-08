@@ -458,20 +458,43 @@ endfunction
 " I'm currently liking slate for html...
 colorscheme slate
 
-function! NewlineBefore() abort
-    let l:nlcount = v:count1
-    while col('.') >= 2 && getline('.')[col('.')-2] =~ '\s'
-        normal! h
+function! NewlineNearCursor(where) abort
+    let nlcount = v:count1
+    let origcol = col('.')
+    let leftcol = col('.')
+    let curline = getline('.')
+    if a:where == 'before'
+        let action = 'i'
+        while leftcol >= 2 && curline[leftcol-2] =~ '\s'
+            let leftcol -= 1
+        endwhile
+        let repeatable = "\<Plug>JpvimrcNewlineBeforeCursor"
+    elseif a:where == 'after'
+        let action = 'a'
+        let leftcol += 1
+        let repeatable = "\<Plug>JpvimrcNewlineAfterCursor"
+    else
+        throw '(jpvimrc) bad argument "' . a:where . '"'
+    endif
+    let rightcol = max([origcol, leftcol])
+    while rightcol <= len(curline) && curline[rightcol-1] =~ '\s'
+        let rightcol += 1
     endwhile
-    execute "normal! " . l:nlcount . "i\<cr>"
-    silent! call repeat#set("\<Plug>PassaroNewlineBefore")
+    if rightcol > leftcol
+        call cursor(curline, leftcol)
+        execute 'normal! "_' . (rightcol - leftcol) . 'x'
+        let action = 'i'
+    endif
+    execute "normal! " nlcount . action . "\<CR>"
+    silent! call repeat#set(repeatable, nlcount)
 endfunction
 
-nnoremap <unique> <Plug>PassaroNewlineBefore :<C-U>call NewlineBefore()<CR>
+nnoremap <unique> <Plug>JpvimrcNewlineBeforeCursor :<C-U>call NewlineNearCursor("before")<CR>
+nnoremap <unique> <Plug>JpvimrcNewlineAfterCursor :<C-U>call NewlineNearCursor("after")<CR>
 
 " Another unimpaired-style mapping to create newlines.
-nnoremap <unique> [<CR> :<C-U>call NewlineBefore()<CR>
-nnoremap <unique> ]<CR> a<CR><Esc><C-O>
+nmap <unique> [<CR> <Plug>JpvimrcNewlineBeforeCursor
+nmap <unique> ]<CR> <Plug>JpvimrcNewlineAfterCursor
 
 " tell ack.vim to use dispatch
 let g:ack_use_dispatch = 1
@@ -621,7 +644,7 @@ function ResetProgressLog() abort
     call search('{END LOG}', 'cw')
     call append(line('.') - 1, toinsert)
     call search(g:jpvimrc_progress_todayactual . '$', 'b')
-    call cursor(1 + line('.'), 0) " equiv: normal j
+    call cursor(1 + line('.'), 0) " equiv: normal j0
 endfunction
 
 autocmd FileType jinja call RagtagInit()
