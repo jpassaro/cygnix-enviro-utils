@@ -7,55 +7,54 @@ The tasks are organized according to what is generally unix-usable, what is
 specific to Cygwin, and what is specific to work (most or all of which likely
 will not make it up here).
 
-# TL;DR on Mac
+# Homebrew (Mac only)
 
-The very basics:
-* `/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"`
-* `brew install bash`
-* add /usr/local/bin/bash to /etc/shells
-* `chsh /usr/local/bin/bash`
-* start new terminal
-* `ssh-keygen` and add resulting public key to github and anywhere else
-* `brew install git --with-openssl --with-curl`
-* `git clone git@github.com:jpassaro/cygnix-enviro-utils.git ~/code/login-utils`
-* `ln -sv ~/code/login-utils/global-gitignore ~/.gitignore`
-* `git config --global include.path ~/code/login-utils/git-config`
-* `mkdir -p ~/bin ~/.ssh`
-* `chmod 700 ~/.ssh`
-* `echo source ~/code/login-utils/bashrc >>~/.bash_profile && source ~/.bash_profile`
+To use this on Mac, install homebrew:
+`/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"`
 
-For long-term / optional stuff:
-* `ls ~/code/login-utils/bin` and symlink any of interest into `~/bin`
-* `echo export GITHUB_API_TOKEN=[your token here] >> ~/.bash_profile`
-* create .ssh/config including
+# Update bash
+
+On some systems (Mac especially) you will need to start by updating bash.
+If your bash is less than 4.4 or so, install the up to date one using your
+system's package manager. For example `brew install bash`;
+
+Add the new bash (with brew this is /usr/local/bin/bash) to /etc/shells,
+and choose it using `chsh`.
+
+Now start a new terminal; it should use the new bash.
+
+# Git bare-bones
+Create .ssh/config including
 ```
 Host gh
   Hostname github.com
   User git
 ```
 
-Good things to brew install:
-* `coreutils`
-* `findutils`
-* `gnu-{set,tar,time,units}`
-* `less`
-* `lesspipe`
-* `ack` -- also `ln -sv ~/code/login-utils/ackrc ~/.ackrc`
-* `vim` -- also:
-  * `git clone gh:VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim`
-  * `echo source ~/code/login-utils/vimrc >> ~/.vimrc`
-  * `vim +PluginInstall
-* `jq` aka sed for json -- also `ln -sv ~/code/login-utils/custom.jq`
-* `python` (a few executables depend on it)
-* `python@2` if any of your projects use python2 (mac's python2 is Too Old)
-* `graphviz` -- see also bin/dot-pipe for a nice vim integration
-* `bash-completion` (lots of nice bash completions)
-* `httpie`
-* `thefuck`
-* `ssh-copy-id`
-* `pstree`
-* `ascii`
-* `awscli`
+Use `ssh-keygen` to create a public key and add it to github. Optionally
+add it to the `gh` ssh host you just created.
+
+Now you can clone git repos quickly:
+`git clone gh:jpassaro/cygnix-enviro-utils.git ~/code/login-utils`
+
+# Including bashrc
+
+If you don't already have git, install it.
+(On mac: `brew install git --with-openssl --with-curl`
+
+```console
+git clone git@github.com:jpassaro/cygnix-enviro-utils.git ~/code/login-utils
+echo source ~/code/login-utils/bashrc >>~/.bash_profile
+```
+
+When you're ready to roll, start a new terminal or call `source
+~/.bash_profile`. The utilities should make further suggestions from here.
+
+# Other bits of setup
+
+It's a good idea to supply a github API token in your private `.bash_profile`
+for various tools. For brew, `GITHUB_API_TOKEN`; for `hub`, Github's CLI,
+`GITHUB_TOKEN`.
 
 # Copyright
 

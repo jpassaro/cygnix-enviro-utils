@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+function _suggest-cmd() {
+  echo '*** try this: ' "$@" ': ***'
+}
+
+function check_symlink() {
+  local source=${1?} target=${2?} import=${3?}
+  if [[ ! -e "$target" ]] ; then
+    _suggest-cmd "ln -sv ${source} ${target}"
+  elif [[ ! -L "$target" ]] && ! grep -Fq "$import" "$target" ; then
+    _suggest-cmd "echo ${import@Q} >>${target}"
+  fi
+}
+
+MY_BASHRC_BASE="${MY_BASHRC_FILE%/*}"
+
+git config --global --includes jploginutils.present \
+  || _suggest-cmd "git config --global include.path ${MY_BASHRC_BASE}/git-config"
+
+[[ -L ~/.gitignore ]] || _suggest-cmd "ln -sv ${MY_BASHRC_BASE}/global-gitignore ~/.gitignore"
+
+check_symlink "${MY_BASHRC_BASE}/ackrc" ~/.ackrc "--ackrc=${MY_BASHRC_BASE}/ackrc"
+check_symlink "${MY_BASHRC_BASE}/custom.jq" ~/.jq "include ${MY_BASHRC_BASE}/custom"
+
+grep -q "^[ ]*source .*/${MY_BASHRC_BASE##*/}/vimrc" ~/.vimrc \
+  || _suggest-cmd "echo 'source ${MY_BASHRC_BASE}/vimrc' >>${HOME}/.vimrc"
+
+unset -f _suggest-cmd check_symlink

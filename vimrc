@@ -177,7 +177,7 @@ if isdirectory(s:vundlepath)
     " All Plugins must be added before the following line
     call vundle#end()            " required
 else
-    echoerr 'Vundle was not found. Consider executing "git clone gh:gmarik/Vundle.vim ~/.vim/bundle/Vundle.vim"'
+    echoerr 'Vundle was not found. Consider executing "git clone gh:VundleVim/Vundle.vim ~/.vim/bundle/Vundle.vim"'
     unlet s:vundlepath
 endif
 

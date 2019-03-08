@@ -29,7 +29,9 @@
 	smtpUser = john.a.passaro@gmail.com
 #	smtpPass = haha nice try
 [pretty]
-    ref = %h (\"%s\", %ad)
+	ref = %h (\"%s\", %ad)
+[jploginutils]
+	present =
 
 # set up via git config include.path
 
