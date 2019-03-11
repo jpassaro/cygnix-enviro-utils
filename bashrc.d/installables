@@ -6,11 +6,13 @@ mkdir -p ~/bin
 prepend-path ~/bin
 
 function check-installables() {
-  local bin_folder thisfunc="${FUNCNAME[0]}"
+  local bin_folder thisfunc="${FUNCNAME[0]}" basedir exclude
   if ! bin_folder="$(cd "$MY_BASHRC_D"/../bin && pwd -P)" ; then
     echo >&2 could not locate "$MY_BASHRC_D"/../bin
     return 1
   fi
+  basedir="${bin_folder%/bin}"
+  exclude="${basedir}/.git/info/exclude"
 
   if [[ "$1" == quiet ]] ; then
 
@@ -21,19 +23,30 @@ function check-installables() {
         true
       }
       function _after() {
-          echo "${1:+$1 installables can be added.}"\
-            "${2:+$2 new scripts can be added to version control.}"\
+          echo ${1:+"$1 installables can be added."} \
+            ${2:+"$2 new scripts can be added to version control."} \
             "Call ${thisfunc} for more."
       }
 
   elif [[ "$1" == ignored ]] ; then
-
+      local deletion="to reverse any of these decisions, delete the file as listed above"
+      echo in source control but never to be installed:
       find ~/bin -maxdepth 1 -type f -empty -perm 644
+      echo "$deletion"
+      echo
+      echo on local but never to be added to source control:
+      git -C "$basedir" \
+          ls-files --others --ignored \
+          --exclude-from "$exclude" \
+          --full-name \
+          "$bin_folder"/* \
+        | awk -v basedir="$basedir" '! /^\// {print basedir "/" $0}'
+      echo "${deletion} and remove it from ${exclude}"
       return 0
 
   elif [[ "$1" == interactive ]] ; then
 
-      local num_installed=0 num_ignored=0 num_added=0
+      local num_installed=0 num_ignored=0 num_added=0 num_checkin_ignored
       function _when_missing() {
         local reply installable="${1}"
         local source="${bin_folder}/${installable}" target=~/bin/"$installable"
@@ -60,7 +73,7 @@ function check-installables() {
         local target="${bin_folder}/${eligible}" source=~/bin/"$eligible"
         local prompt="Do you want to add ${eligible} to source control?"
         prompt="${prompt}${existing:+ (may overwrite ${existing})}"
-        read -r -p "${prompt} [y/N] " reply
+        read -r -p "${prompt} [(y)es/(S)kip/(n)ever] " reply
         case "${reply,,}" in
           y*)
             echo adding "$eligible"
@@ -68,14 +81,20 @@ function check-installables() {
             ln -sv "$target" "$source"
             ((num_added++))
             ;;
+          n*)
+            echo ignoring "$eligible"
+            touch "$target"
+            echo "bin/${eligible}" >>"$exclude"
+            ((num_checkin_ignored++))
+            ;;
           *)
             echo skipping "$eligible"
             ;;
         esac
       }
       function _after() {
-        echo "${1:+Checked ${1} missing executables, installed ${num_installed}, permanently ignored ${num_ignored}.}"\
-          "${2:+Checked ${2} eligible new executables, added ${num_added} to source control.}"
+        echo ${1:+"Checked ${1} missing executables, installed ${num_installed}, permanently ignored ${num_ignored}."} \
+          ${2:+"Checked ${2} eligible new executables, added ${num_added} to source control, permanently ignored ${num_checkin_ignored}."}
       }
 
   else
@@ -104,10 +123,18 @@ function check-installables() {
   done
   local existing
   for path in ~/bin/* ; do
-    [[ -f "$path" && -x "$path" && ! -L "$path" ]] || continue
+    if ! [[ -f "$path" && -x "$path" && ! -L "$path" ]] ; then
+      continue
+    fi
     basename="${path##*/}"
     existing="${bin_folder}/${basename}"
-    [[ -e "$existing" ]] || existing=''
+    if [[ -e "$existing" ]] ; then
+      if git -C "$bin_folder" check-ignore -q "$existing" ; then
+        continue  # it's already ignored, ergo not actually eligible
+      fi
+    else
+      existing=''
+    fi
     _when_eligible "$basename" "$existing"
     ((num_eligible++))
   done
