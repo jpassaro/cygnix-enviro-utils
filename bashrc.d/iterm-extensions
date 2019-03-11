@@ -4,6 +4,7 @@
 source_pragma_once ~/.iterm2_shell_integration.bash
 
 if [[ -n "$ITERM_SHELL_INTEGRATION_INSTALLED" ]] ; then
+  export ITERM_SHELL_INTEGRATION_INSTALLED
   function jp_iterm_send_prompt() {
     iterm2_begin_osc
     printf '%s;%s' "$1" "$2"

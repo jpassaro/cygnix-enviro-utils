@@ -547,6 +547,12 @@ nmap ]Z <Plug>unimpairedQNFile
 set t_u7=
 set t_RV=
 
+if exists('$ITERM_SHELL_INTEGRATION_INSTALLED')
+    let &t_SI = "\<ESC>]1337;CursorShape=1\x7"  " vertical bar
+    let &t_SR = "\<ESC>]1337;CursorShape=2\x7"  " underline
+    let &t_EI = "\<ESC>]1337;CursorShape=0\x7"  " block
+endif
+
 " for vim-python/python-syntax
 let g:python_highlight_all = 1
 let g:python_highlight_string_templates = 0
