@@ -1,7 +1,6 @@
 tap "homebrew/bundle"
 tap "homebrew/cask"
 tap "homebrew/core"
-tap "homebrew/science"
 tap "homebrew/services"
 tap "universal-ctags/universal-ctags"
 
@@ -35,8 +34,11 @@ brew "coreutils"
 # Collection of GNU find, xargs, and locate
 brew "findutils"
 
+# GNU awk utility
+brew "gawk"
+
 # GNU debugger
-brew "gdb", args: ["with-python"]
+brew "gdb"
 
 # Interpreter for PostScript and PDF -- not strictly necessary
 # brew "ghostscript"
