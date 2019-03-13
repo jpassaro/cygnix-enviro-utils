@@ -19,13 +19,10 @@ function c(){
 
 function code() {
   local suff="$1"
-  if [[ -z "$suff" ]] ; then
-    if [[ -d ~/code/"${PASSARO_CODE_LOC}" ]] ; then
-      c ~/code/"${PASSARO_CODE_LOC}"
-      return 0
-    else
-      local suff="-wc"
-    fi
+  if [[ -z "$suff" && -d ~/code/"${PASSARO_CODE_LOC}" ]] ; then
+    c ~/code/"${PASSARO_CODE_LOC}"
+    [[ ! -d .git ]] || git status
+    return 0
   fi
   local folders=(~/code/*"$suff")
   local numf="${#folders[@]}"
