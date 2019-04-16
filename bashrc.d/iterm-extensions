@@ -1,10 +1,14 @@
 #!/bin/bash
 # shellcheck disable=SC1090
 
-source_pragma_once ~/.iterm2_shell_integration.bash
+if [[ "$TERM_PROGRAM" == *iTerm* ]] ; then
+  source_pragma_once ~/.iterm2_shell_integration.bash
+fi
+
+source_pragma_once "$MY_BASHRC_D"/path
 
 if [[ -n "$ITERM_SHELL_INTEGRATION_INSTALLED" ]] ; then
-  export ITERM_SHELL_INTEGRATION_INSTALLED
+  append-path ~/.iterm2
   function jp_iterm_send_prompt() {
     iterm2_begin_osc
     printf '%s;%s' "$1" "$2"
@@ -15,21 +19,14 @@ if [[ -n "$ITERM_SHELL_INTEGRATION_INSTALLED" ]] ; then
     jp_iterm_send_prompt 9 "$1"
   }
 
-  function iterm_bounce() {
-    jp_iterm_send_prompt 1337 "RequestAttention=${1:-yes}"
-  }
-
-  function iterm_fireworks() {
-    iterm_bounce fireworks
-  }
-
   function remind() {
     sleeptime="${1:?usage: remind SLEEPTIME[m|s] message text}"
     (
       sleep "$sleeptime"
       shift
       iterm_growl "$*"
-      iterm_bounce
+      printf '\n\nReminder:\n%s\n\n\n' "$*"
+      it2attention fireworks
     ) &
   }
 
@@ -37,11 +34,11 @@ if [[ -n "$ITERM_SHELL_INTEGRATION_INSTALLED" ]] ; then
     jp_iterm_send_prompt 1337 "SetBadgeFormat=$(echo -n "$1" | base64)"
   }
 
-  iterm_badge_format '\(user.badge)'
+  iterm_badge_format '(\(user.tty)) \(user.badge)'
   iterm2_set_user_var tty "$(basename "$(tty)")"
   iterm2_set_user_var badge ''
 
   function badge() {
-    iterm2_set_user_var badge "$1"
+    iterm2_set_user_var badge "$*"
   }
 fi
