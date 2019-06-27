@@ -3,7 +3,7 @@
 export EDITOR=vim
 
 # PS1
-source_pragma_once "$MY_BASHRC_D"/prompts
+source_pragma_once "$JP_DOTFILES_BASHRC_D"/prompts
 
 # commands manipulating COMMAND_PROMPT
 # (note): these both caution against manipulating COMMAND_PROMPT after they have run.
@@ -13,7 +13,7 @@ source_pragma_once "$MY_BASHRC_D"/prompts
 # direnv goes farther than iterm2 and actually insists on being called last.
 # we will honor that.
 
-source_pragma_once "$MY_BASHRC_D"/iterm-extensions
+source_pragma_once "$JP_DOTFILES_BASHRC_D"/iterm-extensions
 
 if check-for-package --optional direnv ; then
   eval "$(direnv hook bash)"
@@ -26,7 +26,7 @@ if check-for-package lesspipe.sh 'lesspipe.sh, a smarter less reader' ; then
   export LESSOPEN
 fi
 
-source_pragma_once "$MY_BASHRC_D"/*-env
+source_pragma_once "$JP_DOTFILES_BASHRC_D"/*-env
 
 # work around an iTerm2 issue that causes vim to misassign light/dark color scheme
 [[ -n "$COLORFGBG" ]] || export COLORFGBG="15;0"

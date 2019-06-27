@@ -2,7 +2,7 @@
 # shellcheck disable=SC2034
 
 # iterm integration seems to mess this up if called afterward
-source_pragma_once "$MY_BASHRC_D"/iterm-extensions
+source_pragma_once "$JP_DOTFILES_BASHRC_D"/iterm-extensions
 
 # TODO test this PS1 stuff on linux
 

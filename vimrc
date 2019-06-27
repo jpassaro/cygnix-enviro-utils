@@ -658,3 +658,34 @@ endfunction
 autocmd FileType jinja call RagtagInit()
 
 hi Define ctermfg=10
+
+function s:getToday()
+    let today = strftime('%F')
+    try
+        call inputsave()
+        return input('What day? (default ' . today . ')', today)
+    finally
+        call inputrestore()
+    endtry
+endfunction
+
+let g:jphabit_questionpattern = '^\s*>>>\s*\v(.+)\s*%(&\{(\d+)})?)?'
+
+function TrackHabitsToday() abort
+    let today = s:getToday()
+    let theline = search('\c{START}', 'cwn')
+    if ! theline
+        return
+    endif
+    let theline += 1
+    while theline <= line('$')
+        let thetext = getline(theline)
+        if thetext =~? '{END}'
+            break
+        endif
+        if thetext =~? '^\s*$'
+            continue
+        endif
+        let matches = matchlist(theline, g:jphabit_questionpattern)
+    endwhile
+endfunction

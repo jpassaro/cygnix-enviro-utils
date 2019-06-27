@@ -11,7 +11,7 @@
 
 if [[ "${BASH_VERSINFO[0]}" -lt 4 ]] ; then
   echo >&2 "Your bash version ($BASH_VERSION) is too low."
-  echo >&2 "You need to upgrade to at least 4 to use john's login utils."
+  echo >&2 "You need to upgrade to at least 4 to use john's bash dotfiles."
   return
 fi
 
@@ -27,8 +27,21 @@ unset PRAGMA_IMPORTED  # previously was in reload-profile only, trying it here
 declare -A PRAGMA_IMPORTED
 PRAGMA_INDEX=0
 
-MY_BASHRC_FILE="${BASH_SOURCE[0]}"
-MY_BASHRC_D="${MY_BASHRC_FILE}.d"
+JP_DOTFILES_BASHRC_FILE="${BASH_SOURCE[0]}"
+if [[ -L "$JP_DOTFILES_BASHRC_FILE" ]] ; then
+  echo >&2 "${JP_DOTFILES_BASHRC_FILE} appears to be a symlink. This is not supported."
+  echo >&2 "Unfortunately there is no portable way to resolve a symlink in Bash, so you'll need to resolve this yourself."
+  echo >&2 "Search for 'source' or '.' in the parent source file: ${BASH_SOURCE[1]}"
+  return
+fi
+
+export JP_DOTFILES_BASE="${JP_DOTFILES_BASHRC_FILE%/*}"
+if [[ ! -d "$JP_DOTFILES_BASE" ]] ; then
+  echo >&2 "${JP_DOTFILES_BASE} is supposed to be a directory, it is not."
+  return
+fi
+
+JP_DOTFILES_BASHRC_D="${JP_DOTFILES_BASHRC_FILE}.d"
 
 function source_pragma_once() {
   local sourceable
@@ -41,7 +54,7 @@ function source_pragma_once() {
         echo "sourcing $sourceable"
         source "$sourceable"
       elif [[ "$sourceable" == */bashrc.d/* ]] ; then
-        echo "could not find ${sourceable##*/bashrc.d/} in ${MY_BASHRC_D}"
+        echo "could not find ${sourceable##*/bashrc.d/} in ${JP_DOTFILES_BASHRC_D}"
       else
         echo "$sourceable could not be found, consider installing it"
       fi
@@ -73,9 +86,9 @@ function check-for-package() {
   return 1
 }
 
-if [ -d "$MY_BASHRC_D" ] ; then
-  echo "$MY_BASHRC_D" found
-  source_pragma_once "$MY_BASHRC_D"/*
+if [ -d "$JP_DOTFILES_BASHRC_D" ] ; then
+  echo "$JP_DOTFILES_BASHRC_D" found
+  source_pragma_once "$JP_DOTFILES_BASHRC_D"/*
 else
   echo "no bashrc.d found"
 fi
@@ -83,5 +96,5 @@ fi
 function reload-profile() {
   # unset PRAGMA_IMPORTED # currently trying at top of file
   # shellcheck source=./bashrc
-  source "$MY_BASHRC_FILE"
+  source "$JP_DOTFILES_BASHRC_FILE"
 }

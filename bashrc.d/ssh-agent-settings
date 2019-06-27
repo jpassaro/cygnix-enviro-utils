@@ -5,7 +5,7 @@
 # (though I have now added enough of my own stuff to this that I hardly think
 # that is still true)
 
-source_pragma_once "$MY_BASHRC_D"/env
+source_pragma_once "$JP_DOTFILES_BASHRC_D"/env
 
 SSH_HOME="${SSH_HOME:-"$HOME"/.ssh}"
 SSH_ENV="${SSH_ENV:-${SSH_HOME}/agent-setup}"

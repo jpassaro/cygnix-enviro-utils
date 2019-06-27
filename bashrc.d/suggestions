@@ -13,17 +13,17 @@ function check_symlink() {
   fi
 }
 
-MY_BASHRC_BASE="${MY_BASHRC_FILE%/*}"
+JP_DOTFILES_BASHRC_BASE="${JP_DOTFILES_BASHRC_FILE%/*}"
 
 git config --global --includes jploginutils.present \
-  || _suggest-cmd "git config --global include.path ${MY_BASHRC_BASE}/git-config"
+  || _suggest-cmd "git config --global include.path ${JP_DOTFILES_BASHRC_BASE}/git-config"
 
-[[ -L ~/.gitignore ]] || _suggest-cmd "ln -sv ${MY_BASHRC_BASE}/global-gitignore ~/.gitignore"
+[[ -L ~/.gitignore ]] || _suggest-cmd "ln -sv ${JP_DOTFILES_BASHRC_BASE}/global-gitignore ~/.gitignore"
 
-check_symlink "${MY_BASHRC_BASE}/ackrc" ~/.ackrc "--ackrc=${MY_BASHRC_BASE}/ackrc"
-check_symlink "${MY_BASHRC_BASE}/custom.jq" ~/.jq "include ${MY_BASHRC_BASE}/custom"
+check_symlink "${JP_DOTFILES_BASHRC_BASE}/ackrc" ~/.ackrc "--ackrc=${JP_DOTFILES_BASHRC_BASE}/ackrc"
+check_symlink "${JP_DOTFILES_BASHRC_BASE}/custom.jq" ~/.jq "include ${JP_DOTFILES_BASHRC_BASE}/custom"
 
-grep -q "^[ ]*source .*/${MY_BASHRC_BASE##*/}/vimrc" ~/.vimrc \
-  || _suggest-cmd "echo 'source ${MY_BASHRC_BASE}/vimrc' >>${HOME}/.vimrc"
+grep -q "^[ ]*source .*/${JP_DOTFILES_BASHRC_BASE##*/}/vimrc" ~/.vimrc \
+  || _suggest-cmd "echo 'source ${JP_DOTFILES_BASHRC_BASE}/vimrc' >>${HOME}/.vimrc"
 
 unset -f _suggest-cmd check_symlink

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 if check-for-package --optional brew ; then
-  MY_BASHRC_BREWFILE="$(cd -P "$MY_BASHRC_D" && cd .. && pwd)/brewfile"
+  JP_DOTFILES_BASHRC_BREWFILE="$(cd -P "$JP_DOTFILES_BASHRC_D" && cd .. && pwd)/brewfile"
 
   function br-i() {
     local upgrade no_upgrade verbose
@@ -14,13 +14,13 @@ if check-for-package --optional brew ; then
       shift
     done
     [[ -n "$upgrade" ]] || no_upgrade=yes
-    brew bundle install ${no_upgrade:+--no-upgrade} ${verbose:+--verbose} --file="$MY_BASHRC_BREWFILE"
+    brew bundle install ${no_upgrade:+--no-upgrade} ${verbose:+--verbose} --file="$JP_DOTFILES_BASHRC_BREWFILE"
     [[ -n "$upgrade" ]] || echo "Run with --upgrade to do upgrades, or brew-check-full to see upgradeable formulae"
   }
 
   function brew-check() {
     if command -v check-brew.sh >/dev/null ; then
-      check-brew.sh -f "$MY_BASHRC_BREWFILE" "$@"
+      check-brew.sh -f "$JP_DOTFILES_BASHRC_BREWFILE" "$@"
     else
       # shellcheck disable=2016
       echo >&2 '**Please install check-brew.sh using `check-installables`.**'
@@ -29,13 +29,13 @@ if check-for-package --optional brew ; then
   }
 
   function brew-check-full() {
-    brew bundle check --file="$MY_BASHRC_BREWFILE" "$@"
+    brew bundle check --file="$JP_DOTFILES_BASHRC_BREWFILE" "$@"
   }
 
   function _brew-check-at-startup() {
     # mostly here for the local variable
     local retval
-    source_pragma_once "$MY_BASHRC_D"/installables
+    source_pragma_once "$JP_DOTFILES_BASHRC_D"/installables
     brew-check --quiet
     retval=$?
     if [[ $retval == 1 ]] ; then

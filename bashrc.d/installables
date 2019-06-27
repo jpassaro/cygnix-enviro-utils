@@ -1,14 +1,14 @@
 #!/bin/bash
 
-source_pragma_once "$MY_BASHRC_D"/path  # we need prepend-path
+source_pragma_once "$JP_DOTFILES_BASHRC_D"/path  # we need prepend-path
 
 mkdir -p ~/bin
 prepend-path ~/bin
 
 function check-installables() {
   local bin_folder thisfunc="${FUNCNAME[0]}" basedir exclude
-  if ! bin_folder="$(cd "$MY_BASHRC_D"/../bin && pwd -P)" ; then
-    echo >&2 could not locate "$MY_BASHRC_D"/../bin
+  if ! bin_folder="$(cd "$JP_DOTFILES_BASHRC_D"/../bin && pwd -P)" ; then
+    echo >&2 could not locate "$JP_DOTFILES_BASHRC_D"/../bin
     return 1
   fi
   basedir="${bin_folder%/bin}"
