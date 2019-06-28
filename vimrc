@@ -292,7 +292,7 @@ endif
 " commit messages, for now the biggest places I care about line length.
 autocmd Filetype python,gitcommit,vim,bash highlight ColorColumn ctermbg=235
 " soft limit, no real need to enforce.
-autocmd Filetype python,vim,bash setlocal colorcolumn=+2 textwidth=78
+autocmd Filetype python,vim,bash,markdown,rst setlocal colorcolumn=+2 textwidth=78
 " no autowrap on text
 autocmd Filetype python setlocal formatoptions-=t
 " continue comment on <Enter> in Insert mode
@@ -410,6 +410,8 @@ vmap <silent> # z#n
 " place text under motions into search register and highlight them. only works
 " with character-wise motions.
 nmap <silent> =* <Plug>JpvimrcNohi:<C-U>set operatorfunc=SetSearchFromSelection<CR>g@
+nmap <silent> g=* <Plug>JpvimrcNohi:<C-U>set operatorfunc=SetSearchFromSelectionCaseInsensitive<CR>g@
+
 " this doesn't work because i can't call let v:searchforward afterward
 "nmap <silent> =# <Plug>JpvimrcNohi:<C-U>set operatorfunc=SetSearchBackward<CR>g@
 nmap <silent> =# :echoerr '(jpvimrc) searching backward from a motion is not supported'<CR>
@@ -654,3 +656,5 @@ function ResetProgressLog() abort
 endfunction
 
 autocmd FileType jinja call RagtagInit()
+
+hi Define ctermfg=10
