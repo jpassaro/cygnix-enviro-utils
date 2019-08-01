@@ -2,7 +2,6 @@ tap "homebrew/bundle"
 tap "homebrew/cask"
 tap "homebrew/core"
 tap "homebrew/services"
-tap "universal-ctags/universal-ctags"
 
 # Search tool like grep, but optimized for programmers
 brew "ack"
@@ -47,7 +46,7 @@ brew "gdb"
 brew "gist"
 
 # Distributed revision control system
-brew "git", args: ["with-openssl"]
+brew "git"
 
 # GNU implementation of the famous stream editor
 brew "gnu-sed"
@@ -145,3 +144,8 @@ cask "xquartz"
 # cask "gimp"
 # cask "slack"
 # cask "wireshark"
+
+brew "a2ps"
+brew "ghostscript"
+brew "dash"
+brew "hub"
