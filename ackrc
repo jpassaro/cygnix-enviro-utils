@@ -3,5 +3,6 @@
 --ignore-dir=is:htmlcov
 --ignore-dir=is:target
 --ignore-dir=is:_scratch
+--ignore-dir=is:venv
 --type-set
 sh:ext:sh,bash
