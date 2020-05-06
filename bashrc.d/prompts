@@ -24,9 +24,9 @@ if [[ "$TERM" == xterm* ]] ; then
 fi
 
 # add git to ps1
-for prompthome in ~/bashrc.d /usr/local/etc{/bash_completion.d,} /etc ; do
-  if [[ -e "${prompthome}/git-prompt.sh" ]] ; then
-    source_pragma_once "${prompthome}/git-prompt.sh"
+for promptfile in /usr/lib/git-core/git-sh-prompt {,/usr/local}/etc{,/bash_completion.d}/git-prompt{.sh,} ; do
+  if [[ -r "${promptfile}" && ! -d "$promptfile" ]] ; then
+    source_pragma_once "${promptfile}"
     # in bold grey, parenthesized git prompt
     PS1="$PS1"'\[\e[1;30m\]$(__git_ps1 "(%s)")\[\e[m\]'
     # git prompt consists of:

@@ -15,6 +15,16 @@ if [[ "${BASH_VERSINFO[0]}" -lt 4 ]] ; then
   return
 fi
 
+# detect system type
+jp_system_type="$(uname -s)"
+case "${jp_system_type,,}" in
+  *cyg*) jp_system_type=cygwin ;;
+  *linux*) jp_system_type=linux ;;
+  *darwin*) jp_system_type=darwin ;;
+  *) jp_system_type="UNKNOWN:${jp_system_type}"
+esac
+
+
 # source all relevant subscripts. possible examples:
 # - bashrc.d/paths
 # - bashrc.d/env

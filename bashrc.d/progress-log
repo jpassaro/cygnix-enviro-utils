@@ -2,7 +2,7 @@
 # shellcheck disable=SC1090
 
 
-if check-for-package ggrep 'gnu grep as "ggrep"' ; then
+if [[ "$jp_system_type" == linux ]] || check-for-package ggrep 'gnu grep as "ggrep"' ; then
   function _backup_progress_log() {
     local target="$1"
     local match

@@ -21,7 +21,16 @@ fi
 
 # LESSOPEN
 # allow less to view gzip and several other non-ascii filetypes
-if check-for-package lesspipe.sh 'lesspipe.sh, a smarter less reader' ; then
+
+lesspipe=
+if [[ "$jp_system_type" == linux ]] ; then
+  lesspipe=lesspipe
+elif [[ "$jp_system_type" == darwin ]] ; then
+  lesspipe=lesspipe.sh
+fi
+
+if [[ -n "$lesspipe" ]] \
+      && check-for-package "${lesspipe}" "${lesspipe}, a smarter less reader" ; then
   LESSOPEN="|$(command -v lesspipe.sh) %s"
   export LESSOPEN
 fi

@@ -148,7 +148,7 @@ if isdirectory(s:vundlepath)
     " Plugin 'mitsuhiko/vim-jinja'
 
     " support for direnv files and settings
-    Plugin 'direnv/direnv.vim'
+    " Plugin 'direnv/direnv.vim'
 
     " new and improved python syntax
     Plugin 'vim-python/python-syntax'

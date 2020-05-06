@@ -4,7 +4,8 @@ if check-for-package --optional brew ; then
   source_pragma_once "$(brew --prefix)"/etc/bash_completion
 fi
 
-source_pragma_once /usr/local/etc/bash_completion.d/git-completion.bash
+gitcompletion=/usr/local/etc/bash_completion.d/git-completion.bash
+[[ -r "$gitcompletion" ]] && source_pragma_once "$gitcompletion"
 
 # the remainder of this is snippets taken from vim wikia for completing on
 # vim -t. These were apparently defective at some point and I had to comment
