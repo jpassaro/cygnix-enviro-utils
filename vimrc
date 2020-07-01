@@ -228,6 +228,7 @@ set expandtab softtabstop=4 shiftwidth=4
 
 " bash is a special baby, for some reason I find 2-char indent works better
 autocmd Filetype sh setlocal softtabstop=2 shiftwidth=2
+autocmd Filetype yaml setlocal softtabstop=2 shiftwidth=2
 
 " I do not remember how this got in here. It seems fine.
 au BufEnter /private/tmp/crontab.* setlocal backupcopy=yes
@@ -588,6 +589,7 @@ autocmd BufEnter */mothersback/ts/*.ts let b:syntastic_checkers = ["tsc", "tslin
 autocmd BufRead,BufNewFile *.njk set filetype=jinja
 
 autocmd BufRead,BufNewFile .progress/log.txt call SetUpProgressLog()
+autocmd BufRead,BufNewFile ~/_progress/log.txt call SetUpProgressLog()
 
 function SetUpProgressLog()
     if exists('b:jp_progress_log_setup')

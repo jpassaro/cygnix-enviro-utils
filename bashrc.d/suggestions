@@ -26,4 +26,8 @@ check_symlink "${MY_BASHRC_BASE}/custom.jq" ~/.jq "include ${MY_BASHRC_BASE}/cus
 grep -q "^[ ]*source .*/${MY_BASHRC_BASE##*/}/vimrc" ~/.vimrc \
   || _suggest-cmd "echo 'source ${MY_BASHRC_BASE}/vimrc' >>${HOME}/.vimrc"
 
+[[ "$jp_system_type" != 'darwin' ]] \
+  || defaults read com.apple.screencapture location >/dev/null 2>&1 \
+  || _suggest-cmd "mkdir -p ~/Pictures/Screenshots && defaults write com.apple.screencapture location ~/Pictures/Screenshots"
+
 unset -f _suggest-cmd check_symlink
