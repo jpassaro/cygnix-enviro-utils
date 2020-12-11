@@ -5,7 +5,7 @@
 current_branch="$(git symbolic-ref -q HEAD)"
 
 if [[ -z "$(git for-each-ref --format='%(upstream:short)' "$current_branch")" ]] ; then
-  git push -u origin "$current_branch" "$@" && git pr --offline
+  git push -u origin "$current_branch" "$@"
 else
   echo >&2 this branch already is being tracked, git push should suffice
   exit 1
