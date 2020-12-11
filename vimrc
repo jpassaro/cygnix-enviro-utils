@@ -229,9 +229,8 @@ set expandtab softtabstop=4 shiftwidth=4
 " globally.
 " autocmd Filetype javascript,html,jinja,vim,python,gitcommit setlocal ...
 
-" bash is a special baby, for some reason I find 2-char indent works better
-autocmd Filetype sh setlocal softtabstop=2 shiftwidth=2
-autocmd Filetype yaml setlocal softtabstop=2 shiftwidth=2
+" special babies in which for some reason 2-char indent works better
+autocmd Filetype sh,scala,yaml setlocal softtabstop=2 shiftwidth=2
 
 " I do not remember how this got in here. It seems fine.
 au BufEnter /private/tmp/crontab.* setlocal backupcopy=yes
@@ -294,16 +293,17 @@ endif
 
 " mark the right border with a subtle grey. That's 80 in python/vimL, 72 in
 " commit messages, for now the biggest places I care about line length.
-autocmd Filetype python,gitcommit,vim,bash highlight ColorColumn ctermbg=235
+autocmd Filetype python,gitcommit,vim,bash,pullrequest highlight ColorColumn ctermbg=235
 " soft limit, no real need to enforce.
 autocmd Filetype python,vim,bash,markdown,rst setlocal colorcolumn=+2 textwidth=78
+autocmd FileType pullrequest setlocal textwidth=72
 " no autowrap on text
 autocmd Filetype python setlocal formatoptions-=t
 " continue comment on <Enter> in Insert mode
 autocmd Filetype python,bash setlocal formatoptions+=r
 " strict limit; textwidth=72 from distro plugin, and it also sets
 " formatoptions to my liking
-autocmd Filetype gitcommit setlocal colorcolumn=+0 " textwidth is already 72
+autocmd Filetype gitcommit,pullrequest setlocal colorcolumn=+0 " textwidth is already 72
 
 " don't autocomment in vimscripts. however, leave 'c' so that it can autowrap
 " a very long comment like this one
@@ -667,3 +667,5 @@ endfunction
 autocmd FileType jinja call RagtagInit()
 
 hi Define ctermfg=10
+
+nnoremap <unique> <Leader>c :<C-U>helpclose<CR>
