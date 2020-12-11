@@ -32,6 +32,10 @@
 	ref = %h (\"%s\", %ad)
 [jploginutils]
 	present =
+[rebase]
+	autosquash = true
+[pull]
+	ff = only
 
 # set up via git config include.path
 
