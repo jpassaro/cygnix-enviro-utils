@@ -19,10 +19,6 @@ alias l="ls -FGh"
 
 # my own:
 alias grepp='grep -P' # obselete when ack is available
-alias ackp="ack --type=python"
-alias ackh="ack --type=html"
-alias ackn="ack --nopager" # suppress pager
-alias ackl='ack --pager="less -FRX"' # force pager
 alias vi="vim"
 alias view="vim -R"
 

@@ -154,3 +154,40 @@ function shrug() {
   # ¯\_(ツ)_/¯
   echo $'\uAF\\_(\u30C4)_/\uAF'
 }
+
+function helpless() {
+  if [[ "$#" -gt 0 ]] ; then
+    "$@" --help | less -iR
+  else
+    echo >&2 run "helpless <command>" to run "<command> --help" through a pager.
+  fi
+}
+
+function _ack-with-less() {
+  local lessopts="${1}"
+  shift
+  ack --pager="less -R${lessopts:+ }$lessopts" "$@"
+}
+
+function ackl() {
+  if [[ $# == 0 ]] ; then
+    echo >&2 ack with pager
+    return
+  fi
+  _ack-with-less '-FX' "$@"
+}
+
+function ackp() {
+  if [[ $# == 0 ]] ; then
+    echo >&2 ack --passthru with pager, jumping to the first match
+    return
+  fi
+  local lessopt patt
+  for patt ; do
+    if [[ "$patt" != -* ]] ; then
+      lessopt="+/$patt"
+      break
+    fi
+  done
+  _ack-with-less "${lessopt}" --passthru "$@"
+}
