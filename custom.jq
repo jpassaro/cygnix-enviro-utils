@@ -43,3 +43,16 @@ def recurse_type:
   else type
   end
 ;
+
+def flatten_jp:
+  with_entries(
+    (.key |= tostring)
+    | . as $orig
+    | .key as $upperkey
+    | .value
+    | if  type == "object" or type == "array"
+      then flatten_jp | to_entries[] | .key |= "\($upperkey).\(.)"
+      else $orig
+      end
+  )
+;
