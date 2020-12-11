@@ -23,6 +23,7 @@ fi
 # allow less to view gzip and several other non-ascii filetypes
 
 lesspipe=
+# shellcheck disable=SC2154
 if [[ "$jp_system_type" == linux ]] ; then
   lesspipe=lesspipe
 elif [[ "$jp_system_type" == darwin ]] ; then
@@ -39,3 +40,9 @@ source_pragma_once "$MY_BASHRC_D"/*-env
 
 # work around an iTerm2 issue that causes vim to misassign light/dark color scheme
 [[ -n "$COLORFGBG" ]] || export COLORFGBG="15;0"
+
+if check-for-package --optional jenv ; then
+  mkdir -p ~/.jenv/bin
+  prepend-path ~/.jenv/bin
+  eval "$(jenv init -)"
+fi

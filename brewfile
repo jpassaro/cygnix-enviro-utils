@@ -21,9 +21,6 @@ brew "bash"
 # Programmable completion for Bash 3.2
 brew "bash-completion"
 
-# Enables you to reproduce the CircleCI environment locally
-brew "circleci"
-
 # GNU File, Shell, and Text utilities
 brew "coreutils"
 
@@ -138,7 +135,7 @@ brew "vim"
 # Suite of barcodes-reading tools
 brew "zbar"
 
-cask "iterm2"
+#cask "iterm2"  # i often do this by hand
 cask "xquartz"
 # some casks that are likely to be useful
 # cask "gimp"
@@ -149,3 +146,6 @@ brew "a2ps"
 brew "ghostscript"
 brew "dash"
 brew "hub"
+
+brew "sbt"
+brew "jenv"
