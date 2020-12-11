@@ -329,7 +329,7 @@ map <F10> :echo "hi<" . synIDattr(synID(line("."),col("."),1),"name") . '> trans
 
 " sets :make to run f8diff and read errors into a quickfix list.
 " errorformat copied from nvie/vim-flake8
-command SetPyMake setlocal makeprg=f8diff makeef=/tmp/flake.err errorformat="%f:%l:%c: %m\,%f:%l: %m"
+command SetPyMake setlocal makeprg=flake8 makeef=/tmp/flake.err errorformat="%f:%l:%c: %m\,%f:%l: %m"
 autocmd Filetype python SetPyMake
 
 " my convention is to save temporary git files as "./.log"
@@ -513,7 +513,7 @@ let g:dispatch_use_shell_escape = 1
 " syntastic settings
 let g:syntastic_always_populate_loc_list = 1
 let g:syntastic_javascript_checkers = ['eslint']
-let g:syntastic_python_checkers = ['flake8']
+let g:syntastic_python_checkers = ['flake8', 'mypy']
 " let g:syntastic_python_flake8_args = '--select=E901,F821,F401,F841,F812'
 let g:syntastic_sh_shellcheck_args = '-x'
 

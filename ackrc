@@ -4,5 +4,7 @@
 --ignore-dir=is:target
 --ignore-dir=is:_scratch
 --ignore-dir=is:venv
+--ignore-dir=is:.mypy_cache
+--ignore-dir=is:dist
 --type-set
 sh:ext:sh,bash

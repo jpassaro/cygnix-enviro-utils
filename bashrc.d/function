@@ -91,7 +91,9 @@ function activate() {
 }
 
 function py() {
-  _exec_venv python "$@"
+  local prg
+  prg="$(_find_venv python)" || prg=python3
+  "$prg" "$@"
 }
 
 function pi() {
@@ -99,7 +101,7 @@ function pi() {
 }
 
 # used by venv utilities above
-function _condition_venv() {
+function _find_venv() {
   for venv in venv .venv ; do
     local prg="${venv}/bin/${1}"
     if [[ -e "$prg" ]] ; then
@@ -107,19 +109,21 @@ function _condition_venv() {
       return 0
     fi
   done
-  echo >&2 venv "$1" not found
   return 1
 }
 
+function _condition_venv() {
+  _find_venv "$1" || {
+    echo >&2 venv "$1" not found
+    return 1
+  }
+}
+
 function _exec_venv() {
-  local prg result
-  prg="$(_condition_venv "$1")"
-  result="$?"
-  if [[ "$result" == 0 ]] ; then
-    shift
-    "$prg" "$@"
-  fi
-  return "$result"
+  local prg
+  prg="$(_condition_venv "$1")" || return $?
+  shift
+  "$prg" "$@"
 }
 
 # list functions
