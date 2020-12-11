@@ -1,0 +1,91 @@
+#!/bin/bash
+
+function print() {
+  printf "$@"
+  printf '\033[0m\n'
+}
+
+function print-colors() {
+  for i in "$@" ; do
+    printf '\033[%s%sm%s\t' "$pre" "$i" "$i"
+  done
+  print ''  # reset colors
+}
+
+if [[ "$*" == *256* ]] ; then
+  args=1
+  print '\\033[38;2;XXXm'
+  pre='38;5;'
+  printf 'regular:\t' ; print-colors {0..7}
+  printf 'intense:\t' ; print-colors {8..15}
+  print 'RGB:'
+  for ((j=16 ; j < 52 ; j+=12)) ; do
+    for ((k=j ; k < 232  ; k+=36)) ; do
+      colors=()
+      print-colors $(eval "printf '%s ' {${k}..$((k+11))}")
+    done
+  done
+  print greyscale:
+  print-colors {232..243}
+  print-colors {244..255}
+  print '\\033[38;2;<r>;<g>;<b>m for full RGB (find a colorwheel for that'
+  print '\\033[48;{2,5};...m to set background'
+else
+  pre='0;'
+  printf '\t\t'
+  print '\\033[%sXXm\t' '1;' ''  '2;'
+  names=(black red green yellow blue magenta cyan white)
+  for j in {30..37} ; do
+    j60="$((j+60))"
+    idx="$((j-30))"
+    printf '\033[0m%s:%-9s\t' "$idx" "${names[$idx]}"
+    print-colors "1;$j" "1;$j60" "$j" "$j60" "2;$j" "2;$j60"
+  done
+  print '\\033[{40-47,100-107}m for corresponding background colors'
+  print '\\033[{38,48};...m for 256 colors or full RGB; run %s 256 for more detail' "$0"
+fi
+
+
+print ''
+print '\\033[%sm \t\033[0;%sm%s\n\033[0m' \
+  39 39 'reset color' \
+  0 0 'reset all attributes' \
+  4 4 underlined \
+  24 24 'not underlined' \
+  1 1 bold \
+  22 22 plain \
+  2 2 faint \
+
+
+if [[ "$*" == cursor ]] ; then
+  args=1
+  print 'Motion:'
+  print '\\033[<N>A ----- Move the cursor up N (default 1) lines, preserving column'
+  print '\\033[<N>B ----- Move the cursor down N (default 1) lines, preserving column'
+  print '\\033[<N>C ----- Move the cursor forward N (default 1) columns on current line'
+  print '\\033[<N>D ----- Move the cursor backward N (default 1) columns on current line'
+  print '\\033[<N>E ----- Move the cursor up N (default 1) lines and to column 1'
+  print '\\033[<N>F ----- Move the cursor down N (default 1) lines and to column 1'
+  print '\\033[<N>G ----- Move the cursor to column N (default 1) on current line'
+  print '\\033[<L>;<C>H - Move the cursor to line L and column C (both default 1)'
+  print '\\033[<L>;<C>f - Move the cursor to line L and column C (both default 1), with formatting semantics'
+  print '\\033[s -------- Save cursor position'
+  print '\\033[u -------- Restore cursor position'
+  print 'Editing:'
+  print '\\033[K -------- Clear from cursor to end of line (no motion)'
+  print '\\033[1K ------- Clear from cursor to beginning of line (no motion)'
+  print '\\033[2K ------- Clear entire line (no motion)'
+  print '\\033[J -------- Clear the screen from the cursor to the bottom (no motion)'
+  print '\\033[1J ------- Clear the screen from the cursor to the top (no motion)'
+  print '\\033[2J ------- Clear the screen entirely, on some systems also move to (0,0)'
+  print 'Scrolling:'
+  print '\\033[<N>S ----- Scroll whole page up by N (default 1) lines'
+  print '\\033[<N>T ----- Scroll whole page down by N (default 1) lines'
+fi
+
+print 'Reference: %s' 'https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_parameters'
+
+if [[ -z "$args" ]] ; then
+  print 'Run %s 256 to see how to print 256 colors.' "$0"
+  print 'Run %s cursor to see how to manipulate the cursor.' "$0"
+fi

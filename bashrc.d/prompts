@@ -6,29 +6,39 @@ source_pragma_once "$MY_BASHRC_D"/iterm-extensions
 
 # TODO test this PS1 stuff on linux
 
-# green datetime; bold-red working directory
-PS1='[\l] \[\e[0;32m\]\D{%F %T}\[\e[m\] \[\e[1;31m\]\W\[\e[m\] '
+_jp_ps1_color_timestamp='0;32'  # regular green
+_jp_ps1_color_cwd='1;31'  # bold red
+_jp_ps1_color_prompt='1;34'  # bold blue
+_jp_ps1_color_git='1;30'  # bold grey
+_iterm_profile="${ITERM_PROFILE,,}"
+if [[ "$_iterm_profile" == *solarized* && "$_iterm_profile" == *dark* ]] ; then
+  _jp_ps1_color_git='1;32'  # bold green for solarized dark
+  _jp_ps1_color_timestamp='0;36'  # regular green
+fi
+
+# bold-red working directory
+PS1='[\l]' # tty
+PS1="$PS1"' \[\e[${_jp_ps1_color_timestamp}m\]\D{%F %T}\[\e[0m\]'  # timestamp, in green
+PS1="$PS1"' \[\e[${_jp_ps1_color_cwd}m\]\W\[\e[m\]' # $(basename $PWD), in red
 
 # add angle-brackets for each nested bash
 for ((i=1 ; i < SHLVL ; i++)) ; do
-  echo shlvl=$i
   PS1=">$PS1"
 done
 
 # set terminal title: tty, cwd, terminal size
 if [[ "$TERM" == xterm* ]] ; then
   # shellcheck disable=SC2016   # recheck these variables each time
-  titlebar='\[\033]0;\l:\w - ${COLUMNS}x${LINES}\007\]'
-  PS1="$titlebar$PS1"
-  unset titlebar
+  PS1='\[\033]0;\l:\w - ${COLUMNS}x${LINES}\007\]'"$PS1"
 fi
 
 # add git to ps1
 for promptfile in /usr/lib/git-core/git-sh-prompt {,/usr/local}/etc{,/bash_completion.d}/git-prompt{.sh,} ; do
   if [[ -r "${promptfile}" && ! -d "$promptfile" ]] ; then
     source_pragma_once "${promptfile}"
-    # in bold grey, parenthesized git prompt
-    PS1="$PS1"'\[\e[1;30m\]$(__git_ps1 "(%s)")\[\e[m\]'
+    # parenthesize the git prompt info
+    # reference the color dynamically so i can experiment
+    PS1="$PS1"' \[\e[${_jp_ps1_color_git}m\]$(__git_ps1 "(%s)")\[\e[m\]'
     # git prompt consists of:
     # branch name (automatic);
     # '*' for dirty state;
@@ -42,7 +52,7 @@ for promptfile in /usr/lib/git-core/git-sh-prompt {,/usr/local}/etc{,/bash_compl
     # subdirectory.
     GIT_PS1_HIDE_IF_PWD_IGNORED=x
     # default char to separate branch name from dirty state details is space.
-    #GIT_PS1_STATESEPARATOR=
+    GIT_PS1_STATESEPARATOR=:
     break
   fi
 done
@@ -51,4 +61,4 @@ if [[ -z "$GIT_PS1_SHOWDIRTYSTATE" ]] ; then
 fi
 
 # finish up PS1 with a blue dollar or hash
-PS1="$PS1"' \[\e[1;34m\]\$\[\e[m\] '
+PS1="$PS1"' \[\e[${_jp_ps1_color_prompt}m\]\$\[\e[m\] '

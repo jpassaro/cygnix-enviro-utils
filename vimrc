@@ -174,6 +174,9 @@ if isdirectory(s:vundlepath)
     " date increments (primarily for .progress/log)
     Plugin 'tpope/vim-speeddating'
 
+    " new shiny color scheme
+    Plugin 'altercation/vim-colors-solarized'
+
     " All Plugins must be added before the following line
     call vundle#end()            " required
 else
@@ -459,7 +462,11 @@ endfunction
 
 " tried zenburn... it was okay but not always.
 " I'm currently liking slate for html...
-colorscheme slate
+if $ITERM_PROFILE =~? 'solarized' && CheckVundle('solarized')
+    colorscheme solarized
+else
+    colorscheme slate
+endif
 
 function! NewlineNearCursor(where) abort
     let nlcount = v:count1
@@ -550,7 +557,7 @@ nmap ]Z <Plug>unimpairedQNFile
 set t_u7=
 set t_RV=
 
-if exists('$ITERM_SHELL_INTEGRATION_INSTALLED')
+if $TERM_PROGRAM =~? 'iterm'
     let &t_SI = "\<ESC>]1337;CursorShape=1\x7"  " vertical bar
     let &t_SR = "\<ESC>]1337;CursorShape=2\x7"  " underline
     let &t_EI = "\<ESC>]1337;CursorShape=0\x7"  " block
