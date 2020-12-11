@@ -49,13 +49,33 @@ function code() {
 function space() {
   local lines=${LINES}
   local arg="${1:-0}"
-  local neg=""
-  local div=""
-  [[ -n "$1" && "$arg" != -* ]] || { neg=x ; arg=${arg##-} ; }
-  [[ "${arg}" != /* ]] || { div=x ; arg="${arg##/}" ; }
-  [[ "${arg}" != *[^0-9]* ]] || return 1 ;
-  [[ -z "$div" ]] || arg="$((LINES / arg))"
-  [[ -z "$neg" ]] && lines="$arg" || lines="$((lines - arg))"
+  local neg="" div="" mul=""
+  case "$arg" in
+    \**)
+      mul=x
+      arg="${arg##\*}"
+      ;;
+    /-*|/0) return 1 ;;
+    -*|/*|0)
+      # -3 = clear length minus 3; /3 = clear length/3 ; -/3 = clear 2/3 length
+      # blank = full length
+      if [[ "$arg" == ?(0|-*) ]] ; then
+        neg=x
+        arg="${arg##-}"
+      fi
+      if [[ "$arg" == /* ]] ; then
+        div=x
+        arg="${arg##/}"
+      fi
+      ;;
+  esac
+  if [[ "${arg}" == *[^0-9]* ]] ; then return 1 ; fi
+  if [[ -n "$mul" ]] ; then
+    lines="$((LINES * arg))"
+  else
+    [[ -z "$div" ]] || arg="$((LINES / arg))"
+    [[ -z "$neg" ]] && lines="$arg" || lines="$((lines - arg))"
+  fi
   seq "$lines" | tr -dC \\n
 }
 
@@ -131,9 +151,19 @@ function functions() {
   declare -f | sed '/^{ *$/,/^} *$/ d'
 }
 
-# look for vim swap files in current file tree
 function hasvim() {
-  find . -maxdepth "${1:-5}" -name '[._]*.sw*' -o -name '.sw*'
+  # shellcheck disable=SC2016
+  echo >&2 'WARNING: `hasvim()` is deprecated, use `swapfiles()` instead'
+  ! swapfiles "${1:-5}"
+}
+
+# look for vim swap files in current file tree
+function swapfiles() {
+  local output
+  { read -rN1 output ; printf '%s' "$output" ; cat ; } < <(
+    find . ${1:+-maxdepth "$1"} -name '[._]*.sw*' -o -name '.sw*'
+  )
+  [[ -z "$output" ]]
 }
 
 # create pgrep-like function
@@ -157,6 +187,42 @@ fi
 function shrug() {
   # ¯\_(ツ)_/¯
   echo $'\uAF\\_(\u30C4)_/\uAF'
+}
+
+function _git_warn() {
+  echo >&2 WARNING: "$@"
+  echo "To bypass this helpful warning, redo your command with 'command git'."
+  return 1
+}
+
+function _git_check_command() {
+  case "$1" in
+    reset*--hard*|last*--hard*)
+      if ! command git diff --quiet ; then
+        _git_warn 'you may be about to clobber extant changes!!!'
+      fi
+      ;;
+    co\ *|checkout\ *|stash\ *|switch\ *|ci\ *|commit\ *|wip\ *)
+      if ! swapfiles ; then
+        _git_warn "don't change working tree / index state, you are still editing files"
+      fi
+      ;;
+    clone*\ bam:*)
+      # shellcheck disable=SC2016
+      _git_warn 'for cloning a bamtech github repo, consider using `git bam`'
+      ;;
+    *)
+      true ;;
+  esac
+}
+
+function git() {
+  # save myself from some dumb mistakes
+  if _git_check_command "$*" ; then
+    command git "$@"
+  else
+    false
+  fi
 }
 
 function helpless() {
