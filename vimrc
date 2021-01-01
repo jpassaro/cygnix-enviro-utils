@@ -177,6 +177,9 @@ if isdirectory(s:vundlepath)
     " new shiny color scheme
     Plugin 'altercation/vim-colors-solarized'
 
+    " pug templates for node development
+    Plugin 'digitaltoad/vim-pug'
+
     " All Plugins must be added before the following line
     call vundle#end()            " required
 else

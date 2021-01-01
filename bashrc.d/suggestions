@@ -31,3 +31,5 @@ grep -q "^[ ]*source .*/${MY_BASHRC_BASE##*/}/vimrc" ~/.vimrc \
   || _suggest-cmd "mkdir -p ~/Pictures/Screenshots && defaults write com.apple.screencapture location ~/Pictures/Screenshots"
 
 unset -f _suggest-cmd check_symlink
+
+check-for-package shellcheck || true
