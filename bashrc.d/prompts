@@ -17,7 +17,7 @@ if [[ "$_iterm_profile" == *solarized* && "$_iterm_profile" == *dark* ]] ; then
 fi
 
 # bold-red working directory
-PS1='[\l]' # tty
+PS1="[${jp_prompt_tty:-\l}]" # tty
 PS1="$PS1"' \[\e[${_jp_ps1_color_timestamp}m\]\D{%F %T}\[\e[0m\]'  # timestamp, in green
 PS1="$PS1"' \[\e[${_jp_ps1_color_cwd}m\]\W\[\e[m\]' # $(basename $PWD), in red
 
@@ -28,7 +28,8 @@ done
 
 # set terminal title: tty, cwd, terminal size
 if [[ "$TERM" == xterm* ]] ; then
-  # shellcheck disable=SC2016   # recheck these variables each time
+  # recheck these variables each time
+  # shellcheck disable=SC2016
   PS1='\[\033]0;\l:\w - ${COLUMNS}x${LINES}\007\]'"$PS1"
 fi
 
