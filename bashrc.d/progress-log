@@ -42,9 +42,30 @@ if [[ "$jp_system_type" == linux ]] || check-for-package ggrep 'gnu grep as "ggr
     git config jp.progress.promptnext || true
   }
 
+  function find-progress-log() {
+    local where="${1:-$(pwd -P)}"
+    where="$(readlink -f "$where")"
+    while [[ ! -f "$where"/.progress/log.txt ]] ; do
+      #echo "$where"/.progress/log.txt does not exist
+      if [[ "$where" == "$HOME" ]] ; then
+        echo >&2 No .progress/log.txt found down the folder tree.
+        echo >&2 Call progress-init.
+        return 1
+      fi
+      where="${where%/*}"
+    done
+    echo "$where"/.progress/log.txt
+  }
+
   if ! command -v progress >/dev/null ; then
     function progress() {
-      _do_progress "$@"
+      local file status
+      file="$(find-progress-log "$@")"
+      status=$?
+      if [[ "$status" != 0 ]] ; then
+        return "$status"
+      fi
+      _do_progress "$file"
     }
   fi
 fi

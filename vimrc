@@ -595,7 +595,7 @@ autocmd BufEnter */mothersback/ts/*.ts let b:syntastic_checkers = ["tsc", "tslin
 
 autocmd BufRead,BufNewFile *.njk set filetype=jinja
 
-autocmd BufRead,BufNewFile .progress/log.txt call SetUpProgressLog()
+autocmd BufRead,BufNewFile */.progress/log.txt call SetUpProgressLog()
 autocmd BufRead,BufNewFile ~/_progress/log.txt call SetUpProgressLog()
 
 function SetUpProgressLog()
