@@ -47,3 +47,7 @@ then
   # suppress its extremely annoying paging behavior
   alias uniname='uniname -p'
 fi
+
+if [[ "$jp_system_type" == linux ]] ; then
+  alias open='xdg-open'
+fi

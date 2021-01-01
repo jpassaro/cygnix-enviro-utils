@@ -6,7 +6,9 @@ if [[ "$jp_system_type" == linux ]] || check-for-package ggrep 'gnu grep as "ggr
   function _backup_progress_log() {
     local target="$1"
     local match
-    match="$(ggrep -Pom1 '^Date: \d{4}-\d{2}-\d{2}[._+=:-]?[\w-]*' "$target")" || {
+    local grep
+    if [[ "$jp_system_type" == linux ]] ; then grep=grep ; else grep=ggrep ; fi
+    match="$("$grep" -Pom1 '^Date: \d{4}-\d{2}-\d{2}[._+=:-]?[\w-]*' "$target")" || {
       echo >&2 'no date found in progress log, could not back up'
       return 1
     }
