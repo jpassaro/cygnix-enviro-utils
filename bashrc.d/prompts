@@ -1,36 +1,54 @@
 #!/bin/bash
-# shellcheck disable=SC2034
+# shellcheck disable=SC2034 disable=SC2016
 
 # iterm integration seems to mess this up if called afterward
 source_pragma_once "$MY_BASHRC_D"/iterm-extensions
 
 # TODO test this PS1 stuff on linux
 
-_jp_ps1_color_timestamp='0;32'  # regular green
-_jp_ps1_color_cwd='1;31'  # bold red
-_jp_ps1_color_prompt='1;34'  # bold blue
-_jp_ps1_color_git='1;30'  # bold grey
+function _jp_ps1_nonprinting() {
+  printf '\\[%s\\]' "${1?}"
+}
+
+_jp_ps1_csi='\e['
+
+function _jp_ps1_withcolor() {
+  local color="${1?}" text="${2?}"
+  _jp_ps1_nonprinting "${_jp_ps1_csi}${color}m"
+  printf %s "$text"
+  _jp_ps1_nonprinting "${_jp_ps1_csi}0m"  # reset to baseline
+}
+
+
+# using : ${var:=value} instead of straight assignment allows per-host override
+: "${_jp_ps1_color_cwd:=1;31}"  # bold red
+: "${_jp_ps1_color_prompt:=1;34}"  # bold blue
 _iterm_profile="${ITERM_PROFILE,,}"
 if [[ "$_iterm_profile" == *solarized* && "$_iterm_profile" == *dark* ]] ; then
-  _jp_ps1_color_git='1;32'  # bold green for solarized dark
-  _jp_ps1_color_timestamp='0;36'  # regular green
+  : "${_jp_ps1_color_git:=1;32}"  # bold green for solarized dark
+  : "${_jp_ps1_color_timestamp:=0;36}"  # regular green
+else
+  : "${_jp_ps1_color_git:=1;30}"  # bold grey
+  : "${_jp_ps1_color_timestamp:=0;32}"  # regular green
 fi
 
-# bold-red working directory
-PS1="[${jp_prompt_tty:-\l}]" # tty
-PS1="$PS1"' \[\e[${_jp_ps1_color_timestamp}m\]\D{%F %T}\[\e[0m\]'  # timestamp, in green
-PS1="$PS1"' \[\e[${_jp_ps1_color_cwd}m\]\W\[\e[m\]' # $(basename $PWD), in red
+: "${jp_prompt_tty:=\l}"
+PS1="[${jp_prompt_tty}]" # bracketed tty
+PS1="${PS1} $(_jp_ps1_withcolor '${_jp_ps1_color_timestamp}' '\D{%F %T}')"  # timestamp, in green
+PS1="${PS1} $(_jp_ps1_withcolor '${_jp_ps1_color_cwd}' '\W')" # $(basename $PWD), in bold red
 
 # add angle-brackets for each nested bash
 for ((i=1 ; i < SHLVL ; i++)) ; do
   PS1=">$PS1"
 done
 
+_jp_ps1_osc='\e]'
+_jp_ps1_bel='\007'
+_jp_ps1_dimensions='${COLUMNS}x${LINES}'
+
 # set terminal title: tty, cwd, terminal size
 if [[ "$TERM" == xterm* ]] ; then
-  # recheck these variables each time
-  # shellcheck disable=SC2016
-  PS1='\[\033]0;\l:\w - ${COLUMNS}x${LINES}\007\]'"$PS1"
+  PS1="$(_jp_ps1_nonprinting "${_jp_ps1_osc}0:${jp_prompt_tty}:\w - ${_jp_ps1_dimensions}${_jp_ps1_bel}")$PS1"
 fi
 
 # add git to ps1
@@ -39,7 +57,7 @@ for promptfile in /usr/lib/git-core/git-sh-prompt {,/usr/local}/etc{,/bash_compl
     source_pragma_once "${promptfile}"
     # parenthesize the git prompt info
     # reference the color dynamically so i can experiment
-    PS1="$PS1"' \[\e[${_jp_ps1_color_git}m\]$(__git_ps1 "(%s)")\[\e[m\]'
+    PS1="${PS1} $(_jp_ps1_withcolor '${_jp_ps1_color_git}' '$(__git_ps1 "(%s)")')"
     # git prompt consists of:
     # branch name (automatic);
     # '*' for dirty state;
@@ -62,4 +80,4 @@ if [[ -z "$GIT_PS1_SHOWDIRTYSTATE" ]] ; then
 fi
 
 # finish up PS1 with a blue dollar or hash
-PS1="$PS1"' \[\e[${_jp_ps1_color_prompt}m\]\$\[\e[m\] '
+PS1="${PS1} $(_jp_ps1_withcolor '${_jp_ps1_color_prompt}' '\$') "
