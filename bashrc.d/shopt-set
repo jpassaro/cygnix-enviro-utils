@@ -2,8 +2,9 @@
 
 # several useful bash options available via `set` and `shopt`.
 
-# Don't use ^D to exit, unless this is a nested bash process
-if [[ "$SHLVL" == 1 ]] ; then
+# Don't use ^D to exit, unless this is a nested bash process,
+# or otherwise overridden (for example an SSH host)
+if [[ "$SHLVL" != 1 || "${_jp_allow_ctrl_d:=no}" == [yY]* ]] ; then
   set -o ignoreeof
 else
   set +o ignoreeof
