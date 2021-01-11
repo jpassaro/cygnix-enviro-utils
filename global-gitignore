@@ -11,3 +11,7 @@ _scratch/*
 **/.DS_Store
 
 .progress/
+
+**/.bloop/
+/.metals/
+/project/metals.sbt
