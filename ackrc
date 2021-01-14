@@ -6,5 +6,6 @@
 --ignore-dir=is:venv
 --ignore-dir=is:.mypy_cache
 --ignore-dir=is:dist
+--ignore-dir=is:.bloop
 --type-set
 sh:ext:sh,bash
