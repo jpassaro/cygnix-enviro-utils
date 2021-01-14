@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+if [[ $# == 0 ]] ; then
+  echo >&2 'usage: git new [-n|--no-fetch] <new-branch>'
+  exit 1
+fi
+
+if [[ "$1" == '--no-fetch' || "$1" == '-n' ]] ; then
+  echo >&2 skipping fetch
+  shift
+else
+  fetch=1
+fi
+
+if [[ -t 0 ]] ; then
+  read -rN1 -p "About to ${fetch:+fetch and }create new branch '$1' from origin/master, Enter to proceed or Ctrl-C to cancel" \
+    || exit $?
+fi
+
+if [[ -n "$fetch" ]] ; then
+  git fetch origin master
+fi
+
+exec git checkout --no-track -b "$1" origin/master

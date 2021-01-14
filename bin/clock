@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+function onexit() {
+  printf '\ndone\n'
+}
+
+trap onexit EXIT
+
+i=1
+
+
+while : ; do
+  if read -rt 0.01 ; then
+    ((i=i+1))
+  fi
+  printf '\r%02d %s' "$i" "$(date)"
+done
