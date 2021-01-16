@@ -306,7 +306,7 @@ set laststatus=2
 " commit messages, for now the biggest places I care about line length.
 autocmd Filetype python,gitcommit,vim,bash,pullrequest highlight ColorColumn ctermbg=235
 " soft limit, no real need to enforce.
-autocmd Filetype python,vim,bash,markdown,rst setlocal colorcolumn=+2 textwidth=78
+autocmd Filetype python,vim,bash,markdown,rst,text setlocal colorcolumn=+2 textwidth=78
 autocmd FileType pullrequest setlocal textwidth=72
 " no autowrap on text
 autocmd Filetype python setlocal formatoptions-=t
