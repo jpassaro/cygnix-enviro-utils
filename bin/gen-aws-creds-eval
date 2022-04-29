@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+AWS_PROFILE="${1:-${AWS_PROFILE:?profile argument or AWS_PROFILE must be provided}}"
+export AWS_PROFILE
+
+role="$(aws configure get role_arn)" && [[ -n "$role" ]] || exit 1
+
+profile="$(aws configure get source_profile)"
+
+sessionname="local-jpassaro-${EPOCHSECONDS:-$(gdate +%s)}"
+
+aws ${profile:+--profile="$profile"} sts assume-role \
+    --role-arn "$role" \
+    --role-session-name "$sessionname" \
+  | jq -r '.Credentials | to_entries[] | "\(.key)\t\(.value)"' \
+  | while read -r key value ; do
+      key="AWS_$(perl -pe 's/(?<=[a-z])(?=[A-Z0-1])/_/g' <<<"$key" | tr a-z A-Z)"
+      printf 'export %s=%q\n' "$key" "$value"
+    done
