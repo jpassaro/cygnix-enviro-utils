@@ -18,12 +18,18 @@ function c(){
 }
 
 function code() {
-  local suff="$1"
-  if [[ -z "$suff" && -d ~/code/"${PASSARO_CODE_LOC}" ]] ; then
-    c ~/code/"${PASSARO_CODE_LOC}"
-    [[ ! -d .git ]] || git status
-    return 0
+  if [[ $# == 0 ]] ; then
+    if [[ -L .main ]] ; then
+      "${EDITOR:-vi}" "$(readlink .main)"
+      return $?
+    elif [[ -d ~/code/"${PASSARO_CODE_LOC}" ]] ; then
+      c ~/code/"${PASSARO_CODE_LOC}"
+      [[ ! -d .git ]] || git status
+      return 0
+    fi
+    return 1
   fi
+  local suff="$1"
   local folders=(~/code/*"$suff")
   local numf="${#folders[@]}"
   case "$numf" in
@@ -219,6 +225,16 @@ function _git_check_command() {
     clone*\ bam:*)
       # shellcheck disable=SC2016
       _git_warn 'for cloning a bamtech github repo, consider using `git bam`'
+      ;;
+    'tag -d '*|'tag '*' -d '*)
+      ;;
+    'tag '*)
+      local mainrev
+      mainrev="$(command git rev-parse --quiet --verify origin/master)" \
+        || mainrev="$(command git rev-parse --quiet --verify origin/main)"
+      if [[ "$(command git rev-parse HEAD)" != "$mainrev" ]] || ! command git diff --quiet ; then
+        _git_warn "you are tagging a revision that is not the upstream main ($mainrev)"
+      fi
       ;;
     *)
       true ;;

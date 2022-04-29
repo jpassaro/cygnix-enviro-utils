@@ -9,6 +9,7 @@
 	reb = rebase
 	rebi = rebase --interactive
 	sho = show --no-patch
+	lstags = for-each-ref --sort=-creatordate  --format='%(refname:short)\t%(creatordate:short)\t%(contents:subject)' 'refs/tags/*'
 [core]
 	excludesfile = ~/.gitignore
 	abbrev = 12

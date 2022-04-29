@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+branch="${1:-refs/remotes/origin/HEAD}"
+
+git rev-parse --verify "$branch" >/dev/null || exit 1
+
+tag="$(
+  git for-each-ref \
+    --count=1 \
+    --merged="$branch" \
+    --sort=-creatordate \
+    --format='%(refname:short)' \
+    'refs/tags/*'
+)"
+
+mapfile -t sincetag < <(git rev-list --reverse "${tag}..${branch}")
+
+exec git show -s "$(git rev-parse "$tag")" "${sincetag[@]}"
