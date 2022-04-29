@@ -1,6 +1,11 @@
 #!/bin/bash
 # shellcheck disable=SC2034
-export EDITOR=vim
+
+if command -v nvim ; then
+  export EDITOR=nvim
+else
+  export EDITOR=vim
+fi
 
 # PS1
 source_pragma_once "$MY_BASHRC_D"/prompts
@@ -43,6 +48,6 @@ source_pragma_once "$MY_BASHRC_D"/*-env
 
 if check-for-package --optional jenv ; then
   mkdir -p ~/.jenv/bin
-  prepend-path ~/.jenv/bin
-  eval "$(jenv init -)"
+  prepend-path ~/.jenv/{bin,shims}
+  eval "$(jenv init - | grep -v '^export PATH=')"
 fi

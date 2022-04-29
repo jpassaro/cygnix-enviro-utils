@@ -14,4 +14,8 @@ _scratch/*
 
 **/.bloop/
 /.metals/
-/project/metals.sbt
+**/metals.sbt
+
+.java-version
+
+.main

@@ -19,8 +19,16 @@ alias l="ls -FGh"
 
 # my own:
 alias grepp='grep -P' # obselete when ack is available
-alias vi="vim"
-alias view="vim -R"
+
+alias nv=nvim
+if [[ -n "$JP_LOGIN_UTILS_USE_NEOVIM" ]] ; then
+  check-for-package nvim neovim
+  alias vi="nvim"
+  alias view="nvim -R"
+else
+  alias vi="vim"
+  alias view="vim -R"
+fi
 
 # enables "fuck" command to correct your last command
 if check-for-package thefuck ; then eval "$(thefuck --alias)" ; fi

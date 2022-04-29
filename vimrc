@@ -144,7 +144,8 @@ Plug 'Konfekt/FastFold'
 Plug 'wannesm/wmgraphviz.vim'
 
 " read coverage report
-Plug 'mgedmin/coverage-highlight.vim'
+" problems with nvim; disposable
+"Plug 'mgedmin/coverage-highlight.vim'
 
 " mscgen syntax
 Plug 'goodell/vim-mscgen'
@@ -169,7 +170,7 @@ Plug 'airblade/vim-gitgutter'
 Plug 'tpope/vim-eunuch'
 
 " cross-editor text properties
-Plug 'editorconfig/editorconfig-vim'
+" Plug 'editorconfig/editorconfig-vim'
 
 " better statusline plugin
 Plug 'itchyny/lightline.vim'
@@ -180,16 +181,34 @@ Plug 'leafgarland/typescript-vim'
 " date increments (primarily for .progress/log)
 Plug 'tpope/vim-speeddating'
 
-" new shiny color scheme
-Plug 'altercation/vim-colors-solarized'
-
 " pug templates for node development
 Plug 'digitaltoad/vim-pug'
 
-" coc for scala
-Plug 'neoclide/coc.nvim', {'branch': 'release'}
+if has('nvim')
+    Plug 'nvim-lua/plenary.nvim'
+    Plug 'scalameta/nvim-metals'
+    Plug 'ishan9299/nvim-solarized-lua'
+    Plug 'hrsh7th/nvim-cmp'
+    Plug 'hrsh7th/cmp-nvim-lsp'
+    Plug 'hrsh7th/cmp-vsnip'
+    Plug 'hrsh7th/vim-vsnip'
+    Plug 'mfussenegger/nvim-dap'
+    Plug 'mfussenegger/nvim-dap-python'
+else
+    " coc for scala
+    Plug 'neoclide/coc.nvim', {'branch': 'release'}
+    Plug 'scalameta/coc-metals', {'do': 'npm install --frozen-lockfile'}
 
-Plug 'scalameta/coc-metals', {'do': 'npm install --frozen-lockfile'}
+    " new shiny color scheme
+    Plug 'altercation/vim-colors-solarized'
+endif
+
+
+Plug 'vim-test/vim-test'
+
+Plug 'hashivim/vim-terraform'
+
+Plug 'mogelbrod/vim-jsonpath'
 
 " All Plugins must be added before the following line
 call plug#end()            " required
@@ -252,18 +271,29 @@ nnoremap <Leader>n :<C-U>noh<CR>:<CR>
 
 set laststatus=2
 "if CheckVundle('fancy status line')
+    let s:lspstatus = has('nvim') ? 'nvi-lsp' : 'cocstatus'
     let g:lightline = {
-                \ 'colorscheme': 'Tomorrow_Night_Eighties',
-                \ 'active': {
+                \ 'colorscheme': 'solarized',
+                \ 'inactive': {
                 \    'left': [
-                \       ['mode'],
-                \       ['readonly', 'filename', 'modified'],
-                \       ['branchname', 'timestamp', 'cocstatus']
+                \       ['filename', 'modified', 'filetype', 'fileformat'],
+                \       ['branchname', 'timestamp']
                 \    ],
                 \    'right': [
                 \       ['jpdimensions'],
                 \       ['lineinfo', 'percent'],
-                \       ['charvaluehex', 'fileformat', 'filetype'],
+                \    ]
+                \  },
+                \ 'active': {
+                \    'left': [
+                \       ['mode'],
+                \       ['readonly', 'filename', 'modified', 'filetype', 'fileformat'],
+                \       ['branchname', 'timestamp', s:lspstatus]
+                \    ],
+                \    'right': [
+                \       ['jpdimensions'],
+                \       ['charvaluehex', 'byteinfo'],
+                \       ['lineinfo', 'percent'],
                 \    ]
                 \  },
                 \  'component': {
@@ -271,18 +301,45 @@ set laststatus=2
                 \    'jpdimensions': '(%{winwidth(0)}x%{winheight(0)})',
                 \    'percent': '%P',
                 \    'fileformat': '%{&ff==#"unix"?"":&ff}',
-                \    'filetype': '%{&ft}'
+                \    'nvi-lsp': '%{exists("g:metals_status") ? g:metals_status : ""}',
+                \    'lineinfo': '%l:%c / %L lines',
+                \    'filetype': 'ft=%{&ft}'
                 \  },
                 \  'component_visible_condition': {
                 \    'fileformat': '&ff==#"unix" || &ff',
-                \    'filetype': '&ft'
+                \    'filetype': '&ft',
+                \    'nvi-lsp': 'exists("g:metals_status") && g:metals_status != ""'
                 \  },
                 \  'component_function': {
                 \    'timestamp': 'JPtimestamp',
                 \    'cocstatus': 'coc#status',
+                \    'byteinfo': 'JPByteInfo',
                 \    'branchname': 'JPshortGitHead'
                 \  }
                 \}
+    let g:jp_byte_info_measure = 'bytes'
+    let g:jp_byte_info_hex = 0
+    function Togglebyteinfohex()
+        if g:jp_byte_info_hex
+            let g:jp_byte_info_hex = 0
+        else
+            let g:jp_byte_info_hex = 1
+        endif
+    endfunction
+    nmap <leader>x :call Togglebyteinfohex()<CR>
+    function JPByteInfo()
+        let l:wc = wordcount()
+        let l:fmt = g:jp_byte_info_hex ? '%X' : '%d'
+        let l:msr = g:jp_byte_info_measure
+        let l:vis = 'visual_' . l:msr
+        if has_key(l:wc, l:vis)
+            return printf(printf('%s %%s selected', l:fmt), l:wc[l:vis], l:msr)
+        else
+            let l:bytes = l:wc[l:msr]
+            let l:cbytes = l:wc['cursor_' . l:msr]
+            return printf(printf('%s of %s', l:fmt, l:fmt), l:cbytes, l:bytes)
+        endif
+    endfunction
     function JPtimestamp()
         return strftime('%e %b %T')
     endfunction
@@ -292,6 +349,7 @@ set laststatus=2
     function JPshortGitHead()
         return fugitive#head()[0 : g:jpmaxgitbrlen]
     endfunction
+
 " else
 "     " set a useful statusline
 "     set ruler
@@ -554,7 +612,7 @@ let g:SimpylFold_fold_import = 0
 
 let g:WMGraphviz_output = 'png'
 
-autocmd filetype dot let b:vimpipe_command="dot-pipe -o"
+autocmd filetype dot call SetupVimPipe("dot-pipe -o")
 
 " unimpaired: ]<C-Q> doesn't work for unknown reasons, providing an alternative
 nmap [Z <Plug>unimpairedQPFile
@@ -579,9 +637,15 @@ let g:python_highlight_all = 1
 let g:python_highlight_string_templates = 0
 
 " enable vim-pipe on selections
-vnoremap <silent> <LocalLeader>r :<C-U>'<,'> call VimPipe()<CR>
-nnoremap <silent> <LocalLeader>r :<C-U>. call VimPipe()<CR>
-let g:vimpipe_invoke_map = '<LocalLeader>R'
+function SetupVimPipe(cmd)
+    let b:vimpipe_command=a:cmd
+    vnoremap <silent><buffer> <LocalLeader>r :<C-U>'<,'> call VimPipe()<CR>
+    nnoremap <silent><buffer> <LocalLeader>r :<C-U>. call VimPipe()<CR>
+    let g:vimpipe_invoke_map = '<LocalLeader>R'
+endfunction
+
+" suppress mapping <LocalLeader>r
+let g:vimpipe_invoke_map = '<Plug>JPVimrc_invoke_vimpipe'
 
 " vim-pipe mysql
 function SetupMysqlVimpipe(db, host, user, password)
@@ -681,8 +745,40 @@ hi Define ctermfg=10
 
 nnoremap <unique> <Leader>c :<C-U>helpclose<CR>
 
-" GoTo code navigation.
-nmap <silent> gd <Plug>(coc-definition)
-nmap <silent> gy <Plug>(coc-type-definition)
-nmap <silent> gi <Plug>(coc-implementation)
-nmap <silent> gr <Plug>(coc-references)
+if !has('nvim')
+    " GoTo code navigation.
+    nmap <silent> gd <Plug>(coc-definition)
+    nmap <silent> gy <Plug>(coc-type-definition)
+    nmap <silent> gi <Plug>(coc-implementation)
+    nmap <silent> gr <Plug>(coc-references)
+
+    nmap <silent> [g <Plug>(coc-diagnostic-prev)
+    nmap <silent> ]g <Plug>(coc-diagnostic-next)
+
+    nmap <silent> <c-k> :call CocAction('doHover')<CR>
+    inoremap <silent><expr> <C-A> coc#refresh()
+    nmap <LocalLeader>rn <Plug>(coc-rename)
+endif
+
+" tmux intercepts ^b; create an alternative
+cnoremap <C-A> <C-B>
+
+" white-out
+
+function! WhiteOut() abort
+    let thecount = v:count1
+    let oldreg = getreg('a')
+    let oldregtype = getregtype('a')
+    try
+        call setreg('a', 'r l')
+        exec 'normal! ' . thecount . '@a'
+    finally
+        call setreg('a', oldreg, oldregtype)
+        silent! call repeat#set("\<Plug>JpvimrcWhiteOut", nlcount)
+    endtry
+endfunction
+
+nnoremap <Plug>JpvimrcWhiteOut :<C-U>silent! call WhiteOut()<CR>
+nmap <unique> <silent> <Leader><space> <Plug>JpvimrcWhiteOut
+
+let g:EditorConfig_verbose = 1

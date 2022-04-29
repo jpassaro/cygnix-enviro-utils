@@ -7,5 +7,7 @@
 --ignore-dir=is:.mypy_cache
 --ignore-dir=is:dist
 --ignore-dir=is:.bloop
+--ignore-dir=is:.bsp
+--ignore-dir=is:.metals
 --type-set
 sh:ext:sh,bash

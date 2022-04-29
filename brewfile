@@ -149,3 +149,5 @@ brew "hub"
 
 brew "sbt"
 brew "jenv"
+
+brew "neovim"

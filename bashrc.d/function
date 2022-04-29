@@ -84,19 +84,28 @@ function space() {
 # "vimrc 2", "vimrc 3", etc to go to the second or third sourced file
 function vimrc() {
   local OPTS=()
-  if [[ "$#" != 0 ]] ; then
-    local n
-    case "$1" in
-      0|*[^0-9]*) n=1 ;;
-      *)  n="$1" ;;
+  local arg n vim=vim src=~/.vimrc
+  for arg ; do
+    case "$arg" in
+      n|nv|nvi|nvim)
+        vim=nvim
+        src=~/.config/nvim/init.vim
+        continue
+        ;;
+      0|*[^0-9]*)
+        n=1
+        ;;
+      *)
+        n="$arg"
+        ;;
     esac
     while [[ "$((n--))" -gt 0 ]] ; do
-      OPTS=("${OPTS[@]}" '+/^source')
+      OPTS+=('+/^source')
     done
     # shellcheck disable=SC2016
-    OPTS=("${OPTS[@]}" '+normal $gf')
-  fi
-  vim ~/.vimrc "${OPTS[@]}"
+    OPTS+=('+normal Wgf')
+  done
+  "$vim" "$src" "${OPTS[@]}"
 }
 
 # quickly access vim help
