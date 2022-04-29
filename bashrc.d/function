@@ -290,3 +290,7 @@ function ackp() {
 function jql() {
   jq -C "$@" | less -r
 }
+
+function pbtee() {
+  tee >(pbcopy)
+}
