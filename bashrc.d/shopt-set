@@ -4,7 +4,7 @@
 
 # Don't use ^D to exit, unless this is a nested bash process,
 # or otherwise overridden (for example an SSH host)
-if [[ "$SHLVL" != 1 || "${_jp_allow_ctrl_d:=no}" == [yY]* ]] ; then
+if [[ "$SHLVL" != 1 || "${_jp_allow_ctrl_d:=no}" == [nN]* ]] ; then
   set -o ignoreeof
 else
   set +o ignoreeof
