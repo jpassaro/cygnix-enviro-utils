@@ -294,3 +294,15 @@ function jql() {
 function pbtee() {
   tee >(pbcopy)
 }
+
+function executables() {
+  local -a paths
+  local path ex
+  IFS=: eval 'paths=($PATH)'
+  for path in "${paths[@]}" ; do
+    [[ -d "$path" ]] || continue
+    for ex in "$path"/* ; do
+      [[ ! -x "$ex" ]] || echo "$ex"
+    done
+  done | if [[ $# == 0 ]] ; then cat ; else grep "/$1\$" ; fi
+}

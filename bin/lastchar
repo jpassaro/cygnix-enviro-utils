@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+
+
+import io
+import string
+import sys
+
+
+printable = set(string.printable.encode('ascii'))
+printable.remove(0xB)
+printable.remove(0xC)
+
+
+def lastchar(arg):
+    try:
+        with (open(arg, 'rb') if isinstance(arg, str) else arg) as fb:
+            if fb.seekable():
+                size = fb.seek(0, io.SEEK_END)
+                if size > 0:
+                    fb.seek(-1, io.SEEK_END)
+                    byte = fb.read(1)[0]
+                else:
+                    return 'empty'
+            else:
+                buf = bytearray(1024)
+                numbytes = lastbytes = 0
+                while (numbytes := fb.readinto(buf) or 0):
+                    lastbytes = numbytes
+                if lastbytes <= 0:
+                    return 'empty'
+                byte = buf[lastbytes - 1]
+            return repr(chr(byte)) if byte in printable else f"'\\x{byte:02X}'"
+    except OSError as e:
+        print(arg, ':', e, '\n\n', file=sys.stderr)
+        return 'unreadable'
+
+
+if len(sys.argv) <= 1:
+    if sys.stdin.isatty():
+        print('usage:', sys.executable, sys.argv[0], '[file1 [file2 ...]]',
+              file=sys.stderr)
+    else:
+        print(lastchar(sys.stdin.buffer))
+else:
+    answers = {x: lastchar(x) for x in sys.argv[1:]}
+    maxwidth = max(map(len, answers.values()))
+    for x in sys.argv[1:]:
+        print(f'{answers[x]:>{maxwidth}}    {x}')
