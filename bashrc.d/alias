@@ -59,3 +59,5 @@ fi
 if [[ "$jp_system_type" == linux ]] ; then
   alias open='xdg-open'
 fi
+
+alias jq='jq --unbuffered'

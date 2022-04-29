@@ -1,0 +1,46 @@
+#!/usr/bin/env python3
+
+import base64
+import json
+
+import sys
+
+try:
+    import click
+except ImportError:
+    sys.exit('Please install the "click" package')
+
+
+@click.command()
+@click.argument('infile', type=click.File('r'), default='-')
+@click.option('-j', '--as-json', is_flag=True)
+@click.pass_context
+def cli(ctx, infile, as_json):
+    for line in infile:
+        line = line.strip()
+        # if line.replace(string.ascii_letters + string.digits + '._-=') != "":
+        #     ctx.fail('expected 2 or 3 "."-separated base64 expressions')
+        parts = [b64(ctx, as_json, x) for x in line.split('.')]
+
+        if as_json:
+            click.echo(json.dumps(parts, indent=2))
+        else:
+            for i, part in enumerate(parts):
+                click.echo(f'{i}: {part}')
+            click.echo('')
+
+
+def b64(ctx, as_json, x):
+    remaining = (-len(x)) % 4
+    if remaining not in range(3):
+        click.echo(f'base 64 must have length equal to 2, 3, or 0 modulo 4 (got {len(x) % 4})',
+                   err=True)
+    try:
+        value = base64.urlsafe_b64decode(x + ('=' * remaining))
+        return json.loads(value) if as_json else value
+    except Exception as e:
+        click.echo('unable to decode: ' + str(e), err=True)
+
+
+if __name__ == '__main__':
+    cli()

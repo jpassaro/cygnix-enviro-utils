@@ -270,3 +270,7 @@ function ackp() {
   done
   _ack-with-less "${lessopt}" --passthru "$@"
 }
+
+function jql() {
+  jq -C "$@" | less -r
+}

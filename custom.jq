@@ -56,3 +56,40 @@ def flatten_jp:
       end
   )
 ;
+
+def unflatten_jp_list_entries:
+    map(
+      if .key | length > 1
+      then (.superkey = .key[0]) | (.subkey = .key[1:])
+      else (.superkey = null) | (.subkey = (.key | if length > 0 then .[0] else null end))
+      end
+    ) | group_by(.superkey) | [
+      .[]  # for each group
+        | if .[0].superkey == null
+           then .[] | {key: .subkey, value}
+           else {
+             key: .[0].superkey,
+             value: map({key: .subkey, value}) | unflatten_jp_list_entries
+           }
+           end
+    ] | from_entries
+;
+
+def unflatten_jp: to_entries | map(.key |= split(".")) | unflatten_jp_list_entries;
+
+
+def generify($prefix):
+  . as $orig |
+  if type == "object"
+  then with_entries(.key as $k | (.value |= generify([$prefix[], $k])))
+  elif type == "array"
+  then to_entries | map((.key | tostring) as $k | .value | generify([$prefix[], $k]))
+  elif type == "string"
+  then $prefix | join(".")
+  else $orig
+  end
+;
+
+def generify:
+  generify([])
+;
