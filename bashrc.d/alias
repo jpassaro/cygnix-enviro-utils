@@ -42,8 +42,12 @@ alias vsql='vim +"set ft=sql"'
 
 alias pydoc='python3 -m pydoc'
 
+# shellcheck disable=SC2154
 if [[ "$jp_system_type" != linux ]] && check-for-package gsleep coreutils ; then
   alias sleep=gsleep
+  _jp_awk='gawk'
+else
+  _jp_awk='awk'
 fi
 
 if check-for-package --optional zbarimg 'zbar for QR-code scanning' ; then
@@ -61,3 +65,26 @@ if [[ "$jp_system_type" == linux ]] ; then
 fi
 
 alias jq='jq --unbuffered'
+
+function _jp_awk_alias() {
+  local prg alias="${1?}" #aliascmd
+  printf -v prg %q "$2"
+  #printf -v aliascmd %q "$_jp_awk -e $prg"
+# shellcheck disable=SC2139
+  alias "$alias=$_jp_awk -e $prg"
+}
+
+_jp_awk_alias countlines '{print NR}'
+# shellcheck disable=SC2016
+_jp_awk_alias sumlines 'BEGIN {S=0.0} {S+=$1} END {print S}'
+# shellcheck disable=SC2016
+_jp_awk_alias awk1 '{print $1}'
+
+# shellcheck disable=SC2016
+_jp_awk_alias sumlinesbygroup '
+  NR == 1 { S = 0.0 ; OLDKEY = $1 }
+  NR > 1 && OLDKEY != $1 { print OLDKEY, S ; S = 0.0 ; OLDKEY = $1 }
+  { S += $2 }
+  END { print OLDKEY, S }
+'
+unset -f _jp_awk_alias

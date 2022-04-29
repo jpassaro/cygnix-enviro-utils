@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+declare -a args
+
+while [[ "$1" == -* ]] ; do
+  args=("${args[@]}" "$1")
+  shift
+done
+
+case "$#" in
+  1)
+    exec <"$1" ;;
+  0)
+    [[ ! -t 0 ]] || exit 1 ;;
+  *)
+    exec < <(cat "$@") ;;
+esac
+
+csvjson "${args[@]}" -H --stream | jq -r --arg apo "'" '$ARGS.named.apo as $apo | to_entries | sort_by(.key) | map("\($apo)\(.value)\($apo)") | join(",") | "(\(.)),"'
