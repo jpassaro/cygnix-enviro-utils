@@ -302,7 +302,7 @@ set laststatus=2
                 \    'percent': '%P',
                 \    'fileformat': '%{&ff==#"unix"?"":&ff}',
                 \    'nvi-lsp': '%{exists("g:metals_status") ? g:metals_status : ""}',
-                \    'lineinfo': '%l:%c / %L lines',
+                \    'lineinfo': '%l:%c/L=%L',
                 \    'filetype': 'ft=%{&ft}'
                 \  },
                 \  'component_visible_condition': {
@@ -337,7 +337,7 @@ set laststatus=2
         else
             let l:bytes = l:wc[l:msr]
             let l:cbytes = l:wc['cursor_' . l:msr]
-            return printf(printf('%s of %s', l:fmt, l:fmt), l:cbytes, l:bytes)
+            return printf(printf('b=%s/%s', l:fmt, l:fmt), l:cbytes, l:bytes)
         endif
     endfunction
     function JPtimestamp()
@@ -347,7 +347,7 @@ set laststatus=2
         let g:jpmaxgitbrlen = 12
     endif
     function JPshortGitHead()
-        return fugitive#head()[0 : g:jpmaxgitbrlen]
+        return fugitive#Head()[0 : g:jpmaxgitbrlen]
     endfunction
 
 " else
