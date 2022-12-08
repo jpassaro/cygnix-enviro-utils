@@ -196,8 +196,8 @@ if has('nvim')
     Plug 'mfussenegger/nvim-dap-python'
 else
     " coc for scala
-    Plug 'neoclide/coc.nvim', {'branch': 'release'}
-    Plug 'scalameta/coc-metals', {'do': 'npm install --frozen-lockfile'}
+    "Plug 'neoclide/coc.nvim', {'branch': 'release'}
+    "Plug 'scalameta/coc-metals', {'do': 'npm install --frozen-lockfile'}
 
     " new shiny color scheme
     Plug 'altercation/vim-colors-solarized'
@@ -560,7 +560,7 @@ function! NewlineNearCursor(where) abort
         let rightcol += 1
     endwhile
     if rightcol > leftcol
-        call cursor(curline, leftcol)
+        call cursor('.', leftcol)
         execute 'normal! "_' . (rightcol - leftcol) . 'x'
         let action = 'i'
     endif

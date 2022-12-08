@@ -88,3 +88,9 @@ _jp_awk_alias sumlinesbygroup '
   END { print OLDKEY, S }
 '
 unset -f _jp_awk_alias
+
+if check-for-package --optional gdate ; then
+  alias dateweek='gdate +%G-W%V'
+else
+  alias dateweek='date +%G-W%V'
+fi

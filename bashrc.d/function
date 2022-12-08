@@ -172,13 +172,53 @@ function hasvim() {
   ! swapfiles "${1:-5}"
 }
 
-# look for vim swap files in current file tree
 function swapfiles() {
-  local output
-  { read -rN1 output ; printf '%s' "$output" ; cat ; } < <(
-    find . ${1:+-maxdepth "$1"} -name '[._]*.sw*' -o -name '.sw*'
-  )
-  [[ -z "$output" ]]
+  _swapfiles verbose "$@"
+}
+
+function swapfiles-silent() {
+  _swapfiles silent "$@"
+}
+
+# look for vim swap files in current file tree
+# return 0 if none are found
+# return 1 if some are found
+# return 125 if arguments not understood
+# usage: _swapfiles (silent|verbose) [maxdepth]
+function _swapfiles() {
+  local silent depth="$2"
+  case "$1" in
+    silent) silent=x ;;
+    verbose) verbose=x ;;
+    *) echo >&2 unexpected argument to _swapfiles "$1" ; return 125 ;;
+  esac
+  local -a swapfiledirmatches
+  swapfiledirmatches=(~/.local/share/nvim/swap/"${PWD//\//%}%"*)
+  if [[
+    -n "$silent" && (
+      "${#swapfiledirmatches[@]}" -gt 1 || (
+        "${#swapfiledirmatches[@]}" == 1
+        && -e "${swapfiledirmatches[0]}"
+      )
+    )
+  ]] ; then return 1 ; fi
+  (
+    for f in "${swapfiledirmatches[@]}" ; do
+      if [[ -e "$f" ]] ; then
+        echo "$f"
+      fi
+    done
+    find . ${depth:+-maxdepth "$depth"} -name '[._]*.sw*' -o -name '.sw*'
+  ) | {
+    local output
+    read -rN1 output || return 0
+    [[ -n "$output" ]] || return 0
+    if [[ -z "$silent" ]] ; then
+      printf '%s' "$output"
+      cat
+    fi
+    return 1
+  }
 }
 
 # create pgrep-like function
@@ -218,7 +258,12 @@ function _git_check_command() {
       fi
       ;;
     co\ *|checkout\ *|stash\ *|switch\ *|ci\ *|commit\ *|wip\ *)
-      if ! swapfiles ; then
+      local depth configkey=jploginutils.swapfilesdepth
+      depth="$(command git config "$configkey")" \
+        || _git_warn "checking for swapfiles before executing ${1}; if this is slow, try setting git config jploginutils.swapfilesdepth" \
+        || true   # suppress error
+
+      if ! swapfiles ${depth:+"$depth"} ; then
         _git_warn "don't change working tree / index state, you are still editing files"
       fi
       ;;

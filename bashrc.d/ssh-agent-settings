@@ -33,8 +33,8 @@ SSH_ENV_LOCK="${SSH_ENV_LOCK:-/tmp/ssh-agent-setup-lock}"
 # SSH_ENV_LOCK, then this function should be run again. If 3 happens,
 # you can also do the above; ideally (but optionally), you should
 # kill the "rogue" agent first.
-function maybe-start-agent {
-  if check-env-file ; then
+function ssh-maybe-start-agent {
+  if ssh-check-env-file ; then
     return
   fi
   if mkdir "$SSH_ENV_LOCK" >/dev/null 2>&1 ; then
@@ -43,11 +43,11 @@ function maybe-start-agent {
     echo succeeded
     chmod 600 "${SSH_ENV}"
     . "${SSH_ENV}"
-    add-local-keys
+    ssh-add-local-keys
   else
     echo 'avoided a ssh-agent race condition! trying again in a moment'
     sleep "${SSH_ENV_WAIT:-1}"
-    if ! check-env-file ; then
+    if ! ssh-check-env-file ; then
       cat <<-END_OF_MESSAGE >&2
 	------------------OH NO!---------------------------
 	This has proven complicated. Please kill any existing ssh-agents
@@ -55,7 +55,7 @@ function maybe-start-agent {
 
 	$ rmdir $SSH_ENV_LOCK ; ${FUNCNAME[0]}
 
-	Then you should execute check-env-file in all sessions.
+	Then you should execute ssh-check-env-file in all sessions.
 
 	See comments in ${BASH_SOURCE[0]} for more about what has happened.
 	END_OF_MESSAGE
@@ -64,7 +64,7 @@ function maybe-start-agent {
   fi
 }
 
-function add-local-keys() {
+function ssh-add-local-keys() {
   local pub key
   for pub in "$SSH_HOME"/*.pub ; do
     key="${pub%.pub}"  # shave off the suffix
@@ -74,7 +74,7 @@ function add-local-keys() {
   done
 }
 
-function check-env-file() {
+function ssh-check-env-file() {
   if [[ ! -f "${SSH_ENV}" ]] ; then
     return 1
   fi
@@ -92,4 +92,4 @@ function check-env-file() {
 
 # Source SSH settings, if applicable
 
-maybe-start-agent
+ssh-maybe-start-agent
