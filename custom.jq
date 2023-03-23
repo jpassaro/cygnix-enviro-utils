@@ -93,3 +93,21 @@ def generify($prefix):
 def generify:
   generify([])
 ;
+
+def to_ddb:
+  if type == "null"
+    then {"NULL": true}
+  elif type == "string"
+    then {"S": .}
+  elif type == "number"
+    then {"N": tostring}
+  elif type == "boolean"
+    then {"BOOL": .}
+  elif type == "object"
+    then {"M": map_values(to_ddb)}
+  elif type == "array"
+    then {"L": map(to_ddb)}
+  else
+    error("unknown type \(type)")
+  end
+;

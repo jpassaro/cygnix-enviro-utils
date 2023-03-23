@@ -1,0 +1,121 @@
+#!/usr/bin/env python3
+
+import itertools
+import os
+from pathlib import Path
+import re
+import sys
+
+import click
+
+try:
+    import psutil
+except ImportError:
+    psutil = None
+
+
+@click.command()
+@click.option('-s', '--silent', is_flag=True)
+@click.option('-d', '--maxdepth', type=int)
+def cli(silent, maxdepth):
+    if psutil is None and not silent:
+        print(f'{sys.argv[0]}: consider installing psutil to check'
+              ' whether swapfiles are open', file=sys.stderr)
+    cwd = Path.cwd().resolve()
+    allfiles = itertools.chain(iternvim(cwd), iterlocaldir(cwd))
+    if silent:
+        try:
+            next(allfiles)
+        except StopIteration:
+            pass
+        else:
+            raise SilentFailure()
+    else:
+        if psutil is not None:
+            allfiles = augment_psutil(allfiles)
+        exc = None
+        for f in allfiles:
+            if exc is None:
+                exc = SilentFailure()
+            click.echo(str(f))
+        if exc is not None:
+            raise exc
+
+
+def augment_psutil(allfiles):
+    orig_pair_resolved = [(f, f.resolve()) for f in allfiles]
+    keys = set(resolved for orig, resolved in orig_pair_resolved)
+    psfiles = psutil_files(keys)
+    for orig, resolved in orig_pair_resolved:
+        openfiles = psfiles.get(resolved)
+        value = '{} -- open files({})'.format(
+            orig,
+            '<none>' if openfiles is None else ' ; '.join(
+                f'pid={pid}' if path == orig else f'pid={pid}:{path}'
+                for pid, path in openfiles
+            )
+        )
+        yield value
+
+
+def psutil_files(keys):
+    values = dict()
+    for p in psutil.process_iter(['pid', 'open_files']):
+        for f in p.info['open_files'] or []:
+            path = Path(f.path)
+            if path.resolve() in keys:
+                values.setdefault(path, []).append((p.pid, path))
+    return values
+
+
+class SilentFailure(click.ClickException):
+    def __init__(self):
+        super().__init__(message=None)
+
+    def show(self, file=None):
+        pass
+
+
+def iternvim(base):
+    xdghome = \
+            Path(os.environ['XDG_DATA_HOME']) \
+            if 'XDG_DATA_HOME' in os.environ \
+            else Path.home() / '.local/share'
+    yield from (xdghome / 'nvim/swap').glob(
+        str(base).replace('/', '%') + '%*'
+    )
+
+
+def walkdirs(unresolvedbase, depth=None, cache=None):
+    if depth is not None and depth <= 0:
+        return
+    resolved = unresolvedbase.resolve()
+    if cache is None:
+        cache = set()
+    elif resolved in cache:
+        return
+    cache.add(resolved)
+    subdirs = []
+    for item in unresolvedbase.iterdir():
+        if item.is_dir():
+            subdirs.append(item)
+        else:
+            yield item
+    if depth == 1:
+        return
+    nextdepth = None if depth is None else depth - 1
+    for subdir in subdirs:
+        yield from walkdirs(subdir, nextdepth, cache)
+
+
+localswapdirpattern = re.compile(r'^\..*\.sw[a-p]$')
+
+
+def iterlocaldir(base, depth=None):
+    for item in walkdirs(base, depth):
+        if localswapdirpattern.match(item.name) is not None:
+            yield item
+
+
+if __name__ == '__main__':
+    cli()

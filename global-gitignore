@@ -12,10 +12,16 @@ _scratch/*
 
 .progress/
 
+**/.bsp/
 **/.bloop/
 /.metals/
 **/metals.sbt
+/local.sbt
 
 .java-version
 
 .main
+
+.smithy.lsp.log
+
+.vscode/
