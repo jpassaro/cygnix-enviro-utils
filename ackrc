@@ -9,5 +9,6 @@
 --ignore-dir=is:.bloop
 --ignore-dir=is:.bsp
 --ignore-dir=is:.metals
+--ignore-file=is:.smithy.lsp.log
 --type-set
 sh:ext:sh,bash
