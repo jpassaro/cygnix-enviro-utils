@@ -4,6 +4,7 @@ thisscript="$0"
 anyfailed=
 quiet=
 input=
+brewprefix="$(brew --prefix)"
 
 function fail() {
   [[ -n "$quiet" ]] || echo "$@"
@@ -39,11 +40,11 @@ while read -r entrytype qformula ; do
   formula="${formula%%\"*}"
   case "$entrytype" in
     brew)
-      [[ -d /usr/local/Cellar/"${formula##*/}" ]] ;;
+      [[ -d "$brewprefix"/Cellar/"${formula##*/}" ]] ;;
     tap)
-      [[ -d /usr/local/Homebrew/Library/Taps/"${formula%%/*}/homebrew-${formula#*/}" ]] ;;
+      [[ -d "$brewprefix"/Library/Taps/"${formula%%/*}/homebrew-${formula#*/}" ]] ;;
     cask)
-      [[ -d /usr/local/Caskroom/"${formula}" ]] ;;
+      [[ -d "$brewprefix"/Caskroom/"${formula}" ]] ;;
     *)
       fail "I don't know how to read '${entrytype}' entries." ;;
   esac || fail "${entrytype} '${formula}' is not installed."

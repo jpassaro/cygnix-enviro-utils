@@ -10,7 +10,7 @@ brew "ack"
 brew "ascii"
 
 # Interpreted, interactive, object-oriented programming language
-brew "python"
+brew "python@3.11"  # try and keep this up to date
 
 # Official Amazon AWS command-line interface
 brew "awscli"
@@ -34,7 +34,8 @@ brew "findutils"
 brew "gawk"
 
 # GNU debugger
-brew "gdb"
+# left out for now because not supported on silicon -- and hardly ever needed!
+#brew "gdb"
 
 # Interpreter for PostScript and PDF -- not strictly necessary
 # brew "ghostscript"
@@ -73,7 +74,7 @@ brew "httpie"
 brew "perl"
 
 # Tools and libraries to manipulate images in many formats
-brew "imagemagick", args: ["with-fontconfig", "with-ghostscript", "with-pango", "with-perl", "with-x11"]
+brew "imagemagick" #, args: ["with-fontconfig", "with-ghostscript", "with-pango", "with-perl", "with-x11"]
 
 # GNU utilities for networking
 brew "inetutils"
@@ -135,7 +136,7 @@ brew "vim"
 # Suite of barcodes-reading tools
 brew "zbar"
 
-#cask "iterm2"  # i often do this by hand
+#cask "iterm2"  # i usually do this by hand
 cask "xquartz"
 # some casks that are likely to be useful
 # cask "gimp"
@@ -146,8 +147,5 @@ brew "a2ps"
 brew "ghostscript"
 brew "dash"
 brew "hub"
-
-brew "sbt"
-brew "jenv"
 
 brew "neovim"

@@ -22,7 +22,9 @@ function append-path() {
   done
 }
 
-if [[ "$PATH" != */usr/local/bin*:/usr/bin* ]] ; then
-  # it must come first, even if it was already there
-  export PATH="/usr/local/bin:${PATH}"
-fi
+for localpath in /usr/local/bin /opt/homebrew/bin ; do
+  if [[ "$PATH" != *"$localpath"*:/usr/bin* ]] ; then
+    # it must come first, even if it was already there
+    export PATH="${localpath}:${PATH}"
+  fi
+done

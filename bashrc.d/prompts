@@ -52,7 +52,7 @@ if [[ "$TERM" == xterm* ]] ; then
 fi
 
 # add git to ps1
-for promptfile in /usr/lib/git-core/git-sh-prompt {,/usr/local}/etc{,/bash_completion.d}/git-prompt{.sh,} ; do
+for promptfile in /usr/lib/git-core/git-sh-prompt {,/opt/homebrew,/usr/local}/etc{,/bash_completion.d}/git-prompt{.sh,} ; do
   if [[ -r "${promptfile}" && ! -d "$promptfile" ]] ; then
     source_pragma_once "${promptfile}"
     # parenthesize the git prompt info

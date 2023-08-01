@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source_pragma_once "$MY_BASHRC_D"/path
+
 if check-for-package --optional brew ; then
   source_pragma_once "$(brew --prefix)"/etc/bash_completion
 fi
