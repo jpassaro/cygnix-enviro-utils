@@ -13,5 +13,10 @@ while : ; do
   if read -rt 0.01 ; then
     ((i=i+1))
   fi
-  printf '\r%02d %s' "$i" "$(date)"
+  printf '\r%02d %s' "$i" "$(
+    if command -v gdate >/dev/null ; then
+      gdate --iso=ns
+    else date --iso=ns
+    fi
+  )"
 done
