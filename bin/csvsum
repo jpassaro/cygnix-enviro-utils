@@ -1,0 +1,64 @@
+#!/usr/bin/env python3
+
+import csv
+import sys
+
+import click
+
+@click.command()
+@click.option('-c', '--col')
+@click.option('-i', '--as-int/--no-as-int')
+@click.argument('file', type=click.File('r'), default='-')
+@click.pass_context
+def main(ctx, file, col, as_int):
+    with file, sys.stdout:
+        reader = csv.reader(file)
+        writer = csv.writer(sys.stdout)
+        header = next(reader)
+        ncols = len(header)
+        numfunc = int if as_int else float
+
+        colarg = col
+        if col is None:
+            col = ncols - 1
+            click.echo(f'summing over rightmost column ({header[col]})',
+                       err=True)
+        elif col in header:
+            col = header.index(col)
+        elif col.isdigit():
+            col = int(col)
+            if col < 0:
+                ctx.abort('negative --col not allowed')
+            elif col >= ncols:
+                ctx.abort(f'invalid --col arg {colarg}: must be less than'
+                          f' number of columns ({ncols})')
+        else:
+            ctx.abort(f'invalid --col arg: {colarg!r} not found in '
+                      + header.join(", "))
+        writer.writerow(header)
+        lastkey = None
+        line_no = 0
+        total = 0
+        for line in reader:
+            line_no += 1
+
+            key = (tuple(line[:col]), tuple(line[col+1:]))
+            if key != lastkey:
+                if lastkey is not None:
+                    writer.writerow((*lastkey[0], total, *lastkey[1]))
+                lastkey = key
+                total = 0
+
+            value = line[col]
+            try:
+                value = numfunc(value or 0)
+            except ValueError:
+                ctx.abort(f'at line {line_no}, {col!r}={value!r}'
+                          ' could not be parsed')
+            total += value
+        if lastkey is not None:
+            writer.writerow((*lastkey[0], total, *lastkey[1]))
+
+
+if __name__ == '__main__':
+    main()
