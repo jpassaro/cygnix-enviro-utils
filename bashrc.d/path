@@ -7,7 +7,8 @@ function _can_add() {
   [[ -n "$1" && "$#" == 1 ]] \
     && [[  "$PATH" == *?:"$1":?*
       || "$PATH" == "$1":?*
-      || "$PATH" == *?:"$1" ]]
+      || "$PATH" == *?:"$1"
+      || "$PATH" == "$1" ]]
 }
 
 function prepend-path() {
@@ -28,3 +29,12 @@ for localpath in /usr/local/bin /opt/homebrew/bin ; do
     export PATH="${localpath}:${PATH}"
   fi
 done
+
+if [[ -n "$GEMINI_CLI$CLAUDECODE$CLAUDE_CODE$CLAUDE" ]] && command -v brew >/dev/null ; then
+  for pkg in coreutils findutils gawk gnu-sed gnu-tar grep ; do
+    pkg_prefix="$(brew --prefix "$pkg" 2>/dev/null)" || continue
+    if [[ -n "$pkg_prefix" && -d "${pkg_prefix}/libexec/gnubin" ]] ; then
+      prepend-path "${pkg_prefix}/libexec/gnubin"
+    fi
+  done
+fi
