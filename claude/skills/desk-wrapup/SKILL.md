@@ -44,8 +44,8 @@ Ask if any open items need notes for tomorrow. Offer to:
 
 ### 6. Unpushed work check
 
-Read ~/.claude/reference/known-workspaces.md to get the list of tracked
-repos. For each repo path listed, scan for worktrees at <repo>/.worktrees/*/
+Read ~/desk/reference/workspaces.md to get the list of tracked repos.
+For each repo path listed, scan for worktrees at <repo>/.worktrees/*/
 and check the repo root itself. For each git directory found, check for
 uncommitted or unpushed work:
 
@@ -68,7 +68,7 @@ reference file should be created.
 
 Run the backup-local-state.sh script (in the hooks/ directory of this plugin)
 to archive ~/.claude and ~/desk. The backup destination is machine-specific —
-check ~/desk/CLAUDE.md or ~/.claude/CLAUDE.md for the configured path.
+check ~/desk/CLAUDE.md for the configured path.
 
 If no destination is configured, remind the user to set one up and skip the
 backup step.

@@ -1,4 +1,13 @@
-# Todo file format
+---
+name: todo-conventions
+description: Todo file format, priority markers, task lifecycle, and staleness rules for ~/desk todo tracking
+---
+
+# Todo file conventions
+
+Use these conventions when creating, editing, or reviewing todo files.
+
+## File layout
 
 Files live at ~/desk/todo/YYYYMM/DD.md (e.g., ~/desk/todo/202602/26.md).
 ~/desk/today.md is a symlink to the current day's file.

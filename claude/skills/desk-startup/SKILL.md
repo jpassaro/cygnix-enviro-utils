@@ -49,7 +49,7 @@ Ask: "Anything else to add before we start?"
 
 ## References
 
-- Todo file format: see reference/todo-format.md (in the same plugin directory)
+- Todo file format: see the todo-conventions skill (in the same plugin directory)
 
 ## Implementation notes
 
