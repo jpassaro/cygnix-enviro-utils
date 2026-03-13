@@ -42,6 +42,10 @@ alias vsql='vim +"set ft=sql"'
 
 alias pydoc='python3 -m pydoc'
 
+if command -v jp-claude >/dev/null 2>&1 ; then
+  alias claude=jp-claude
+fi
+
 # shellcheck disable=SC2154
 if [[ "$jp_system_type" != linux ]] && check-for-package gsleep coreutils ; then
   alias sleep=gsleep

@@ -36,6 +36,8 @@ PRAGMA_INDEX=0
 
 MY_BASHRC_FILE="${BASH_SOURCE[0]}"
 MY_BASHRC_D="${MY_BASHRC_FILE}.d"
+JP_LOGIN_UTILS="$(cd "$(dirname "$MY_BASHRC_FILE")" && pwd -P)"
+export JP_LOGIN_UTILS
 
 function source_pragma_once() {
   local sourceable

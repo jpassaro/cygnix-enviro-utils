@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Wrapper that ensures --plugin-dir is always passed to claude.
+# JP_CLAUDE_CMD: override the underlying claude binary (e.g. /path/to/ca)
+# JP_LOGIN_UTILS: login-utils directory (set by bashrc, default ~/code/login-utils)
+
+plugin_dir="${JP_LOGIN_UTILS:-$HOME/code/login-utils}/claude"
+plugin_args=()
+if test -d "$plugin_dir"; then
+  plugin_args=(--plugin-dir "$plugin_dir")
+else
+  echo >&2 "jp-claude: plugin directory not found: $plugin_dir"
+fi
+
+exec "${JP_CLAUDE_CMD:-claude}" "${plugin_args[@]}" "$@"
