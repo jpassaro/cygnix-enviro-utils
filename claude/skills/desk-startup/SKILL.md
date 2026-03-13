@@ -28,8 +28,9 @@ drop. Delete each future file once all its reminders are dispatched.
 
 ### 3. Create today's todo file
 
-Create ~/desk/todo/YYYYMM/DD.md if it doesn't exist. Migrate the confirmed
-items from steps 1 and 2. Then update the symlink:
+Create ~/desk/todo/YYYYMM/DD.md if it doesn't exist. Start the file with
+a date header (`# YYYY-MM-DD`), then migrate the confirmed items from
+steps 1 and 2. Then update the symlink:
 
     ln -sfv ~/desk/todo/YYYYMM/DD.md ~/desk/today.md
 
@@ -46,26 +47,9 @@ Remind the user to check:
 
 Ask: "Anything else to add before we start?"
 
-## Todo file format reference
+## References
 
-Files live at ~/desk/todo/YYYYMM/DD.md.
-
-Task markers:
-- `[ ]` uncompleted
-- `[~]` in progress
-- `[x]` completed
-- `[>]` migrated forward
-
-Priority markers (between checkbox and item text):
-- `!!` — top priority (must get done today)
-- `::` — important (should get done today)
-- (no marker) — lower priority / if time permits
-
-Each item ends with `(added YYYY-MM-DD)`.
-
-After the task list, two optional sections:
-- `=== Notes ===` — schedule, logistics, mid-session adjustments (not tasks)
-- `=== Journal ===` — retrospective written at wrap-up
+- Todo file format: see reference/todo-format.md (in the same plugin directory)
 
 ## Implementation notes
 

@@ -44,22 +44,25 @@ Ask if any open items need notes for tomorrow. Offer to:
 
 ### 6. Unpushed work check
 
-Scan all worktrees for uncommitted or unpushed work:
+Read ~/.claude/reference/known-workspaces.md to get the list of tracked
+repos. For each repo path listed, scan for worktrees at <repo>/.worktrees/*/
+and check the repo root itself. For each git directory found, check for
+uncommitted or unpushed work:
 
 ```bash
-for wt in ~/code/*/.worktrees/*/; do
-    if [ -d "$wt/.git" ] || [ -f "$wt/.git" ]; then
-        unpushed="$(cd "$wt" && git log --oneline @{u}..HEAD 2>/dev/null | wc -l | tr -d ' ')"
-        dirty="$(cd "$wt" && git status --porcelain 2>/dev/null | wc -l | tr -d ' ')"
-        if [ "$unpushed" != "0" ] || [ "$dirty" != "0" ]; then
-            printf "%s  (unpushed: %s, dirty: %s)\n" "$wt" "$unpushed" "$dirty"
-        fi
-    fi
-done
+# For each directory (repo root or worktree):
+unpushed="$(cd "$dir" && git log --oneline @{u}..HEAD 2>/dev/null | wc -l | tr -d ' ')"
+dirty="$(cd "$dir" && git status --porcelain 2>/dev/null | wc -l | tr -d ' ')"
 ```
+
+Report any directories with unpushed > 0 or dirty > 0.
 
 Do not let the user leave with unpushed commits. Dirty files should at
 minimum be committed (WIP is fine). Unpushed branches must be pushed.
+
+If ~/.claude/reference/known-workspaces.md is missing, fall back to
+scanning ~/code/*/.worktrees/*/ directly and warn the user that the
+reference file should be created.
 
 ### 7. Final state
 
