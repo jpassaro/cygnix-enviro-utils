@@ -3,7 +3,10 @@
 # Non-interactive environment setup: EDITOR, PAGER, LESSOPEN.
 # Interactive env setup (prompts, direnv, iterm, jenv) is in env-interactive.
 
-if command -v nvim >/dev/null 2>&1 ; then
+if [[ "${CLAUDECODE:-}" == "1" ]]; then
+  export EDITOR="$HOME/bin/no-interactive-edit"
+  export PAGER="$HOME/bin/no-interactive-pager"
+elif command -v nvim >/dev/null 2>&1 ; then
   export EDITOR=nvim
   export PAGER=less
 else
