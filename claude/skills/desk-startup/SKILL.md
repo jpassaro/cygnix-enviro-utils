@@ -38,10 +38,10 @@ steps 1 and 2. Then update the symlink:
 
 Remind the user to check:
 - Email
-- Outlook calendar (meetings) — if any OOO/AFK blocks, remind user to
-  notify the team before moving on (see OOO protocol in ~/desk/CLAUDE.md)
-- Jira (assigned tickets): https://jira.disney.com/secure/RapidBoard.jspa?projectKey=ACCT&rapidView=11991
-- GitHub (pending code reviews): https://github.bamtech.co/ge-accounting/datos-aggregator/pulls?q=is%3Apr+is%3Aopen+-is%3Adraft
+- Calendar (meetings) — if any OOO/AFK blocks, remind user to notify the
+  team before moving on (see OOO protocol in ~/desk/CLAUDE.md)
+- Open tickets and outstanding code reviews — read ~/desk/CLAUDE.md for
+  the specific URLs to check. If no URLs are configured there, ask the user.
 
 ### 5. Final prompt
 
