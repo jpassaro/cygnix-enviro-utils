@@ -236,6 +236,10 @@ highlight BadWhitespace ctermbg=red guibg=darkred
 autocmd ColorScheme * highlight BadWhitespace ctermbg=red guibg=darkred
 autocmd BufRead,BufNewFile * match BadWhitespace /\s\+$/
 
+function s:DoWhitespace()
+
+endfunction
+
 " shortcut for unfolding a fold.
 " nnoremap <space> za
 " Disabled in favor of using z-* keybindings directly, which are somewhat more
@@ -250,7 +254,11 @@ set backspace=start,indent,eol
 set hidden
 
 " display this funny unicode thing for every tab everywhere, with width 8
-set list listchars=tab:⟩— tabstop=8
+set list
+set encoding=utf-8
+set listchars=tab:\\u27E8_\\u27E9,nbsp:\\u2217,multispace:\\u22EF,lead:\\u2025,leadmultispace:\\u2026,trail:\\u2205,precedes:\\u29FC,extends:\\u29FD,eol:\\u00A4
+set tabstop=8
+
 " use spaces instead when entering new content, and let my tabs have width 4.
 " shiftwidth too, see docs for distinction.
 set expandtab softtabstop=4 shiftwidth=4

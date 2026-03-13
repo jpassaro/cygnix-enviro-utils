@@ -26,3 +26,9 @@ _scratch/*
 
 .vscode/
 **/.DS_Store
+
+.jplocal/
+CLAUDE.jp-notes.md
+
+.worktrees/
+.claude/

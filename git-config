@@ -10,6 +10,7 @@
 	rebi = rebase --interactive
 	sho = show --no-patch
 	lstags = for-each-ref --sort=-creatordate  --format='%(refname:short)\t%(creatordate:short)\t%(contents:subject)' 'refs/tags/*'
+	ff = merge --ff-only
 [core]
 	excludesfile = ~/.gitignore
 	abbrev = 12
@@ -37,7 +38,12 @@
 	autosquash = true
 [pull]
 	ff = only
+[color "diff"]
+	whitespace = red red
+[diff]
+	wsErrorHighlight = all
 
-# set up via git config include.path
+# to use:
+# $ git config --global include.path /absolute/path/to/here/git-config
 
 # vi: ft=gitconfig noexpandtab
