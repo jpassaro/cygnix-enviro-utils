@@ -16,4 +16,11 @@ case "$#" in
     exec < <(cat "$@") ;;
 esac
 
-csvjson "${args[@]}" -H --stream | jq -r --arg apo "'" '$ARGS.named.apo as $apo | to_entries | sort_by(.key) | map("\($apo)\(.value)\($apo)") | join(",") | "(\(.)),"'
+csvjson "${args[@]}" -H --stream | jq -r --arg apo "'" '
+  $ARGS.named.apo as $apo | to_entries | sort_by(.key) | map(
+    .value |
+      . as $value |
+      try tonumber catch $value |
+      if type == "string" then "\($apo)\(.)\($apo)" else tostring end
+    ) | join(",") | "(\(.)),"'
+
