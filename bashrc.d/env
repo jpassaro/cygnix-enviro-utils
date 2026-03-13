@@ -1,27 +1,14 @@
 #!/bin/bash
 # shellcheck disable=SC2034
+# Non-interactive environment setup: EDITOR, PAGER, LESSOPEN.
+# Interactive env setup (prompts, direnv, iterm, jenv) is in env-interactive.
 
-if command -v nvim ; then
+if command -v nvim >/dev/null 2>&1 ; then
   export EDITOR=nvim
+  export PAGER=less
 else
   export EDITOR=vim
-fi
-
-# PS1
-source_pragma_once "$MY_BASHRC_D"/prompts
-
-# commands manipulating COMMAND_PROMPT
-# (note): these both caution against manipulating COMMAND_PROMPT after they have run.
-# Since they both actually do this, we have a quandary!
-# At a glance they both make cursory attempts to behave nicely if that does not
-# prove to be the case.
-# direnv goes farther than iterm2 and actually insists on being called last.
-# we will honor that.
-
-source_pragma_once "$MY_BASHRC_D"/iterm-extensions
-
-if check-for-package --optional direnv ; then
-  eval "$(direnv hook bash)"
+  export PAGER=less
 fi
 
 # LESSOPEN
@@ -36,18 +23,7 @@ elif [[ "$jp_system_type" == darwin ]] ; then
 fi
 
 if [[ -n "$lesspipe" ]] \
-      && check-for-package "${lesspipe}" "${lesspipe}, a smarter less reader" ; then
-  LESSOPEN="|$(command -v lesspipe.sh) %s"
+      && check-for-package "$lesspipe" "${lesspipe}, a smarter less reader" ; then
+  LESSOPEN="|$(command -v "$lesspipe") %s"
   export LESSOPEN
-fi
-
-source_pragma_once "$MY_BASHRC_D"/*-env
-
-# work around an iTerm2 issue that causes vim to misassign light/dark color scheme
-[[ -n "$COLORFGBG" ]] || export COLORFGBG="15;0"
-
-if check-for-package --optional jenv ; then
-  mkdir -p ~/.jenv/bin
-  prepend-path ~/.jenv/{bin,shims}
-  eval "$(jenv init - | grep -v '^export PATH=')"
 fi
