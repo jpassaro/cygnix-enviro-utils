@@ -3,11 +3,16 @@
 source_pragma_once "$MY_BASHRC_D"/path
 
 if check-for-package --optional brew ; then
-  source_pragma_once "$(brew --prefix)"/etc/bash_completion
+  source_pragma_once \
+    "$(brew --prefix)"/etc/bash_completion \
+    "$(brew --prefix)"/etc/profile.d/bash_completion.sh \
+    "$(brew --prefix)"/etc/bash_completion.d/*
 fi
 
-gitcompletion=/usr/local/etc/bash_completion.d/git-completion.bash
-[[ -r "$gitcompletion" ]] && source_pragma_once "$gitcompletion"
+export GIT_COMPLETION_SHOW_ALL_COMMANDS=1
+
+# gitcompletion=/usr/local/etc/bash_completion.d/git-completion.bash
+# [[ -r "$gitcompletion" ]] && source_pragma_once "$gitcompletion"
 
 # the remainder of this is snippets taken from vim wikia for completing on
 # vim -t. These were apparently defective at some point and I had to comment

@@ -44,11 +44,14 @@ done
 
 _jp_ps1_osc='\e]'
 _jp_ps1_bel='\007'
-_jp_ps1_dimensions='${COLUMNS}x${LINES}'
+function _jp_ps1_settitle() {
+  _jp_ps1_nonprinting "\\e]0;${1?}\\007"
+}
 
+_jp_ps1_dimensions='${COLUMNS}x${LINES}'
 # set terminal title: tty, cwd, terminal size
 if [[ "$TERM" == xterm* ]] ; then
-  PS1="$(_jp_ps1_nonprinting "${_jp_ps1_osc}0:${jp_prompt_tty}:\w - ${_jp_ps1_dimensions}${_jp_ps1_bel}")$PS1"
+  PS1="$(_jp_ps1_settitle "${jp_prompt_tty}:\\w - ${_jp_ps1_dimensions}")$PS1"
 fi
 
 # add git to ps1
