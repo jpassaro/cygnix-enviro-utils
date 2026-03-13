@@ -44,6 +44,47 @@ def recurse_type:
   end
 ;
 
+def flatten_jp_list:
+  to_entries | map(
+    .key as $herekey
+    | .value
+    | if type == "object" or type == "array"
+      then flatten_jp_list[] | .keypart = [$herekey, .keypart[]]
+      else {keypart: [$herekey], value: .}
+      end
+  )
+;
+
+def _flatten_unfull:
+  map((.key = (.keypart | join("."))) | del(.keypart)) | from_entries
+;
+
+def flatten_jp_new:
+  flatten_jp_list | _flatten_unfull
+;
+
+def flatten_jp_generic_keys_full:
+  flatten_jp_list | map(
+    .keypart |= map(if type == "number" then "##" else tostring end)
+  ) | group_by(.keypart) | map({
+    keypart: .[0].keypart,
+    value: map(.value) | unique
+  })
+;
+
+def flatten_jp_generic_full:
+  flatten_jp_generic_keys_full | map(.value |= (
+    map(type)|unique|join("|")
+  ))
+;
+
+def flatten_jp_generic_keys:
+  flatten_jp_generic_keys_full | _flatten_unfull
+;
+
+def flatten_jp_generic: flatten_jp_generic_full | _flatten_unfull
+;
+
 def flatten_jp:
   with_entries(
     (.key |= tostring)
@@ -109,5 +150,39 @@ def to_ddb:
     then {"L": map(to_ddb)}
   else
     error("unknown type \(type)")
+  end
+;
+
+def _from_ddb:
+  if type == "object"
+    then
+      if keys == ["NULL"] then null
+      elif keys == ["S"] then .S
+      elif keys == ["N"] then .N|tonumber
+      elif keys == ["BOOL"] then .BOOL
+      elif keys == ["L"] then .L|map(_from_ddb)
+      elif keys == ["M"] then .M|map_values(_from_ddb)
+      elif keys|length == 1
+        then error(
+          "unknown key \"\(keys[0])\", should be one of \"NULL\", \"BOOL\", \"N\", \"S\", \"L\", \"M\""
+        )
+      else error("object must have at most one key, one of \"NULL\", \"BOOL\", \"N\", \"S\", \"L\", \"M\"")
+      end
+  else error("unknown type \(type)")
+  end
+;
+
+def from_ddb:
+  map_values(_from_ddb)
+;
+
+def trynumber:
+  . as $value | try tonumber catch $value
+;
+
+def recurse_sort_arrays:
+  if type == "object" then map_values(recurse_sort_arrays)
+  elif type == "array" then sort | map(recurse_sort_arrays)
+  else .
   end
 ;
