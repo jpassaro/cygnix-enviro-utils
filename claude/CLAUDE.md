@@ -49,6 +49,13 @@ When the user wants to save context to another directory (rough plans, future
 tasks, reminders for a different repo), write it to CLAUDE.jp-notes.md in that
 directory. Create the file if it doesn't exist; append if it does.
 
+## Commit messages
+
+In commit message bodies, distinct changes belong in distinct paragraphs.
+Each paragraph can be multi-sentence, but should cover one logical change.
+This keeps `git log` scannable when a commit touches multiple files for
+related-but-separable reasons.
+
 ## Markdown style
 
 When writing markdown tables, always align column widths so that pipe
