@@ -64,7 +64,16 @@ If ~/.claude/reference/known-workspaces.md is missing, fall back to
 scanning ~/code/*/.worktrees/*/ directly and warn the user that the
 reference file should be created.
 
-### 7. Final state
+### 7. Backup local state
+
+Run the backup-local-state.sh script (in the hooks/ directory of this plugin)
+to archive ~/.claude and ~/desk. The backup destination is machine-specific —
+check ~/desk/CLAUDE.md or ~/.claude/CLAUDE.md for the configured path.
+
+If no destination is configured, remind the user to set one up and skip the
+backup step.
+
+### 8. Final state
 
 Show the user the final task summary: completed count, open count, migrated
 count. Surface any stale items (open for more than a week) one more time.
