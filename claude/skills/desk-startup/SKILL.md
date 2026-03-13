@@ -43,7 +43,22 @@ Remind the user to check:
 - Open tickets and outstanding code reviews — read ~/desk/CLAUDE.md for
   the specific URLs to check. If no URLs are configured there, ask the user.
 
-### 5. Final prompt
+### 5. Fetch and report on repos
+
+Read ~/desk/reference/workspaces.md for the list of repos. For each repo
+path listed (lines matching `- ~/code/<name>`), run:
+
+    git -C <repo> fetch --quiet
+
+Then check for new upstream commits:
+
+    git -C <repo> log HEAD..origin/<main-branch> --oneline
+
+Report a summary: which repos have new commits, how many each. If any
+repos updated, offer to summarize the new commits if the user wants.
+Skip repos that aren't git directories or don't exist on this machine.
+
+### 6. Final prompt
 
 Ask: "Anything else to add before we start?"
 
