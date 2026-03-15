@@ -52,13 +52,14 @@ Host jsharp
 EOF
 ```
 
-Create or update `.ssh/known_hosts` including
+Create or update `.ssh/known_hosts` including the current GitHub host keys:
 ```
-github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==
+github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl
+github.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEmKSENjQEezOmUMZhfDqnNoeWk1X1qdzJLUmS5eXU8T9QOq4G3v6vG59S9QO6j+U8C9P3K9m/7yO4P2l9m9N/6M=
 ```
 
-Use `ssh-keygen` to create an SSH keypair. Point to that key in the `gh` ssh
-host config you just created, and add the public key to your github settings.
+Use `ssh-keygen -t ed25519` to create a modern SSH keypair. Add the public
+key to your GitHub settings.
 
 Now you can clone and push to github repos quickly, efficiently, and without
 entering a password:
