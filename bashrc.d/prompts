@@ -19,68 +19,75 @@ function _jp_ps1_withcolor() {
   _jp_ps1_nonprinting "${_jp_ps1_csi}0m"  # reset to baseline
 }
 
-
-# using : ${var:=value} instead of straight assignment allows per-host override
-: "${_jp_ps1_color_cwd:=1;31}"  # bold red
-: "${_jp_ps1_color_prompt:=1;34}"  # bold blue
-_iterm_profile="${ITERM_PROFILE,,}"
-if [[ "$_iterm_profile" == *solarized* && "$_iterm_profile" == *dark* ]] ; then
-  : "${_jp_ps1_color_git:=1;32}"  # bold green for solarized dark
-  : "${_jp_ps1_color_timestamp:=0;36}"  # regular green
-else
-  : "${_jp_ps1_color_git:=1;30}"  # bold grey
-  : "${_jp_ps1_color_timestamp:=0;32}"  # regular green
-fi
-
-: "${jp_prompt_tty:=\l}"
-PS1="[${jp_prompt_tty}]" # bracketed tty
-PS1="${PS1} $(_jp_ps1_withcolor '${_jp_ps1_color_timestamp}' '\D{%F %T}')"  # timestamp, in green
-PS1="${PS1} $(_jp_ps1_withcolor '${_jp_ps1_color_cwd}' '\W')" # $(basename $PWD), in bold red
-
-# add angle-brackets for each nested bash
-for ((i=1 ; i < SHLVL ; i++)) ; do
-  PS1=">$PS1"
-done
-
 _jp_ps1_osc='\e]'
 _jp_ps1_bel='\007'
 function _jp_ps1_settitle() {
   _jp_ps1_nonprinting "\\e]0;${1?}\\007"
 }
 
-_jp_ps1_dimensions='${COLUMNS}x${LINES}'
-# set terminal title: tty, cwd, terminal size
-if [[ "$TERM" == xterm* ]] ; then
-  PS1="$(_jp_ps1_settitle "${jp_prompt_tty}:\\w - ${_jp_ps1_dimensions}")$PS1"
-fi
 
-# add git to ps1
-for promptfile in /usr/lib/git-core/git-sh-prompt {,/opt/homebrew,/usr/local}/etc{,/bash_completion.d}/git-prompt{.sh,} ; do
-  if [[ -r "${promptfile}" && ! -d "$promptfile" ]] ; then
-    source_pragma_once "${promptfile}"
-    # parenthesize the git prompt info
-    # reference the color dynamically so i can experiment
-    PS1="${PS1} $(_jp_ps1_withcolor '${_jp_ps1_color_git}' '$(__git_ps1 "(%s)")')"
-    # git prompt consists of:
-    # branch name (automatic);
-    # '*' for dirty state;
-    # '+' for staged/uncommitted changes;
-    GIT_PS1_SHOWDIRTYSTATE=x
-    # '%' for untracked files;
-    GIT_PS1_SHOWUNTRACKEDFILES=x
-    # '=<>' if upstream is set for same as, behind, or ahead of upstream.
-    GIT_PS1_SHOWUPSTREAM=auto
-    # git prompt suppressed if you happen to navigate into an ignored
-    # subdirectory.
-    GIT_PS1_HIDE_IF_PWD_IGNORED=x
-    # default char to separate branch name from dirty state details is space.
-    GIT_PS1_STATESEPARATOR=:
-    break
+function _jp_ps1_setup() {
+  local i _iterm_profile _jp_ps1_dimensions promptfile
+
+  # using : ${var:=value} instead of straight assignment allows per-host override
+  : "${_jp_ps1_color_cwd:=1;31}"  # bold red
+  : "${_jp_ps1_color_prompt:=1;34}"  # bold blue
+  _iterm_profile="${ITERM_PROFILE,,}"
+  if [[ "$_iterm_profile" == *solarized* && "$_iterm_profile" == *dark* ]] ; then
+    : "${_jp_ps1_color_git:=1;32}"  # bold green for solarized dark
+    : "${_jp_ps1_color_timestamp:=0;36}"  # regular green
+  else
+    : "${_jp_ps1_color_git:=1;30}"  # bold grey
+    : "${_jp_ps1_color_timestamp:=0;32}"  # regular green
   fi
-done
-if [[ -z "$GIT_PS1_SHOWDIRTYSTATE" ]] ; then
-  echo 'No git-prompt.sh found anywhere!'
-fi
 
-# finish up PS1 with a blue dollar or hash
-PS1="${PS1} $(_jp_ps1_withcolor '${_jp_ps1_color_prompt}' '\$') "
+  : "${jp_prompt_tty:=\l}"
+  PS1="[${jp_prompt_tty}]" # bracketed tty
+  PS1="${PS1} $(_jp_ps1_withcolor '${_jp_ps1_color_timestamp}' '\D{%F %T}')"  # timestamp, in green
+  PS1="${PS1} $(_jp_ps1_withcolor '${_jp_ps1_color_cwd}' '\W')" # $(basename $PWD), in bold red
+
+  # add angle-brackets for each nested bash
+  for ((i=1 ; i < SHLVL ; i++)) ; do
+    PS1=">$PS1"
+  done
+
+  _jp_ps1_dimensions='${COLUMNS}x${LINES}'
+  # set terminal title: tty, cwd, terminal size
+  if [[ "$TERM" == xterm* ]] ; then
+    PS1="$(_jp_ps1_settitle "${jp_prompt_tty}:\\w - ${_jp_ps1_dimensions}")$PS1"
+  fi
+
+  # add git to ps1
+  for promptfile in /usr/lib/git-core/git-sh-prompt {,/opt/homebrew,/usr/local}/etc{,/bash_completion.d}/git-prompt{.sh,} ; do
+    if [[ -r "${promptfile}" && ! -d "$promptfile" ]] ; then
+      source_pragma_once "${promptfile}"
+      # parenthesize the git prompt info
+      # reference the color dynamically so i can experiment
+      PS1="${PS1} $(_jp_ps1_withcolor '${_jp_ps1_color_git}' '$(__git_ps1 "(%s)")')"
+      # git prompt consists of:
+      # branch name (automatic);
+      # '*' for dirty state;
+      # '+' for staged/uncommitted changes;
+      GIT_PS1_SHOWDIRTYSTATE=x
+      # '%' for untracked files;
+      GIT_PS1_SHOWUNTRACKEDFILES=x
+      # '=<>' if upstream is set for same as, behind, or ahead of upstream.
+      GIT_PS1_SHOWUPSTREAM=auto
+      # git prompt suppressed if you happen to navigate into an ignored
+      # subdirectory.
+      GIT_PS1_HIDE_IF_PWD_IGNORED=x
+      # default char to separate branch name from dirty state details is space.
+      GIT_PS1_STATESEPARATOR=:
+      break
+    fi
+  done
+  if [[ -z "$GIT_PS1_SHOWDIRTYSTATE" ]] ; then
+    echo 'No git-prompt.sh found anywhere!'
+  fi
+
+  # finish up PS1 with a blue dollar or hash
+  PS1="${PS1} $(_jp_ps1_withcolor '${_jp_ps1_color_prompt}' '\$') "
+}
+
+_jp_ps1_setup
+unset -f _jp_ps1_setup

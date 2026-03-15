@@ -137,8 +137,9 @@ function pi() {
 
 # used by venv utilities above
 function _find_venv() {
+  local prg venv
   for venv in venv .venv ; do
-    local prg="${venv}/bin/${1}"
+    prg="${venv}/bin/${1}"
     if [[ -e "$prg" ]] ; then
       echo "$prg"
       return 0
@@ -186,7 +187,7 @@ function swapfiles-silent() {
 # return 125 if arguments not understood
 # usage: _swapfiles (silent|verbose) [maxdepth]
 function _swapfiles() {
-  local silent depth="$2"
+  local silent depth="$2" verbose
   case "$1" in
     silent) silent=x ;;
     verbose) verbose=x ;;
@@ -203,6 +204,7 @@ function _swapfiles() {
     )
   ]] ; then return 1 ; fi
   (
+    local f
     for f in "${swapfiledirmatches[@]}" ; do
       if [[ -e "$f" ]] ; then
         echo "$f"
@@ -220,6 +222,7 @@ function _swapfiles() {
     return 1
   }
 }
+
 
 # create pgrep-like function
 if ! check-for-package --optional pgrep ; then

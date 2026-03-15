@@ -12,12 +12,14 @@ function _can_add() {
 }
 
 function prepend-path() {
+  local x
   for x ; do
     _can_add "$x" || export PATH="$x":"$PATH"
   done
 }
 
 function append-path() {
+  local x
   for x ; do
     _can_add "$x" || export PATH="$PATH":"$x"
   done
