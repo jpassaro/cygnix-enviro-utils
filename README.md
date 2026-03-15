@@ -76,37 +76,8 @@ summary when action is needed.
 
 # Claude Code integration
 
-`claude/` is a plugin directory for Claude Code, loaded via `--plugin-dir`.
-It provides portable conventions and skills that work on any machine.
-
-The `jp-claude` wrapper (in `bin/`) handles this automatically — it adds
-`--plugin-dir $JP_LOGIN_UTILS/claude` to every invocation. The bashrc
-aliases `claude` to `jp-claude` when it's on PATH.
-
-## What lives where
-
-| Location                            | Scope          | Contents                                                   |
-|-------------------------------------|----------------|------------------------------------------------------------|
-| `login-utils/claude/`               | Portable       | CLAUDE.md, skills, hooks, references                       |
-| `~/.claude/CLAUDE.md`               | Machine-local  | Wires up which skills to activate on session start         |
-| `~/.claude/settings.json`           | Machine-local  | Hooks, env vars, permissions, enabled plugins              |
-| `~/.claude/reference/`              | Machine-local  | known-workspaces.md, other machine-specific references     |
-| `~/.claude/skills/`                 | Machine-local  | Work-specific skills (employer tools, internal APIs, etc.) |
-| `~/desk/CLAUDE.md`                  | Machine-local  | Work-specific daily context (URLs, team protocols)         |
-
-## Work computer extras
-
-Beyond the portable baseline, a work machine typically needs:
-
-- `~/.claude/settings.json` — env vars for authentication (e.g. Bedrock
-  profile), hooks pointing to login-utils scripts, tool permissions
-- `~/.claude/reference/known-workspaces.md` — list of repos and aggregate
-  workspace locations on this machine
-- `~/.claude/skills/` — employer-specific skills
-- `~/desk/CLAUDE.md` — daily-check URLs (ticket tracker, code review),
-  OOO protocol, backup destination
-- `export JP_CLAUDE_CMD=<path>` in `~/.bash_profile` if using a managed
-  launcher (e.g. `ca`) as the underlying claude binary
+`agent/` is a plugin directory for AI assistants. More information about it is
+provided in [AGENTS.md](AGENTS.md).
 
 # Other bits of setup
 
