@@ -15,14 +15,26 @@ handles Homebrew initialization automatically once it is sourced.
 
 ## Update bash
 
-On some systems (Mac especially) you will need to start by updating bash.
-If your bash is less than 4.4 or so, install the up to date one using your
-system's package manager. For example `brew install bash`;
+Modern macOS defaults to `zsh`. These utilities are Bash-based and cannot be
+used in zsh. Furthermore, they require features introduced in **Bash 4.x or
+higher**, while Macs generally come with a bash in the 3.x series which is
+incompatible with these utilities. Therefore we will need to install a custom
+bash and make it the default shell.
 
-Add the new bash (with brew this is "$(brew --prefix)"/bin/bash) to /etc/shells,
-and choose it using `chsh`.
+1.  **Install modern Bash**:
+    `brew install bash`
 
-Now start a new terminal; it should use the new bash.
+2.  **Add to allowed shells**:
+    Add the new bash (with brew this is "$(brew --prefix)/bin/bash") to
+    `/etc/shells`.
+
+3.  **Change your default shell**:
+    ```bash
+    chsh -s "$(brew --prefix)/bin/bash"
+    ```
+
+Now start a new terminal; it should use the new bash. You can verify with
+`echo $BASH_VERSION`.
 
 ## Git bare-bones
 Create or update `.ssh/config` including
