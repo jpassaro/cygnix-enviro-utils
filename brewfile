@@ -18,8 +18,8 @@ brew "awscli"
 # Bourne-Again SHell, a UNIX command interpreter
 brew "bash"
 
-# Programmable completion for Bash 3.2
-brew "bash-completion"
+# Programmable completion for Bash 4.x+
+brew "bash-completion@2"
 
 # GNU File, Shell, and Text utilities
 brew "coreutils"

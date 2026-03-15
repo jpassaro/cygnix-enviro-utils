@@ -3,10 +3,16 @@
 source_pragma_once "$MY_BASHRC_D"/path
 
 if check-for-package --optional brew ; then
-  source_pragma_once \
-    "$(brew --prefix)"/etc/bash_completion \
-    "$(brew --prefix)"/etc/profile.d/bash_completion.sh \
-    "$(brew --prefix)"/etc/bash_completion.d/*
+  # Sourcing the main script (v1) or the profile wrapper (v2) is sufficient.
+  # They both handle sourcing their respective bash_completion.d/ directories.
+  # We try the v2 path first as it's the modern standard for Bash 4+.
+  # We check for existence first to avoid warnings from source_pragma_once.
+  BREW_PREFIX="$(brew --prefix)"
+  if [[ -r "$BREW_PREFIX/etc/profile.d/bash_completion.sh" ]] ; then
+    source_pragma_once "$BREW_PREFIX/etc/profile.d/bash_completion.sh"
+  elif [[ -r "$BREW_PREFIX/etc/bash_completion" ]] ; then
+    source_pragma_once "$BREW_PREFIX/etc/bash_completion"
+  fi
 fi
 
 export GIT_COMPLETION_SHOW_ALL_COMMANDS=1
