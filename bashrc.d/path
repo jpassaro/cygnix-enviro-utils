@@ -23,18 +23,34 @@ function append-path() {
   done
 }
 
-for localpath in /usr/local/bin /opt/homebrew/bin ; do
-  if [[ "$PATH" != *"$localpath"*:/usr/bin* ]] ; then
-    # it must come first, even if it was already there
-    export PATH="${localpath}:${PATH}"
-  fi
-done
-
-if [[ -n "$GEMINI_CLI$CLAUDECODE$CLAUDE_CODE$CLAUDE" ]] && command -v brew >/dev/null ; then
-  for pkg in coreutils findutils gawk gnu-sed gnu-tar grep ; do
-    pkg_prefix="$(brew --prefix "$pkg" 2>/dev/null)" || continue
-    if [[ -n "$pkg_prefix" && -d "${pkg_prefix}/libexec/gnubin" ]] ; then
-      prepend-path "${pkg_prefix}/libexec/gnubin"
+# Initialize Homebrew
+if [[ -z "$HOMEBREW_PREFIX" ]] ; then
+  for brew_bin in /opt/homebrew/bin/brew /usr/local/bin/brew ; do
+    if [[ -x "$brew_bin" ]] ; then
+      eval "$("$brew_bin" shellenv)"
+      break
     fi
   done
+fi
+
+# Fallback for HOMEBREW_PREFIX if shellenv wasn't used but brew is on PATH
+if [[ -z "$HOMEBREW_PREFIX" ]] && command -v brew >/dev/null ; then
+  export HOMEBREW_PREFIX="$(brew --prefix)"
+fi
+
+if [[ -n "$HOMEBREW_PREFIX" ]] ; then
+  # Ensure brew's bin is early in PATH
+  if [[ "$PATH" != *"$HOMEBREW_PREFIX/bin"*:/usr/bin* ]] ; then
+    export PATH="$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/sbin:$PATH"
+  fi
+
+  # Helper for GNU utilities if in an AI agent session
+  if [[ -n "$GEMINI_CLI$CLAUDECODE$CLAUDE_CODE$CLAUDE" ]] ; then
+    for pkg in coreutils findutils gawk gnu-sed gnu-tar grep ; do
+      pkg_prefix="$HOMEBREW_PREFIX/opt/$pkg"
+      if [[ -d "${pkg_prefix}/libexec/gnubin" ]] ; then
+        prepend-path "${pkg_prefix}/libexec/gnubin"
+      fi
+    done
+  fi
 fi

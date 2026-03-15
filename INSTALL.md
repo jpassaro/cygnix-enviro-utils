@@ -5,7 +5,13 @@ This guide covers the technical setup for `cygnix-enviro-utils`.
 ## Homebrew (Mac only)
 
 To use this on Mac, install homebrew:
-`/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"`
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+**Note:** The installer will suggest adding an `eval` of `brew shellenv` to
+your `.bash_profile`. You can ignore this; the `bashrc` in this repository
+handles Homebrew initialization automatically once it is sourced.
 
 ## Update bash
 

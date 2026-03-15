@@ -4,7 +4,7 @@ thisscript="$0"
 anyfailed=
 quiet=
 input=
-brewprefix="$(brew --prefix)"
+brewprefix="${HOMEBREW_PREFIX:-$(brew --prefix)}"
 
 function fail() {
   [[ -n "$quiet" ]] || echo "$@"
