@@ -34,8 +34,9 @@ repo or a mutable working directory.
     ln -s ~/code/repo-a ~/code/my-system/repo-a
     ln -s ~/code/repo-b ~/code/my-system/repo-b
 
-Add a CLAUDE.md at the aggregate root listing the repos, their languages,
-and purposes. Each repo's main clone should stay on a clean main branch.
+Add an AI instructions file (CLAUDE.md or GEMINI.md) at the aggregate
+root listing the repos, their languages, and purposes. Each repo's
+main clone should stay on a clean main branch.
 
 ### Multi-repo changes
 
@@ -64,7 +65,7 @@ When a change spans multiple repos in an aggregate workspace:
 ## Machine-specific details
 
 The list of repos, their main branch names, and aggregate workspace
-locations are machine-specific. Check ~/desk/reference/workspaces.md for
-this machine's layout. Entries use the format `- ~/code/<name> (<language>,
+locations are machine-specific. Check ~/.config/jp-agent/workspaces.md
+for this machine's layout. Entries use the format `- ~/code/<name> (<language>,
 main branch: <branch>)`. For the full format specification, see
-`$JP_LOGIN_UTILS/claude/skills/worktree-conventions/workspace-reference-format.md`.
+`$JP_LOGIN_UTILS/agent/skills/worktree-conventions/workspace-reference-format.md`.

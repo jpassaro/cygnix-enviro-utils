@@ -23,6 +23,6 @@ increasing directness at the configured thresholds.
 - These checks should happen once per threshold (not on every prompt after
   the time passes).
 - Include the check naturally at the top of your response.
-- The thresholds above are defaults. The invoking CLAUDE.md may override
-  them (e.g., different times for a personal machine, or a shifted schedule
-  for an in-office day).
+- The thresholds above are defaults. The invoking AI instructions file
+  (CLAUDE.md or GEMINI.md) may override them: e.g., different times for
+  a personal machine, or a shifted schedule for an in-office day.

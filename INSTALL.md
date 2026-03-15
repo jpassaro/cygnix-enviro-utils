@@ -77,6 +77,30 @@ echo source ~/code/login-utils/bashrc >>~/.bash_profile
 When you're ready to roll, start a new terminal or call `source
 ~/.bash_profile`. The utilities should make further suggestions from here.
 
+## AI Integration
+
+This repository provides portable skills and hooks for AI agents in the `agent/`
+directory.
+
+### Loading portable skills
+
+To ensure your AI assistant always has access to these portable conventions:
+
+- **Claude Code**: Use the `jp-claude` wrapper (in `bin/`). It automatically
+  adds `--plugin-dir $JP_LOGIN_UTILS/agent` to every invocation.
+- **Gemini CLI**: Import the instructions in your global or workspace config:
+  `echo "@agent/AGENTS.md" >> AGENTS.md`
+
+### Hooks & Time Awareness
+
+Some skills (like `end-of-day-awareness` and `soft-timebox`) rely on current 
+timestamps being injected into the conversation context.
+
+- **Gemini CLI**: The `gemini-prompt-timestamp.sh` hook is configured in 
+  `.gemini/settings.json` using the `BeforeAgent` event. It injects a 
+  `[Current Time: ...]` block directly into the context.
+- **Claude Code**: *Claude-specific instructions will be added at a later time.*
+
 ## Other bits of setup
 
 It's a good idea to supply a github API token in your private `.bash_profile`

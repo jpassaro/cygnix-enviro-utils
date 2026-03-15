@@ -44,7 +44,7 @@ Ask if any open items need notes for tomorrow. Offer to:
 
 ### 6. Unpushed work check
 
-Read ~/desk/reference/workspaces.md to get the list of tracked repos.
+Read ~/.config/jp-agent/workspaces.md to get the list of tracked repos.
 For each repo path listed, scan for worktrees at <repo>/.worktrees/*/
 and check the repo root itself. For each git directory found, check for
 uncommitted or unpushed work:
@@ -60,15 +60,16 @@ Report any directories with unpushed > 0 or dirty > 0.
 Do not let the user leave with unpushed commits. Dirty files should at
 minimum be committed (WIP is fine). Unpushed branches must be pushed.
 
-If ~/.claude/reference/known-workspaces.md is missing, fall back to
-scanning ~/code/*/.worktrees/*/ directly and warn the user that the
-reference file should be created.
+If the workspace reference file (~/.config/jp-agent/workspaces.md) is
+missing, fall back to scanning ~/code/*/.worktrees/*/ directly and warn
+the user that the reference file should be created.
 
 ### 7. Backup local state
 
 Run the backup-local-state.sh script (in the hooks/ directory of this plugin)
-to archive ~/.claude and ~/desk. The backup destination is machine-specific —
-check ~/desk/CLAUDE.md for the configured path.
+to archive agent config (e.g., ~/.claude, ~/.gemini) and ~/desk. The backup
+destination is machine-specific — check the desk's AI instructions (e.g.,
+~/desk/CLAUDE.md) for the configured path.
 
 If no destination is configured, remind the user to set one up and skip the
 backup step.

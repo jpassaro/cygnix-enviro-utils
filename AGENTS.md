@@ -20,36 +20,17 @@ When starting a session in this repository, you MUST check your configuration:
     `agent/AGENTS.md`. If you are not seeing instructions about "Bash habits"
     or "Communication style", notify the user.
 
-### How to Load (for Users)
-
-To ensure your AI assistant always has access to these portable conventions:
-
-- **Claude Code**: Use the `jp-claude` wrapper (in `bin/`). It automatically
-  adds `--plugin-dir $JP_LOGIN_UTILS/agent` to every invocation.
-- **Gemini CLI**: Import the instructions in your global or workspace config:
-  `echo "@agent/AGENTS.md" >> AGENTS.md`
-
 ## Architecture & Conventions
 
-| Location                            | Scope          | Contents                                                   |
-|-------------------------------------|----------------|------------------------------------------------------------|
-| `login-utils/agent/`                | Portable       | AGENTS.md, skills, hooks, references                       |
-| `~/.agents/AGENTS.md`               | Machine-local  | Wires up which skills to activate on session start         |
-| `~/.agents/settings.json`           | Machine-local  | Hooks, env vars, permissions, enabled plugins              |
-| `~/.agents/reference/`              | Machine-local  | known-workspaces.md, other machine-specific references     |
-| `~/.agents/skills/`                 | Machine-local  | Work-specific skills (employer tools, internal APIs, etc.) |
-| `~/desk/AGENTS.md`                  | Machine-local  | Work-specific daily context (URLs, team protocols)         |
+See [INSTALL.md](INSTALL.md) for instructions on how to load these skills and
+configure hooks (like timestamps).
 
-### Work computer extras
+| Description            | Claude Location                      | Gemini Location                      | Scope         | Contents                                                   |
+|:-----------------------|:-------------------------------------|:-------------------------------------|:--------------|:-----------------------------------------------------------|
+| **Portable Plugin**    | `$JP_LOGIN_UTILS/agent/`             | `$JP_LOGIN_UTILS/agent/`             | Portable      | Agnostic skills, hooks, and communication style            |
+| **Workspace Registry** | `~/.config/jp-agent/workspaces.md`   | `~/.config/jp-agent/workspaces.md`   | Machine-local | List of tracked repos and aggregate workspaces             |
+| **Global Settings**    | `~/.claude/settings.json`            | `~/.gemini/settings.json`            | Machine-local | Hooks, permissions, and plugin registrations               |
+| **Machine Context**    | `~/.claude/CLAUDE.md`                | `~/.gemini/AGENTS.md`                | Machine-local | Wires up machine-local skills and instructions             |
+| **Desk Context**       | `~/desk/CLAUDE.md`                   | `~/desk/GEMINI.md`                   | Machine-local | Daily URLs, team protocols, and OOO settings               |
+| **Specialized Skills** | `~/.claude/skills/`                  | `~/.gemini/skills/`                  | Machine-local | Context-specific tools, internal APIs, or private automation |
 
-Beyond the portable baseline, a work machine typically needs:
-
-- `~/.agents/settings.json` — env vars for authentication (e.g. Bedrock
-  profile), hooks pointing to login-utils scripts, tool permissions
-- `~/.agents/reference/known-workspaces.md` — list of repos and aggregate
-  workspace locations on this machine
-- `~/.agents/skills/` — employer-specific skills
-- `~/desk/AGENTS.md` — daily-check URLs (ticket tracker, code review),
-  OOO protocol, backup destination
-- `export JP_CLAUDE_CMD=<path>` in `~/.bash_profile` if using a managed
-  launcher (e.g. `ca`) as the underlying claude binary

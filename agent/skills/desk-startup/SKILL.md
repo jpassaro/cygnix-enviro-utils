@@ -39,13 +39,14 @@ steps 1 and 2. Then update the symlink:
 Remind the user to check:
 - Email
 - Calendar (meetings) — if any OOO/AFK blocks, remind user to notify the
-  team before moving on (see OOO protocol in ~/desk/CLAUDE.md)
-- Open tickets and outstanding code reviews — read ~/desk/CLAUDE.md for
-  the specific URLs to check. If no URLs are configured there, ask the user.
+  team before moving on (see OOO protocol in the desk's AI instructions,
+  e.g., ~/desk/CLAUDE.md or ~/desk/GEMINI.md)
+- Open tickets and outstanding code reviews — read the desk's AI instructions
+  for the specific URLs to check. If no URLs are configured there, ask the user.
 
 ### 5. Fetch and report on repos
 
-Read ~/desk/reference/workspaces.md for the list of repos. For each repo
+Read ~/.config/jp-agent/workspaces.md for the list of repos. For each repo
 path listed (lines matching `- ~/code/<name>`), run:
 
     git -C <repo> fetch --quiet

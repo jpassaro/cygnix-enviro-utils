@@ -1,6 +1,6 @@
 # Workspaces reference file format
 
-This documents the expected structure of ~/desk/reference/workspaces.md.
+This documents the expected structure of ~/.config/jp-agent/workspaces.md.
 
 ## Purpose
 
@@ -17,7 +17,7 @@ List directories that contain symlinks to git repos. One per line:
 
     ## Aggregate directories (contain symlinks to git repos)
 
-    - ~/code/datos — see its CLAUDE.md for full worktree conventions
+    - ~/code/datos — see its AI instructions for full worktree conventions
     - ~/code/my-workspace
 
 ### Git repos grouped by aggregate

@@ -21,9 +21,10 @@ In bash commands, always quote variables and process substitutions: `"$var"`,
 Shebangs in new bash scripts should use `#!/usr/bin/env bash`. Scripts that
 don't need bash features should use `#!/bin/sh` and stay POSIX-compliant.
 
-GNU coreutils, findutils, sed, tar, awk, and grep are on PATH in Claude Code
-sessions, so GNU extension flags are available. In scripts that need to be
-portable, stick to POSIX-specified behavior and avoid GNU extensions.
+GNU coreutils, findutils, sed, tar, awk, and grep are on PATH in AI agent
+sessions (like Claude Code or Gemini CLI), so GNU extension flags are
+available. In scripts that need to be portable, stick to POSIX-specified
+behavior and avoid GNU extensions.
 
 When creating "temp" files, always create a folder ./.jplocal/YYYYMMDD/ to use
 as a "tempdir".
