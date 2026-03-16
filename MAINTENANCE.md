@@ -61,6 +61,28 @@ There are three ways to check your Homebrew status:
     install them based on the `brewfile`. Use `br-i --upgrade` if you also 
     want to upgrade existing packages.
 
+## Rogue Additions to Shell Init
+
+Install scripts for CLI tools often append lines to `~/.bashrc` or
+`~/.bash_profile` — adding PATH entries, sourcing completions, or running
+init hooks. These rogue additions bypass our managed structure and can cause
+surprising behavior (interactive prompts during shell init, duplicate PATH
+entries, etc.).
+
+Periodically check `~/.bashrc` and `~/.bash_profile` for lines added by
+installers. Common patterns to look for:
+
+-   **PATH additions**: Prefer symlinking the binary into `~/bin/` (which is
+    already on PATH) and removing the added `export PATH=...` line.
+-   **Completion scripts**: Symlink the completion file into
+    `~/.local/share/bash-completion/completions/` (the standard user
+    directory for bash-completion 2.x) and remove the `source ...` or
+    `[[ -f ... ]] && source ...` line. Completions there are lazy-loaded
+    automatically.
+-   **Tool init hooks** (e.g. `eval "$(tool init bash)"`): Evaluate whether
+    these belong in `bashrc.d/env-interactive` or can be replaced with a
+    simpler setup.
+
 ## Git Configuration Sync
 
 You likely have global git settings in `~/.gitconfig` that would be useful to 

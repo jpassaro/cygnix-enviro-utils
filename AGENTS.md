@@ -20,6 +20,19 @@ When starting a session in this repository, you MUST check your configuration:
     `agent/AGENTS.md`. If you are not seeing instructions about "Bash habits"
     or "Communication style", notify the user.
 
+### Maintenance Check
+
+When starting a session in this repository, scan for maintenance drift
+per [MAINTENANCE.md](MAINTENANCE.md). Key checks:
+
+-   `check-installables` — missing or stale symlinks in `~/bin/`
+-   `brew-check` — Homebrew formula drift against the brewfile
+-   Uncommitted changes in this repo
+-   Rogue additions to `~/.bashrc` or `~/.bash_profile` (installer-added
+    PATH entries, completion sourcing, init hooks)
+-   `~/.gitconfig` settings that look like they belong in the repo's
+    `git-config` (shared aliases, tool preferences, etc.)
+
 ## Architecture & Conventions
 
 See [INSTALL.md](INSTALL.md) for instructions on how to load these skills and
