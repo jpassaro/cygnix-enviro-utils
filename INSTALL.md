@@ -130,17 +130,26 @@ skills, communication habits, and automatic hooks (like timestamps).
 
 ### Verification
 
-After installing, verify that the skills and hooks are active:
+To verify that the extension and its components are active, follow the checks
+relevant to your environment:
 
-1.  **Installation/linkage**: use CLI sub-commands to ensure the plugin and
-    its skills and hooks are accessible, depending on which agent you're using:
-    * `gemini extensions list`
-    * `gemini skills list`
-    * `claude plugins list`
-    * `type -a claude` (should show jp-claude past the alias).
-2.  **Hooks**: Start a new session and ask the assistant for the time.
-    It should have a timestamp (local, not UTC) printed into its context,
-    approximately like this: `[Current Time: ...]`
+#### For Users (Manual Check)
+- **Gemini**: Run `gemini extensions list` and `gemini skills list`.
+- **Claude**: Run `claude plugins list`.
+- **Aliases**: Run `type -a claude` to ensure it points to `jp-claude`.
+
+#### For AI Agents (Self-Diagnostic)
+If you are an AI assistant working in this repo, you MUST verify your own 
+integration:
+
+1.  **Extensions/Plugins**: Check if you have been started with the 
+    `jp-login-utils` extension (Gemini) or plugin (Claude).
+2.  **Skills**: Check your internal skill-listing (e.g., `gemini skills list`) 
+    to ensure the skills in `agent/skills/` are discovered and enabled.
+3.  **Hooks**: Check your own conversation context for the presence of a
+    `[Current Time: ...]` block, with a local (not UTC) timestamp. This is
+    expected with or just after the user's prompt. If it is present, the
+    timestamp hook is active.
 
 ### Communication Style & Habits
 
