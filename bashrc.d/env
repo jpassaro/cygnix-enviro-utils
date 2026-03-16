@@ -1,6 +1,7 @@
 #!/bin/bash
 # shellcheck disable=SC2034
-# Non-interactive environment setup: EDITOR, PAGER, LESSOPEN.
+# Non-interactive environment: EDITOR, PAGER, LESSOPEN.
+# Safe for non-interactive shells.
 # Interactive env setup (prompts, direnv, iterm, jenv) is in env-interactive.
 
 if [[ "${CLAUDECODE:-}" == "1" ]]; then

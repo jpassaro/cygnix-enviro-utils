@@ -1,5 +1,16 @@
 #!/bin/bash
 # shellcheck disable=SC1090
+# General-purpose shell functions: directory navigation (c, code),
+# venv helpers (activate, py, pi), vim utilities, ack/jq wrappers,
+# swapfile detection, and misc tools.
+# Safe for non-interactive shells (only defines functions).
+#
+# TODO: this is a god file. Consider splitting into focused files, e.g.:
+#   - function-nav: directory navigation (c, code)
+#   - function-venv: venv helpers (activate, py, pi, _find_venv, etc.)
+#   - function-vim: vim utilities (vimrc, :help, swapfiles)
+#   - function-text: ack/jq/grep wrappers (ackl, ackp, jql)
+#   - keep misc (shrug, pbtee, executables, dls, helpless, space, etc.) here
 
 function c(){
   local DIR="$1"

@@ -1,4 +1,6 @@
 #!/bin/bash
+# Defines login-utils-status: reports on installables, brew deps, repo state.
+# Safe for non-interactive shells (only defines a function).
 
 function login-utils-status() {
   local -a messages=()

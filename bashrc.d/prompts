@@ -1,5 +1,8 @@
 #!/bin/bash
 # shellcheck disable=SC2034 disable=SC2016
+# PS1 setup: colors, git status, timestamp, terminal title.
+# interactive-only: sets PS1 and PROMPT_COMMAND helpers
+[[ "$-" == *i* ]] || return
 
 # iterm integration seems to mess this up if called afterward
 source_pragma_once "$MY_BASHRC_D"/iterm-extensions

@@ -1,5 +1,8 @@
 #!/bin/bash
 # shellcheck disable=SC1090
+# iTerm2 shell integration: badge, growl notifications, remind.
+# interactive-only: uses OSC terminal escape sequences
+[[ "$-" == *i* ]] || return
 
 if [[ "$TERM_PROGRAM" == *iTerm* ]] ; then
   source_pragma_once ~/.iterm2_shell_integration.bash

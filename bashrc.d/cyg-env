@@ -1,4 +1,6 @@
 #!/bin/bash
+# Cygwin-specific environment (MAIN, USERPROFILE, TERM, CYGWIN flag).
+# Safe for non-interactive shells.
 [[ -e /cygdrive ]] && {
 export MAIN=/cygdrive/c/athena_trunk
 USERPROFILE=$(cygpath -u "$USERPROFILE")

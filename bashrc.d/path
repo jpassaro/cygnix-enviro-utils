@@ -1,4 +1,6 @@
 #!/bin/bash
+# PATH utilities (prepend-path, append-path) and Homebrew initialization.
+# Safe for non-interactive shells.
 
 # utilities to easily add paths to your PATH.
 # Each one checks for duplicate entries and that the directory exists.

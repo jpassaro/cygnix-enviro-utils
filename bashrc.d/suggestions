@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Checks for missing symlinks/config and suggests setup commands.
+# Safe for non-interactive shells (useful for agents verifying integration).
 
 function _suggest-cmd() {
   echo '*** try this: ' "$@" ': ***'

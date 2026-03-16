@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Homebrew bundle management: br-i (install), brew-check, brew-check-full.
+# Safe for non-interactive shells (only defines functions).
 
 if check-for-package --optional brew ; then
   MY_BASHRC_BREWFILE="$(cd -P "$MY_BASHRC_D" && cd .. && pwd)/brewfile"

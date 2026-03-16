@@ -1,6 +1,7 @@
 #!/bin/bash
-
-# several useful bash options available via `set` and `shopt`.
+# Shell options: globstar, extglob, histappend, cdspell, ignoreeof.
+# interactive-only: these options are for interactive shell sessions
+[[ "$-" == *i* ]] || return
 
 # Don't use ^D to exit, unless this is a nested bash process,
 # or otherwise overridden (for example an SSH host)

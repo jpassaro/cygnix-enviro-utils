@@ -1,4 +1,8 @@
 #!/bin/bash
+# Aliases for common commands (ls, grep, vim, awk, etc).
+# interactive-only: defines aliases
+[[ "$-" == *i* ]] || return
+
 alias sshes='grep Host ~/.ssh/config'
 alias hosts='grep Host ~/.ssh/config'
 alias hello='echo hello'

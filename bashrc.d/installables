@@ -1,4 +1,7 @@
 #!/bin/bash
+# Manages ~/bin: adds it to PATH, defines check-installables for
+# installing/tracking symlinks from the repo's bin/ directory.
+# Safe for non-interactive shells.
 
 source_pragma_once "$MY_BASHRC_D"/path  # we need prepend-path
 

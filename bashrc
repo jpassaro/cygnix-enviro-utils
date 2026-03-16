@@ -94,27 +94,18 @@ function check-for-package() {
   return 1
 }
 
-# --- non-interactive setup ---
-# PATH, key exports, and ssh agent env are useful in non-interactive shells too.
+# Source all bashrc.d subscripts. Each script is responsible for detecting
+# when it should run (e.g. skip if non-interactive, skip if not cygwin).
 
 if [ -d "$MY_BASHRC_D" ] ; then
+  # path and env first — other scripts depend on PATH and HOMEBREW_PREFIX.
   source_pragma_once "$MY_BASHRC_D"/path
   mkdir -p ~/bin
   prepend-path ~/bin
   source_pragma_once "$MY_BASHRC_D"/env
   source_pragma_once "$MY_BASHRC_D"/cyg-env
-fi
 
-# pick up ssh agent env vars (PID, socket) for non-interactive use (e.g. git over ssh).
-# the full agent startup/key-adding logic in ssh-agent-settings runs interactively only.
-SSH_HOME="${SSH_HOME:-"$HOME"/.ssh}"
-SSH_ENV="${SSH_ENV:-${SSH_HOME}/agent-setup}"
-[[ ! -f "$SSH_ENV" ]] || source "$SSH_ENV"
-
-# --- end non-interactive setup ---
-[[ "$-" == *i* ]] || return
-
-if [ -d "$MY_BASHRC_D" ] ; then
+  # everything else
   [[ "$JP_VERBOSE_SOURCE" != on ]] || echo "$MY_BASHRC_D" found
   source_pragma_once "$MY_BASHRC_D"/*
 else

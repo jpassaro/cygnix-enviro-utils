@@ -1,5 +1,7 @@
 #!/bin/bash
 # shellcheck disable=SC1090
+# Rarely-used utility functions: host management, logging, log retrieval.
+# Safe for non-interactive shells (only defines functions).
 
 source_pragma_once "$MY_BASHRC_D"/function
 

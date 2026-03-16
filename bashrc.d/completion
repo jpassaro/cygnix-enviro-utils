@@ -1,4 +1,7 @@
 #!/bin/bash
+# Tab-completion setup: Homebrew bash-completion, git, and vim -t.
+# interactive-only: defines and sources completion functions
+[[ "$-" == *i* ]] || return
 
 source_pragma_once "$MY_BASHRC_D"/path
 
