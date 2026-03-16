@@ -1,7 +1,9 @@
 {
-  "name": "jp-personal",
+  "name": "jp-login-utils",
+  "version": "1.0.0",
   "description": "John's personal conventions, skills, and hooks for AI agents",
   "author": {
     "name": "John Passaro"
-  }
+  },
+  "contextFileName": "AGENTS.md"
 }

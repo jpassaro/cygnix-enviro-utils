@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "BeforeAgent": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "name": "timestamp-injector",
+            "type": "command",
+            "command": "${extensionPath}/hooks/gemini-prompt-timestamp.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

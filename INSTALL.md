@@ -109,27 +109,50 @@ When you're ready to roll, start a new terminal or call `source
 
 ## AI Integration
 
-This repository provides portable skills and hooks for AI agents in the `agent/`
-directory.
+This repository provides a portable extension for AI agents (Gemini CLI and 
+Claude Code) in the `agent/` directory. This extension bundles specialized 
+skills, communication habits, and automatic hooks (like timestamps).
 
-### Loading portable skills
+### Installation
 
-To ensure your AI assistant always has access to these portable conventions:
+-   **Gemini CLI**: the extension is installed in a persistent fashion.
+    Normally it's installed by version, but there is a symlink-based dev mode
+    where changes become available immediately. Use this command:
+    ```bash
+    gemini extensions link ~/code/login-utils/agent
+    ```
+-   **Claude Code**: the plugin must be added to be around runtime. The
+    `jp-claude` wrapper (in `bin/`) automatically adds `--plugin-dir
+    ~/code/login-utils/agent` to every invocation. Just run
+    `check-installables interactive` to ensure that jp-claude is installed
+    properly. If so, then your next terminal session will alias
+    claude=jp-claude and you should have the plugin available.
 
-- **Claude Code**: Use the `jp-claude` wrapper (in `bin/`). It automatically
-  adds `--plugin-dir $JP_LOGIN_UTILS/agent` to every invocation.
-- **Gemini CLI**: Import the instructions in your global or workspace config:
-  `echo "@agent/AGENTS.md" >> AGENTS.md`
+### Verification
+
+After installing, verify that the skills and hooks are active:
+
+1.  **Installation/linkage**: use CLI sub-commands to ensure the plugin and
+    its skills and hooks are accessible, depending on which agent you're using:
+    * `gemini extensions list`
+    * `gemini skills list`
+    * `claude plugins list`
+    * `type -a claude` (should show jp-claude past the alias).
+2.  **Hooks**: Start a new session and ask the assistant for the time.
+    It should have a timestamp (local, not UTC) printed into its context,
+    approximately like this: `[Current Time: ...]`
+
+### Communication Style & Habits
+
+The extension automatically loads `agent/AGENTS.md`, which contains 
+instructions for communication style, bash habits, and engineering standards. 
+You do not need to import this file manually.
 
 ### Hooks & Time Awareness
 
-Some skills (like `end-of-day-awareness` and `soft-timebox`) rely on current 
-timestamps being injected into the conversation context.
-
-- **Gemini CLI**: The `gemini-prompt-timestamp.sh` hook is configured in 
-  `.gemini/settings.json` using the `BeforeAgent` event. It injects a 
-  `[Current Time: ...]` block directly into the context.
-- **Claude Code**: *Claude-specific instructions will be added at a later time.*
+The extension includes a `timestamp-injector` hook that automatically injects 
+`[Current Time: ...]` into your conversations. This is used by skills like 
+`soft-timebox` and `end-of-day-awareness`.
 
 ## Other bits of setup
 
