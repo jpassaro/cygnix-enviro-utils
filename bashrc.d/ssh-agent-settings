@@ -1,6 +1,9 @@
 #!/bin/bash
 # shellcheck disable=SC1090
-# ssh-agent
+# SSH agent lifecycle: start agent, add keys, detect stale agents.
+# Safe for non-interactive shells: agent startup and env sourcing work,
+# but ssh-add-local-keys is stubbed to avoid terminal reads.
+
 # first shamelessly adapted (plagiarized) from some stack exchange thread
 # (though I have now added enough of my own stuff to this that I hardly think
 # that is still true)
@@ -53,37 +56,61 @@ function ssh-maybe-start-agent {
     chmod 600 "${SSH_ENV}"
     . "${SSH_ENV}"
     [[ "$JP_VERBOSE_SSH" != on ]] || echo >&2 "login-utils/ssh-agent: sourced ${SSH_ENV} (PID ${SSH_AGENT_PID})"
+    # Record whether the winner was interactive so race losers can react.
+    if [[ "$-" == *i* ]]; then
+      echo interactive > "$SSH_ENV_LOCK/shell-type"
+    else
+      echo non-interactive > "$SSH_ENV_LOCK/shell-type"
+    fi
     ssh-add-local-keys
 
   else
-    echo 'avoided a ssh-agent race condition! trying again in a moment'
+    echo >&2 "login-utils/ssh-agent: avoided race condition, retrying shortly"
     sleep "${SSH_ENV_WAIT:-1}"
     if ! ssh-check-env-file ; then
       cat <<-END_OF_MESSAGE >&2
 	------------------OH NO!---------------------------
-	This has proven complicated. Please kill any existing ssh-agents
-	and execute the following:
+	Could not find a running ssh-agent after waiting.
+	This likely means a stale lock dir was left behind.
+	To fix, run:
 
-	$ rmdir $SSH_ENV_LOCK ; ${FUNCNAME[0]}
+	  rm -rf ${SSH_ENV_LOCK@Q} && ${FUNCNAME[0]}
 
-	Then you should execute ssh-check-env-file in all sessions.
+	Any other open terminals should then run ssh-check-env-file
+	to pick up the new agent.
 
-	See comments in ${BASH_SOURCE[0]} for more about what has happened.
+	See comments in ${BASH_SOURCE[0]} for details.
 	END_OF_MESSAGE
       return 1
+    fi
+    # Agent is running, but if the winner was non-interactive, keys
+    # may not have been added. Nudge an interactive user to fix this.
+    if [[ "$-" == *i* ]] && \
+       [[ -f "$SSH_ENV_LOCK/shell-type" ]] && \
+       [[ "$(< "$SSH_ENV_LOCK/shell-type")" == non-interactive ]]; then
+      echo >&2 "login-utils/ssh-agent: agent was started by a non-interactive shell,"
+      echo >&2 "  so SSH keys may not have been added. Run: ssh-add-local-keys"
     fi
   fi
 }
 
-function ssh-add-local-keys() {
-  local pub key
-  for pub in "$SSH_HOME"/*.pub ; do
-    key="${pub%.pub}"  # shave off the suffix
-    if [[ -r "$key" ]] ; then
-      ssh-add "$key"
-    fi
-  done
-}
+if [[ "$-" == *i* ]]; then
+  function ssh-add-local-keys() {
+    local pub key
+    for pub in "$SSH_HOME"/*.pub ; do
+      key="${pub%.pub}"  # shave off the suffix
+      if [[ -r "$key" ]] ; then
+        ssh-add "$key"
+      fi
+    done
+  }
+else
+  function ssh-add-local-keys() {
+    echo >&2 "ssh-add-local-keys: must be run in an interactive shell."
+    echo >&2 "  Open a new terminal and run: ssh-add-local-keys"
+    return 1
+  }
+fi
 
 function ssh-check-env-file() {
   if [[ ! -f "${SSH_ENV}" ]] ; then
