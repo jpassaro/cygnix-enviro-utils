@@ -71,11 +71,41 @@ If you don't already have git, install it. Then clone this:
 
 ```console
 git clone gh:jpassaro/cygnix-enviro-utils.git ~/code/login-utils
-echo source ~/code/login-utils/bashrc >>~/.bash_profile
+```
+
+### Profile vs. Bashrc
+
+Bash uses two main configuration files, and the rules for when it reads which one
+can be confusing:
+
+-   **`.bash_profile`**: Read by **login shells** (e.g., when you first log in, 
+    or when you open a new terminal window on **macOS**).
+-   **`.bashrc`**: Read by **non-login interactive shells** (e.g., when you 
+    start a sub-shell by typing `bash`).
+
+To ensure a consistent environment across all types of interactive shells, the 
+standard practice is to put all configuration in `.bashrc` and have 
+`.bash_profile` source it.
+
+Add the following to your `~/.bashrc`:
+```bash
+# Source the login-utils bashrc
+if [ -f ~/code/login-utils/bashrc ]; then
+    source ~/code/login-utils/bashrc
+fi
+```
+
+Then, add the following to your `~/.bash_profile` to ensure `.bashrc` is 
+always loaded:
+```bash
+# Load .bashrc if it exists
+if [ -f ~/.bashrc ]; then
+    source ~/.bashrc
+fi
 ```
 
 When you're ready to roll, start a new terminal or call `source
-~/.bash_profile`. The utilities should make further suggestions from here.
+~/.bashrc`. The utilities should make further suggestions from here.
 
 ## AI Integration
 
