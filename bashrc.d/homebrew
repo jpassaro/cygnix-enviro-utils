@@ -31,20 +31,4 @@ if check-for-package --optional brew ; then
   function brew-check-full() {
     brew bundle check --file="$MY_BASHRC_BREWFILE" "$@"
   }
-
-  function _brew-check-at-startup() {
-    # mostly here for the local variable
-    local retval
-    source_pragma_once "$MY_BASHRC_D"/installables
-    brew-check --quiet
-    retval=$?
-    if [[ $retval == 1 ]] ; then
-      echo
-      echo '** You are missing brew dependencies. Use br-i to install them. **'
-      echo
-    fi
-  }
-
-  _brew-check-at-startup
-  unset -f _brew-check-at-startup
 fi

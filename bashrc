@@ -39,7 +39,14 @@ MY_BASHRC_D="${MY_BASHRC_FILE}.d"
 JP_LOGIN_UTILS="$(cd "$(dirname "$MY_BASHRC_FILE")" && pwd -P)"
 export JP_LOGIN_UTILS
 
+# set JP_VERBOSE_SOURCE=on to see what is being sourced at startup
+JP_VERBOSE_SOURCE="${JP_VERBOSE_SOURCE:-off}"
+
 function source_pragma_once() {
+  if [[ -z "$JP_VERBOSE_SOURCE_HINT_SHOWN" && "$JP_VERBOSE_SOURCE" != on && "$-" == *i* ]] ; then
+    echo >&2 "login-utils/source_pragma_once: set JP_VERBOSE_SOURCE=on to enable verbose logging"
+    export JP_VERBOSE_SOURCE_HINT_SHOWN=yes
+  fi
   local sourceable
   for sourceable ; do
     if [[ -z "${PRAGMA_IMPORTED[$sourceable]}" &&
@@ -47,8 +54,13 @@ function source_pragma_once() {
     then
       if [[ -e "$sourceable" ]] ; then
         PRAGMA_IMPORTED["$sourceable"]=$((PRAGMA_INDEX++))
-        [[ "$-" != *i* ]] || echo >&2 "sourcing $sourceable"
+        if [[ "$JP_VERBOSE_SOURCE" == on ]] ; then
+          echo >&2 "login-utils/source_pragma_once: sourcing $sourceable: start"
+        fi
         source "$sourceable"
+        if [[ "$JP_VERBOSE_SOURCE" == on ]] ; then
+          echo >&2 "login-utils/source_pragma_once: sourcing $sourceable: end"
+        fi
       elif [[ "$sourceable" == */bashrc.d/* ]] ; then
         echo >&2 "could not find ${sourceable##*/bashrc.d/} in ${MY_BASHRC_D}"
       else
@@ -103,10 +115,10 @@ SSH_ENV="${SSH_ENV:-${SSH_HOME}/agent-setup}"
 [[ "$-" == *i* ]] || return
 
 if [ -d "$MY_BASHRC_D" ] ; then
-  echo "$MY_BASHRC_D" found
+  [[ "$JP_VERBOSE_SOURCE" != on ]] || echo "$MY_BASHRC_D" found
   source_pragma_once "$MY_BASHRC_D"/*
 else
-  echo "no bashrc.d found"
+  [[ "$JP_VERBOSE_SOURCE" != on ]] || echo "no bashrc.d found (expected $MY_BASHRC_D)"
 fi
 
 function reload-profile() {
@@ -114,3 +126,5 @@ function reload-profile() {
   # shellcheck source=./bashrc
   source "$MY_BASHRC_FILE"
 }
+
+[[ "$-" != *i* ]] || login-utils-status

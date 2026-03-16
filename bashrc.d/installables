@@ -141,11 +141,7 @@ function check-installables() {
   [[ "${num_missing}" -gt 0 ]] || num_missing=
   [[ "${num_eligible}" -gt 0 ]] || num_eligible=
   if [[ -n "${num_missing}${num_eligible}" ]] ; then
-    echo
     _after "$num_missing" "$num_eligible"
-    echo
   fi
   unset -f _when_missing _when_eligible _after
 }
-
-check-installables quiet | sed 's/..*/>>> & <<</'

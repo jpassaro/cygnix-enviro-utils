@@ -7,6 +7,14 @@
 
 source_pragma_once "$MY_BASHRC_D"/env
 
+# set JP_VERBOSE_SSH=on to see ssh-agent startup logging
+JP_VERBOSE_SSH="${JP_VERBOSE_SSH:-off}"
+
+if [[ -z "$JP_VERBOSE_SSH_HINT_SHOWN" && "$JP_VERBOSE_SSH" != on && "$-" == *i* ]] ; then
+  echo >&2 "login-utils/ssh-agent: set JP_VERBOSE_SSH=on to enable verbose logging"
+  export JP_VERBOSE_SSH_HINT_SHOWN=yes
+fi
+
 SSH_HOME="${SSH_HOME:-"$HOME"/.ssh}"
 SSH_ENV="${SSH_ENV:-${SSH_HOME}/agent-setup}"
 SSH_ENV_LOCK="${SSH_ENV_LOCK:-/tmp/ssh-agent-setup-lock}"
@@ -38,12 +46,15 @@ function ssh-maybe-start-agent {
     return
   fi
   if mkdir "$SSH_ENV_LOCK" >/dev/null 2>&1 ; then
-    echo "Initialising new SSH agent..."
-    ssh-agent > "${SSH_ENV}"
-    echo succeeded
+    [[ "$JP_VERBOSE_SSH" != on ]] || echo >&2 "login-utils/ssh-agent: Initialising new SSH agent..."
+    # ssh-agent outputs `echo Agent pid 123;`, which we strip
+    ssh-agent | sed '/^echo Agent pid/d' > "${SSH_ENV}"
+    [[ "$JP_VERBOSE_SSH" != on ]] || echo >&2 "login-utils/ssh-agent: succeeded"
     chmod 600 "${SSH_ENV}"
     . "${SSH_ENV}"
+    [[ "$JP_VERBOSE_SSH" != on ]] || echo >&2 "login-utils/ssh-agent: sourced ${SSH_ENV} (PID ${SSH_AGENT_PID})"
     ssh-add-local-keys
+
   else
     echo 'avoided a ssh-agent race condition! trying again in a moment'
     sleep "${SSH_ENV_WAIT:-1}"
@@ -79,13 +90,19 @@ function ssh-check-env-file() {
     return 1
   fi
   source "${SSH_ENV}"
-  echo checking for ssh-agent pid "$SSH_AGENT_PID"
+  if [[ "$JP_VERBOSE_SSH" == on ]] ; then
+    echo >&2 "login-utils/ssh-agent: checking for ssh-agent pid $SSH_AGENT_PID"
+  fi
   # ps ${SSH_AGENT_PID} doesn't work under cywgin
   # shellcheck disable=SC2009  # because we are okay grepping ps output here
   if ps ${CYGWIN:+-p} "${SSH_AGENT_PID}" | grep -qm1 ssh-agent$ ; then
-    echo "previous ssh-agent ${SSH_AGENT_PID} is still running"
+    if [[ "$JP_VERBOSE_SSH" == on ]] ; then
+      echo >&2 "login-utils/ssh-agent: previous ssh-agent ${SSH_AGENT_PID} is still running"
+    fi
   else
-    echo "no ssh-agent found"
+    if [[ "$JP_VERBOSE_SSH" == on ]] ; then
+      echo >&2 "login-utils/ssh-agent: no ssh-agent found"
+    fi
     return 1
   fi
 }

@@ -1,0 +1,40 @@
+#!/bin/bash
+
+function login-utils-status() {
+  local -a messages=()
+  
+  # 1. Installables
+  if command -v check-installables >/dev/null ; then
+    local installables_msg
+    installables_msg="$(check-installables quiet)"
+    [[ -z "$installables_msg" ]] || messages+=("$installables_msg")
+  fi
+
+  # 2. Homebrew
+  if command -v brew-check >/dev/null ; then
+    if ! brew-check --quiet ; then
+      messages+=("You are missing brew dependencies. Use br-i to install them.")
+    fi
+  fi
+
+  # 3. Repo Dirty Check
+  if [[ -d "$JP_LOGIN_UTILS/.git" ]] ; then
+    if ! git -C "$JP_LOGIN_UTILS" diff --quiet --exit-code HEAD 2>/dev/null ; then
+      messages+=("login-utils has uncommitted changes.")
+    elif ! git -C "$JP_LOGIN_UTILS" ls-files --others --exclude-standard --directory --no-empty-directory --error-unmatch . >/dev/null 2>&1 ; then
+      # ls-files returns 1 if no untracked files found with --error-unmatch
+      :
+    else
+      messages+=("login-utils has untracked files.")
+    fi
+  fi
+
+  if [[ ${#messages[@]} -gt 0 ]] ; then
+    echo
+    local msg
+    for msg in "${messages[@]}" ; do
+      echo ">>> $msg <<<"
+    done
+    echo
+  fi
+}

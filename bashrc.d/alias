@@ -31,7 +31,7 @@ else
 fi
 
 # enables "fuck" command to correct your last command
-if check-for-package thefuck ; then eval "$(thefuck --alias)" ; fi
+if check-for-package --optional thefuck ; then eval "$(thefuck --alias)" ; fi
 
 # in case accidentally type vim commands into bash terminal
 alias :q=true
