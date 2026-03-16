@@ -136,20 +136,53 @@ relevant to your environment:
 #### For Users (Manual Check)
 - **Gemini**: Run `gemini extensions list` and `gemini skills list`.
 - **Claude**: Run `claude plugins list`.
-- **Aliases**: Run `type -a claude` to ensure it points to `jp-claude`.
+- **Aliases**: In an interactive shell, run `type -a claude` to ensure it
+  points to `jp-claude`. (Aliases are intentionally not exported to
+  non-interactive shells, so this check only works from a terminal prompt.)
 
 #### For AI Agents (Self-Diagnostic)
-If you are an AI assistant working in this repo, you MUST verify your own 
+If you are an AI assistant working in this repo, you MUST verify your own
 integration:
 
-1.  **Extensions/Plugins**: Check if you have been started with the 
+1.  **Extensions/Plugins**: Check if you have been started with the
     `jp-login-utils` extension (Gemini) or plugin (Claude).
-2.  **Skills**: Check your internal skill-listing (e.g., `gemini skills list`) 
+2.  **Skills**: Check your internal skill-listing (e.g., `gemini skills list`)
     to ensure the skills in `agent/skills/` are discovered and enabled.
-3.  **Hooks**: Check your own conversation context for the presence of a
-    `[Current Time: ...]` block, with a local (not UTC) timestamp. This is
-    expected with or just after the user's prompt. If it is present, the
-    timestamp hook is active.
+3.  **Hooks**: Check your own conversation context for a `Current Time: ...`
+    line injected with or just after the user's prompt, including a timezone
+    offset (not UTC). If it is present, the timestamp hook is active.
+
+**Note:** Agents cannot verify the `claude` → `jp-claude` alias directly
+(non-interactive shell). If the plugin and hooks checks pass, the alias
+was working when the session was launched.
+
+### Hooks
+
+Gemini CLI discovers hooks automatically from `agent/hooks/hooks.json` when
+the extension is installed. Claude Code does not have an equivalent
+auto-discovery mechanism — hooks must be registered manually in
+`~/.claude/settings.json` (global) or `.claude/settings.json` (project).
+
+For example, to register the timestamp-injector hook for Claude Code, add a
+`UserPromptSubmit` entry to `~/.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/code/login-utils/agent/hooks/user-prompt-timestamp.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
 
 ### Communication Style & Habits
 

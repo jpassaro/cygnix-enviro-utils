@@ -1,2 +1,2 @@
 #!/bin/sh
-printf 'Current time: %s\n' "$(date '+%Y-%m-%d %H:%M')"
+printf 'Current time: %s\n' "$(date '+%Y-%m-%d %H:%M %z %Z')"

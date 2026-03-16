@@ -21,9 +21,9 @@ stamp="$(date '+%Y%m%d-%H%M')"
 archive="${dest}/local-state-${stamp}.tar.gz"
 
 declare -a targets=(desk)
-for dir in .claude .gemini; do
-    if [[ -d "$HOME/$dir" ]]; then
-        targets+=("$dir")
+for item in .claude .gemini .ssh/config .vimrc .gitconfig .config/nvim; do
+    if [[ -e "$HOME/$item" ]]; then
+        targets+=("$item")
     fi
 done
 
