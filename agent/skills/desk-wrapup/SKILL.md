@@ -33,6 +33,8 @@ cannot.
 Add a `=== Journal ===` section to today's file. Brief retrospective:
 - What got done
 - What didn't and why
+- Where did today actually go? — ask the user to name the things that
+  pulled their attention away from the plan, so the drift is visible
 - Any lessons, observations, or retrospective notes worth carrying forward
 
 ### 5. Tomorrow prep

@@ -20,6 +20,17 @@ the work doesn't correspond to any listed item, say so in your first response:
 Then proceed with the user's request regardless of their answer. If continuing
 on something that isn't a priority, don't block — just surface the tradeoff.
 
+## Date staleness check
+
+Note the date in today.md's `# YYYY-MM-DD` header at session start. If a
+later user message's timestamp shows a different (later) day, re-read
+today.md — the file may have been rolled over by another session, or the
+rollover may have been missed. If the header still shows the old date and
+there's no `=== Journal ===` section, flag it: "today.md looks stale —
+start a desk session to roll over?" Don't attempt the rollover in-place
+from a non-desk workspace — it's interactive and would clutter the
+current session's context.
+
 ## Task tracking ceremony
 
 - If the user indicates a new task, offer to add it to the to-do list.
