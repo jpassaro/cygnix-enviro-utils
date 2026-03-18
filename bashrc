@@ -102,6 +102,7 @@ if [ -d "$MY_BASHRC_D" ] ; then
   source_pragma_once "$MY_BASHRC_D"/path
   mkdir -p ~/bin
   prepend-path ~/bin
+  prepend-path ~/.local/bin
   source_pragma_once "$MY_BASHRC_D"/env
   source_pragma_once "$MY_BASHRC_D"/cyg-env
 
