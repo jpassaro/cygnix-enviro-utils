@@ -4,6 +4,5 @@
   "description": "John's personal conventions, skills, and hooks for AI agents",
   "author": {
     "name": "John Passaro"
-  },
-  "contextFileName": "AGENTS.md"
+  }
 }

@@ -28,13 +28,6 @@
       counterpart looks like. Decide the split, then either add a
       template or document inline in the desk-startup/desk-wrapup skills.
 
-- [ ] Fix plugin CLAUDE.md not loading AGENTS.md content
-      Claude Code ignores `contextFileName` in plugin.json and the `@AGENTS.md`
-      include syntax in CLAUDE.md. The loaded context is the literal string
-      `@AGENTS.md`, so none of the bash habits, tempfile conventions, etc.
-      reach the agent. Fix: `ln -sf AGENTS.md CLAUDE.md` in the agent/
-      directory so Claude Code picks up the real content while Gemini can
-      still use `contextFileName`.
 
 ## Pre-commit-checks skill (design)
 
@@ -100,6 +93,17 @@ same way a new engineer would on day one.
   `claude:` prefix (e.g., `claude:desk-startup`), which reads like an
   official namespace. Rename to something personal (`jp/`, `personal/`,
   etc.) when restructuring.
+
+## hooks.json compatibility
+
+- [ ] `BeforeAgent` in hooks.json causes Claude Code to reject the entire file
+      Claude Code validates hooks.json strictly — any unrecognized key
+      (like the Gemini-only `BeforeAgent`) fails the whole plugin with
+      `hook-load-failed`. Options:
+        a) Split into hooks.json (Claude) and gemini-hooks.json (Gemini)
+        b) Remove BeforeAgent and use Gemini's own config for that hook
+        c) Wait for Claude Code to use lenient parsing (ignore unknown keys)
+      Current workaround: hooks registered manually in ~/.claude/settings.json.
 
 ## End-to-end testing
 

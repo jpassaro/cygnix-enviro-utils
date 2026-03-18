@@ -1,3 +1,7 @@
+These instructions are loaded from the login-utils plugin (path provided
+by the session-start hook). See its README.md if needed for detail on
+installables, bin/ scripts, and other documentation.
+
 ## Communication style
 
 When answering questions, cite the source (file path, documentation URL, or
@@ -56,6 +60,22 @@ In commit message bodies, distinct changes belong in distinct paragraphs.
 Each paragraph can be multi-sentence, but should cover one logical change.
 This keeps `git log` scannable when a commit touches multiple files for
 related-but-separable reasons.
+
+## End-of-day time awareness
+
+Use injected timestamps to monitor the time of day. Escalate with increasing
+directness at these thresholds (once per threshold, at the top of the response):
+
+- **Past 17:00** — "FYI it's past 5. Should we think about wrapping up?"
+- **Past 17:30** — "Hey, it's past 5:30. You may want to put this down."
+- **Past 18:00** — "It's past 6, getting late. Should we stop?"
+- **Past 18:30** — "6:30. Your kids are waiting. Let's call it a night."
+- **Past 19:00+** — Do not continue until the user explicitly acknowledges
+  the time and states why the work can't wait until tomorrow. Be blunt:
+  "It's past 7. What's going on that can't wait until morning?"
+
+Project-level instructions (CLAUDE.md, GEMINI.md) may override these
+thresholds for specific contexts.
 
 ## Markdown style
 
