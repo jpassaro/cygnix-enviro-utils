@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+editor="${EDITOR:-vim}"
+
+case "$editor" in
+  vim|nvim|*/vim|*/nvim) ;;
+  *) echo "vim-light: EDITOR is not vim or nvim: '$editor'" >&2; exit 1 ;;
+esac
+
+exec "$editor" -c 'set background=light' -c 'colorscheme solarized' "$@"

@@ -1,0 +1,44 @@
+#!/bin/sh
+
+dateexpr_input="${1:-"21 days ago"}"
+
+case "$dateexpr_input" in
+  *' ago')
+    dateexpr="$dateexpr_input"
+    ;;
+  *[!0-9]*)
+    echo >&2 "invalid argument, expect DAYS_AGO"
+    exit 1
+    ;;
+  *)
+    dateexpr="$dateexpr_input days ago"
+esac
+
+if command -v gdate >/dev/null ; then
+  datecmd=gdate
+else
+  datecmd=date
+fi
+
+earliest="$("$datecmd" -d "$dateexpr" +%s)"
+
+my_email="$(git config user.email)"
+if [ -z "$my_email" ] ; then
+  echo >&2 "git config user.email is not set"
+  exit 1
+fi
+
+fmt='%(authordate:unix) %(authoremail) %(refname)'
+
+git fetch 2>/dev/null >/dev/null || { echo >&2 unable to fetch first ; }
+
+git for-each-ref \
+    --format="%(if:equals=commit)%(objecttype)%(then)$fmt%(end)" \
+  | awk -v EARLIEST="$earliest" '$1 >= EARLIEST' \
+  | while read -r dt email ref ; do
+      if echo "$email" | grep -qi "$my_email" ; then
+        echo "$ref"
+      elif git rev-list --format=%ae refs/remotes/origin/main.."$ref" 2>/dev/null | grep -qi "$my_email" ; then
+        echo "$ref"
+      fi
+    done
