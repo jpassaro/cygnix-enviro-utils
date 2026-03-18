@@ -22,6 +22,8 @@ When starting a session in this repository, you MUST check your configuration:
 
 ### Maintenance Check
 
+Check [TODO.md](TODO.md) for open enhancements and design notes.
+
 When starting a session in this repository, scan for maintenance drift
 per [MAINTENANCE.md](MAINTENANCE.md). Key checks:
 
