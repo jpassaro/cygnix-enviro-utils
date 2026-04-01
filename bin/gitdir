@@ -1,0 +1,13 @@
+#!/bin/sh
+# Usage: gitdir <subcommand> <directory> [args...]
+# Equivalent to: git -C <directory> <subcommand> [args...]
+#
+# For compound git subcommands, join with a colon:
+#   gitdir worktree:list <directory>  ->  git -C <directory> worktree list
+#   gitdir worktree:add <directory> .worktrees/foo -b branch hash
+#   gitdir remote:add <directory> origin url
+cmd="$(echo "$1" | tr : ' ')"
+dir="$2"
+shift 2
+# $cmd is intentionally unquoted to allow word splitting
+exec git -C "$dir" $cmd "$@"

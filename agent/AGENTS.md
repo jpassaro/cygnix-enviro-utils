@@ -35,6 +35,16 @@ as a "tempdir".
 
 When in a git worktree, pass its absolute path to subagents explicitly.
 
+For read-only git commands on remote directories, prefer
+`gitdir <subcommand> <directory> [args...]` over `git -C <directory>
+<subcommand>`. This wrapper is easier to allowlist in Claude Code permissions
+(prefix rules can't match a variable path in the middle of the command).
+Use colons for compound subcommands: `gitdir worktree:list <dir>`.
+Good candidates: fetch, log, status, diff, rev-parse, worktree:list.
+Use `git -C` directly for write operations (worktree add, push, etc.).
+If `gitdir` is not on PATH, ask the user's permission to run
+`installables install gitdir` (see login-utils MAINTENANCE.md if needed).
+
 ## Personal local-only files
 
 Two files provide per-repo context that is local to the user (globally

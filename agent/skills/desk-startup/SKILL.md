@@ -60,11 +60,11 @@ Remind the user to check:
 Read ~/.config/jp-agent/workspaces.md for the list of repos. For each repo
 path listed (lines matching `- ~/code/<name>`), run:
 
-    git -C <repo> fetch --quiet
+    gitdir fetch <repo> --quiet
 
 Then check for new upstream commits:
 
-    git -C <repo> log HEAD..origin/<main-branch> --oneline
+    gitdir log <repo> HEAD..origin/<main-branch> --oneline
 
 Report a summary: which repos have new commits, how many each. If any
 repos updated, offer to summarize the new commits if the user wants.

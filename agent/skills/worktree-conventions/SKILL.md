@@ -17,9 +17,9 @@ workspaces, or coordinating multi-repo changes.
 - When creating a worktree, base it on a fully resolved commit hash (not a
   remote ref like `origin/main`) to avoid accidentally setting up tracking:
 
-      cd <repo> && git fetch
-      hash="$(git rev-parse origin/main)"   # use the repo's main branch
-      git worktree add .worktrees/<name> -b <branch> "$hash"
+      gitdir fetch <repo>
+      hash="$(gitdir rev-parse <repo> origin/main)"   # use the repo's main branch
+      git -C <repo> worktree add .worktrees/<name> -b <branch> "$hash"
 
 ## Aggregate workspaces
 
@@ -44,9 +44,9 @@ When a change spans multiple repos in an aggregate workspace:
 
 1. In each involved repo's main directory, create a worktree:
 
-       cd ~/code/repo-a && git fetch
-       hash="$(git rev-parse origin/main)"
-       git worktree add .worktrees/my-feature -b my-feature "$hash"
+       gitdir fetch ~/code/repo-a
+       hash="$(gitdir rev-parse ~/code/repo-a origin/main)"
+       git -C ~/code/repo-a worktree add .worktrees/my-feature -b my-feature "$hash"
 
    Repeat for each repo involved in the change.
 
