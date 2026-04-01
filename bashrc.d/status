@@ -6,9 +6,9 @@ function login-utils-status() {
   local -a messages=()
   
   # 1. Installables
-  if command -v check-installables >/dev/null ; then
+  if command -v installables >/dev/null ; then
     local installables_msg
-    installables_msg="$(check-installables quiet)"
+    installables_msg="$(installables quiet)"
     [[ -z "$installables_msg" ]] || messages+=("$installables_msg")
   fi
 

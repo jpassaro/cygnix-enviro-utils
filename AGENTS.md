@@ -27,7 +27,7 @@ Check [TODO.md](TODO.md) for open enhancements and design notes.
 When starting a session in this repository, scan for maintenance drift
 per [MAINTENANCE.md](MAINTENANCE.md). Key checks:
 
--   `check-installables` — missing or stale symlinks in `~/bin/`
+-   `installables` — missing or stale symlinks in `~/bin/`
 -   `brew-check` — Homebrew formula drift against the brewfile
 -   Uncommitted changes in this repo
 -   Rogue additions to `~/.bashrc` or `~/.bash_profile` (installer-added

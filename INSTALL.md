@@ -124,7 +124,7 @@ skills, communication habits, and automatic hooks (like timestamps).
 -   **Claude Code**: the plugin must be added to be around runtime. The
     `jp-claude` wrapper (in `bin/`) automatically adds `--plugin-dir
     ~/code/login-utils/agent` to every invocation. Just run
-    `check-installables interactive` to ensure that jp-claude is installed
+    `installables interactive` to ensure that jp-claude is installed
     properly. If so, then your next terminal session will alias
     claude=jp-claude and you should have the plugin available.
 

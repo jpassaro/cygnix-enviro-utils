@@ -1,5 +1,5 @@
 #!/bin/bash
-# Manages ~/bin: adds it to PATH, defines check-installables for
+# Manages ~/bin: adds it to PATH, defines installables for
 # installing/tracking symlinks from the repo's bin/ directory.
 # Safe for non-interactive shells.
 
@@ -8,7 +8,7 @@ source_pragma_once "$MY_BASHRC_D"/path  # we need prepend-path
 mkdir -p ~/bin
 prepend-path ~/bin
 
-function check-installables() {
+function installables() {
   local bin_folder thisfunc="${FUNCNAME[0]}" basedir exclude
   if ! bin_folder="$(cd "$MY_BASHRC_D"/../bin && pwd -P)" ; then
     echo >&2 could not locate "$MY_BASHRC_D"/../bin
@@ -16,6 +16,79 @@ function check-installables() {
   fi
   basedir="${bin_folder%/bin}"
   exclude="${basedir}/.git/info/exclude"
+
+  case "$1" in
+    help)
+      cat <<EOF
+Usage: ${thisfunc} [subcommand] [name]
+
+Subcommands:
+  (none)         List installable and importable scripts
+  quiet          One-line summary of what's available
+  interactive    Walk through all available actions interactively
+  ignored        Show permanently ignored scripts
+  install NAME   Symlink bin/NAME from this repo into ~/bin
+  ignore NAME    Permanently skip installing bin/NAME
+  import NAME    Import ~/bin/NAME into this repo's bin/
+  help           Show this help
+EOF
+      return 0
+      ;;
+    install)
+      local name="$2" source target
+      [[ -n "$name" ]] || { echo >&2 "usage: ${thisfunc} install NAME"; return 1; }
+      source="${bin_folder}/${name}"
+      target=~/bin/"$name"
+      [[ -x "$source" ]] || { echo >&2 "${name} not found in ${bin_folder}"; return 1; }
+      if [[ -L "$target" ]] ; then
+        echo >&2 "${name} is already installed (symlink exists at ${target})"
+        return 1
+      fi
+      if [[ -f "$target" && ! -x "$target" ]] ; then
+        echo "${name} was previously ignored; removing placeholder"
+        rm -v "$target"
+      fi
+      ln -sv "$source" "$target"
+      return 0
+      ;;
+    ignore)
+      local name="$2" target
+      [[ -n "$name" ]] || { echo >&2 "usage: ${thisfunc} ignore NAME"; return 1; }
+      target=~/bin/"$name"
+      if [[ -L "$target" ]] ; then
+        echo >&2 "${name} is currently installed (symlink at ${target}); remove it first"
+        return 1
+      fi
+      if [[ -f "$target" && ! -x "$target" ]] ; then
+        echo >&2 "${name} is already ignored"
+        return 1
+      fi
+      echo "ignoring ${name}; rm ${target} to reverse this decision"
+      touch "$target"
+      chmod 644 "$target"
+      return 0
+      ;;
+    import)
+      local name="$2" source target existing
+      [[ -n "$name" ]] || { echo >&2 "usage: ${thisfunc} $1 NAME"; return 1; }
+      source=~/bin/"$name"
+      target="${bin_folder}/${name}"
+      if [[ -L "$source" ]] ; then
+        echo >&2 "${name} is already a symlink in ~/bin; nothing to import"
+        return 1
+      fi
+      if [[ ! -f "$source" || ! -x "$source" ]] ; then
+        echo >&2 "${name} not found as an executable in ~/bin"
+        return 1
+      fi
+      if [[ -e "$target" ]] ; then
+        echo "warning: overwriting existing ${target}"
+      fi
+      mv -v "$source" "$target"
+      ln -sv "$target" "$source"
+      return 0
+      ;;
+  esac
 
   if [[ "$1" == quiet ]] ; then
 
@@ -127,6 +200,10 @@ function check-installables() {
   local existing
   for path in ~/bin/* ; do
     if ! [[ -f "$path" && -x "$path" && ! -L "$path" ]] ; then
+      continue
+    fi
+    # Skip binary files — they never belong in git
+    if [[ "$(file --mime-encoding -b "$path")" == binary ]] ; then
       continue
     fi
     basename="${path##*/}"

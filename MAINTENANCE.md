@@ -33,17 +33,24 @@ The workflow for new scripts is designed for safe iteration:
 2.  **Stable Migration**: Once a script is stable, move it into 
     `login-utils/bin/` and replace the local copy with a symlink.
 
-### Using `check-installables`
+### Using `installables`
 
-The `check-installables` function (defined in `bashrc.d/installables`) automates 
+The `installables` function (defined in `bashrc.d/installables`) automates
 this process. It runs quietly on every shell startup.
 
--   **Check status**: Run `check-installables` to see which scripts are missing 
+-   **Check status**: Run `installables` to see which scripts are missing
     symlinks or are eligible for version control.
--   **Interactive Sync**: Run `check-installables interactive` to walk through 
+-   **Interactive Sync**: Run `installables interactive` to walk through
     each item and decide whether to install, ignore, or add it to the repo.
--   **See Ignored**: Run `check-installables ignored` to see which scripts you 
+-   **Install one**: Run `installables install NAME` to symlink a single
+    script from `bin/` into `~/bin`.
+-   **Ignore one**: Run `installables ignore NAME` to permanently skip
+    installing a script (`rm ~/bin/NAME` to reverse).
+-   **Import one**: Run `installables import NAME` to move a script from
+    `~/bin/` into the repo's `bin/` and symlink back.
+-   **See Ignored**: Run `installables ignored` to see which scripts you
     have previously chosen to exclude from sync.
+-   **Help**: Run `installables help` for a full usage summary.
 
 ## Homebrew Maintenance
 

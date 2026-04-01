@@ -25,7 +25,7 @@ if check-for-package --optional brew ; then
       check-brew.sh -f "$MY_BASHRC_BREWFILE" "$@"
     else
       # shellcheck disable=2016
-      echo >&2 '**Please install check-brew.sh using `check-installables`.**'
+      echo >&2 '**Please install check-brew.sh using `installables`.**'
       return 100
     fi
   }

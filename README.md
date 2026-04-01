@@ -22,9 +22,9 @@ I've written over time to accommodate common tasks in Unix and Cygwin.
 New scripts go to `~/bin/` first for iteration. Once stable, migrate them
 to `login-utils/bin/` and symlink back from `~/bin/`.
 
-The `check-installables` bash function (defined in `bashrc.d/installables`)
+The `installables` bash function (defined in `bashrc.d/installables`)
 manages the sync between the two directories. Run it with no arguments to
-see what's out of sync, or `check-installables interactive` to walk through
+see what's out of sync, or `installables interactive` to walk through
 each item. It runs in quiet mode on shell startup and prints a one-line
 summary when action is needed.
 
