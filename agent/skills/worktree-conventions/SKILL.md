@@ -60,7 +60,26 @@ When a change spans multiple repos in an aggregate workspace:
 
    Only include repos involved in the change.
 
-3. Remove the composite directory when the PRs are merged.
+3. Grant Claude Code access to the physical worktree paths. Claude
+   resolves symlinks before checking permissions, so without this step
+   agents cannot read through the symlinks.
+
+       mkdir -p ~/code/my-system/worktrees/my-feature/.claude
+       cat > ~/code/my-system/worktrees/my-feature/.claude/settings.json <<'EOF'
+       {
+         "permissions": {
+           "additionalDirectories": [
+             "~/code/repo-a/.worktrees/my-feature",
+             "~/code/repo-b/.worktrees/my-feature"
+           ]
+         }
+       }
+       EOF
+
+   List every physical worktree path that has a symlink in the composite
+   workspace. Use `~` paths (Claude Code expands them).
+
+4. Remove the composite directory when the PRs are merged.
 
 ## Machine-specific details
 

@@ -1,3 +1,4 @@
+--ignore-dir=is:.worktrees
 --ignore-dir=is:.idea
 --ignore-dir=is:.direnv
 --ignore-dir=is:htmlcov
