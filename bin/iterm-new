@@ -1,0 +1,250 @@
+#!/usr/bin/env bash
+# iterm-new: Open a new iTerm2 window in a directory, with optional color,
+# sizing, env vars, stdin commands, and an initial command.
+#
+# Usage:
+#   iterm-new [OPTIONS] [DIRECTORY] [-- COMMAND...]
+#
+# Known gap: PS1 prompt colors (timestamp, CWD, git status) are configured
+# in bashrc.d/prompts based on $ITERM_PROFILE, not the actual background
+# color. Dark-on-dark or light-on-light clashes are possible when using
+# -c with a color that doesn't match the profile's assumed background.
+
+set -euo pipefail
+
+# --- Defaults ---------------------------------------------------------------
+
+PROFILE="Default"
+COLOR=""          # empty = no color override
+RANDOM_MODE=none  # none | dir | urandom
+FORCE_BG=""       # light | dark | empty (auto-detect)
+ROWS=""
+COLS=""
+ENV_VARS=()
+USE_STDIN=false
+DIR=""
+CMD_ARGS=()
+
+# --- Color presets ----------------------------------------------------------
+
+resolve_preset() {
+    case "$1" in
+        light)  echo "240,240,240" ;;
+        dark)   echo "30,30,30" ;;
+        teal)   echo "180,230,230" ;;
+        cream)  echo "255,245,230" ;;
+        mint)   echo "230,245,240" ;;
+        sand)   echo "210,200,180" ;;
+        navy)   echo "25,40,80" ;;
+        forest) echo "35,55,40" ;;
+        slate)  echo "40,45,55" ;;
+        *) return 1 ;;
+    esac
+}
+
+# --- Usage ------------------------------------------------------------------
+
+usage() {
+    cat <<'USAGE'
+Usage: iterm-new [OPTIONS] [DIRECTORY] [-- COMMAND...]
+
+Options:
+  -p, --profile NAME       iTerm2 profile (default: "Default")
+  -c, --color NAME|R,G,B   Background color preset or explicit RGB
+      --random MODE         Jitter ±15: none (default), dir, urandom
+      --light               Force COLORFGBG to light
+      --dark                Force COLORFGBG to dark
+  -r, --rows N             Override window row count
+  -C, --cols N             Override window column count
+  -e, --env KEY=VALUE      Export env var in session (repeatable)
+      --stdin               Read commands from stdin
+  -h, --help               Show usage
+
+Color presets: light, dark, teal, cream, mint, sand, navy, forest, slate
+USAGE
+}
+
+# --- Argument parsing -------------------------------------------------------
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -p|--profile) PROFILE="$2"; shift 2 ;;
+        -c|--color)   COLOR="$2"; shift 2 ;;
+        --random)     RANDOM_MODE="$2"; shift 2 ;;
+        --light)      FORCE_BG=light; shift ;;
+        --dark)       FORCE_BG=dark; shift ;;
+        -r|--rows)    ROWS="$2"; shift 2 ;;
+        -C|--cols)    COLS="$2"; shift 2 ;;
+        -e|--env)     ENV_VARS+=("$2"); shift 2 ;;
+        --stdin)      USE_STDIN=true; shift ;;
+        -h|--help)    usage; exit 0 ;;
+        --)           shift; CMD_ARGS=("$@"); break ;;
+        -*)           printf 'Error: unknown option: %s\n' "$1" >&2; exit 1 ;;
+        *)
+            if [[ -n "$DIR" ]]; then
+                printf 'Error: unexpected argument: %s\n' "$1" >&2
+                exit 1
+            fi
+            DIR="$1"; shift
+            ;;
+    esac
+done
+
+DIR="$(grealpath -- "${DIR:-.}")"
+
+if [[ ! -d "$DIR" ]]; then
+    printf 'Error: not a directory: %s\n' "$DIR" >&2
+    exit 1
+fi
+
+# --- Resolve color ----------------------------------------------------------
+
+R="" G="" B=""
+
+if [[ -n "$COLOR" ]]; then
+    # Try as preset name first, then as R,G,B triplet.
+    if preset="$(resolve_preset "$COLOR")"; then
+        IFS=, read -r R G B <<< "$preset"
+    elif [[ "$COLOR" =~ ^[0-9]+,[0-9]+,[0-9]+$ ]]; then
+        IFS=, read -r R G B <<< "$COLOR"
+    else
+        printf 'Error: unknown color: %s\n' "$COLOR" >&2
+        exit 1
+    fi
+fi
+
+# --- Apply --random jitter --------------------------------------------------
+
+if [[ -n "$R" && "$RANDOM_MODE" != none ]]; then
+    case "$RANDOM_MODE" in
+        dir)
+            HASH="$(printf '%s' "$DIR" | md5 -q)"
+            ;;
+        urandom)
+            HASH="$(head -c 16 /dev/urandom | md5 -q)"
+            ;;
+        *)
+            printf 'Error: --random must be none, dir, or urandom\n' >&2
+            exit 1
+            ;;
+    esac
+
+    # Jitter ±15 per channel using 3 hash byte-pairs.
+    for i in 0 1 2; do
+        offset=$(( 16#${HASH:$((i * 2)):2} % 31 - 15 ))
+        case $i in
+            0) R=$(( R + offset )) ;;
+            1) G=$(( G + offset )) ;;
+            2) B=$(( B + offset )) ;;
+        esac
+    done
+
+    # Clamp to 0-255.
+    (( R < 0 )) && R=0; (( R > 255 )) && R=255
+    (( G < 0 )) && G=0; (( G > 255 )) && G=255
+    (( B < 0 )) && B=0; (( B > 255 )) && B=255
+fi
+
+# --- Derive COLORFGBG -------------------------------------------------------
+
+COLORFGBG=""
+if [[ -n "$R" ]]; then
+    if [[ -n "$FORCE_BG" ]]; then
+        case "$FORCE_BG" in
+            light) COLORFGBG="0;15" ;;
+            dark)  COLORFGBG="15;0" ;;
+        esac
+    else
+        # Luminance: 0.299R + 0.587G + 0.114B, scaled by 1000 for integer math.
+        L=$(( 299 * R + 587 * G + 114 * B ))
+        if (( L > 180000 )); then
+            COLORFGBG="0;15"
+        else
+            COLORFGBG="15;0"
+        fi
+    fi
+fi
+
+# --- Build AppleScript ------------------------------------------------------
+
+# Escape for AppleScript double-quoted string literals:
+# backslashes → \\, double quotes → \", and also escape single quotes
+# for any shell-level quoting inside write text.
+esc_as() {
+    local s="$1"
+    s="${s//\\/\\\\}"
+    s="${s//\"/\\\"}"
+    printf '%s' "$s"
+}
+# Escape single quotes for shell strings embedded in AppleScript write text.
+esc_sh() { printf '%s' "${1//\'/\'\\\'\'}"; }
+
+# Dir needs both: AppleScript escaping (it's inside a "write text" string)
+# and shell single-quote escaping (it's inside 'cd ...' in the target shell).
+SAFE_DIR="$(esc_sh "$DIR")"
+SAFE_DIR="$(esc_as "$SAFE_DIR")"
+SAFE_PROFILE="$(esc_as "$PROFILE")"
+
+AS_BODY=""
+
+# Background color (16-bit for iTerm2).
+if [[ -n "$R" ]]; then
+    R16=$(( R * 257 ))
+    G16=$(( G * 257 ))
+    B16=$(( B * 257 ))
+    AS_BODY+="        set background color to {${R16}, ${G16}, ${B16}}"$'\n'
+    # Auto-set foreground for readability.
+    if [[ "$COLORFGBG" == "0;15" ]]; then
+        AS_BODY+="        set foreground color to {0, 0, 0}"$'\n'
+    else
+        AS_BODY+="        set foreground color to {65535, 65535, 65535}"$'\n'
+    fi
+fi
+
+# Window sizing.
+if [[ -n "$ROWS" ]]; then
+    AS_BODY+="        set rows to ${ROWS}"$'\n'
+fi
+if [[ -n "$COLS" ]]; then
+    AS_BODY+="        set columns to ${COLS}"$'\n'
+fi
+
+# COLORFGBG export.
+if [[ -n "$COLORFGBG" ]]; then
+    AS_BODY+="        write text \"export COLORFGBG='${COLORFGBG}'\""$'\n'
+fi
+
+# Environment variables (-e).
+for env_pair in "${ENV_VARS[@]}"; do
+    key="${env_pair%%=*}"
+    val="$(esc_as "$(esc_sh "${env_pair#*=}")")"
+    AS_BODY+="        write text \"export ${key}='${val}'\""$'\n'
+done
+
+# Stdin content.
+if [[ "$USE_STDIN" == true ]]; then
+    STDIN_CONTENT="$(cat)"
+    if [[ -n "$STDIN_CONTENT" ]]; then
+        SAFE_STDIN="$(esc_as "$STDIN_CONTENT")"
+        AS_BODY+="        write text \"${SAFE_STDIN}\""$'\n'
+    fi
+fi
+
+# cd and optional command.
+if [[ ${#CMD_ARGS[@]} -gt 0 ]]; then
+    SAFE_CMD="$(esc_as "${CMD_ARGS[*]}")"
+    AS_BODY+="        write text \"cd '${SAFE_DIR}' && ${SAFE_CMD}\""$'\n'
+else
+    AS_BODY+="        write text \"cd '${SAFE_DIR}'\""$'\n'
+fi
+
+# --- Execute ----------------------------------------------------------------
+
+osascript <<EOF
+tell application "iTerm2"
+    activate
+    set newWindow to (create window with profile "${SAFE_PROFILE}")
+    tell current session of newWindow
+${AS_BODY}    end tell
+end tell
+EOF
