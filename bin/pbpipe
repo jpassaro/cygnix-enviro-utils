@@ -1,29 +1,28 @@
-#!/Users/john.passaro/pbutils/venv/bin/python
+#!/usr/bin/env bash
+# pbpipe: paste clipboard → pipe through command → copy result back.
+# Usage: pbpipe [-t] COMMAND [ARGS...]
+#   -t, --tee   Also print the output to stdout.
 
-import sys
+set -euo pipefail
 
-try:
-    import pyperclip
-    import click
-except ImportError:
-    sys.exit(f'please run {sys.executable} -m pip install pyperclip click')
+TEE=false
+case "${1:-}" in
+    -t|--tee) TEE=true; shift ;;
+esac
 
-import subprocess
+if [[ $# -eq 0 ]]; then
+    printf 'Usage: pbpipe [-t] COMMAND [ARGS...]\n' >&2
+    exit 1
+fi
 
+result="$(pbpaste | "$@")" || {
+    rc=$?
+    printf 'pbpipe: command exited %d\n' "$rc" >&2
+    exit 1
+}
 
-@click.command(context_settings=dict(allow_interspersed_args=False))
-@click.option('-t', '--tee/--no-tee', default=False)
-@click.option('-s', '--shell/--no-shell', default=False)
-@click.argument('command', nargs=-1, required=True)
-def main(command, tee, shell):
-    inp = pyperclip.paste()
-    cmd = subprocess.run(command, input=inp, check=True, shell=shell,
-                         capture_output=True, text=True, encoding='utf-8')
-    out = cmd.stdout
-    if tee:
-        click.echo(out, nl=False)
-    pyperclip.copy(cmd.stdout)
+if [[ "$TEE" == true ]]; then
+    printf '%s' "$result"
+fi
 
-
-if __name__ == '__main__':
-    main()
+printf '%s' "$result" | pbcopy
