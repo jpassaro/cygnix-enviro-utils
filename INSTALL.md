@@ -196,6 +196,22 @@ The extension includes a `timestamp-injector` hook that automatically injects
 `[Current Time: ...]` into your conversations. This is used by skills like 
 `soft-timebox` and `end-of-day-awareness`.
 
+## Editor configuration
+
+Add the following to your `~/.vimrc`:
+```bash
+source ~/code/login-utils/vimrc
+```
+
+For neovim, symlink the init file (or source it from an existing one):
+```bash
+mkdir -p ~/.config/nvim
+ln -sf ~/code/login-utils/nvim-init.vim ~/.config/nvim/init.vim
+```
+
+The nvim config sources `~/.vimrc` and adds COLORFGBG-based light/dark
+background detection (which neovim does not do natively).
+
 ## Other bits of setup
 
 It's a good idea to supply a github API token in your private `.bash_profile`

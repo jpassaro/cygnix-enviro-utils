@@ -541,7 +541,7 @@ endfunction
 " I'm currently liking slate for html...
 if $ITERM_PROFILE =~? 'solarized' " && CheckVundle('solarized')
     colorscheme solarized
-else
+elseif &background !=# 'light'
     colorscheme slate
 endif
 
