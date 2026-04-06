@@ -1,14 +1,31 @@
 #!/usr/bin/env bash
 # Wrapper that ensures --plugin-dir is always passed to claude.
-# JP_CLAUDE_CMD: override the underlying claude binary (e.g. /path/to/ca)
-# JP_LOGIN_UTILS: login-utils directory (set by bashrc, default ~/code/login-utils)
+# JP_CLAUDE_CMD:     override the underlying claude binary (e.g. /path/to/ca)
+# JP_LOGIN_UTILS:    login-utils directory (set by bashrc, default ~/code/login-utils)
+# JP_CLAUDE_PLUGINS: colon-separated list of additional plugin directories
 
-plugin_dir="${JP_LOGIN_UTILS:-$HOME/code/login-utils}/agent"
+default_plugin_dir="${JP_LOGIN_UTILS:-$HOME/code/login-utils}/agent"
+
 plugin_args=()
-if test -d "$plugin_dir"; then
-  plugin_args=(--plugin-dir "$plugin_dir")
+
+# Always include the default login-utils plugin directory.
+if test -d "$default_plugin_dir"; then
+  plugin_args=(--plugin-dir "$default_plugin_dir")
 else
-  echo >&2 "jp-claude: plugin directory not found: $plugin_dir"
+  echo >&2 "jp-claude: plugin directory not found: $default_plugin_dir"
+fi
+
+# Append any directories from JP_CLAUDE_PLUGINS (colon-separated).
+if test -n "$JP_CLAUDE_PLUGINS"; then
+  IFS=: read -ra _dirs <<< "$JP_CLAUDE_PLUGINS"
+  for _dir in "${_dirs[@]}"; do
+    test -z "$_dir" && continue
+    if test -d "$_dir"; then
+      plugin_args+=(--plugin-dir "$_dir")
+    else
+      echo >&2 "jp-claude: JP_CLAUDE_PLUGINS entry not found: $_dir"
+    fi
+  done
 fi
 
 exec "${JP_CLAUDE_CMD:-claude}" "${plugin_args[@]}" "$@"
