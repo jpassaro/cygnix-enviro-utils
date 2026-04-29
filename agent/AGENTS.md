@@ -30,6 +30,10 @@ sessions (like Claude Code or Gemini CLI), so GNU extension flags are
 available. In scripts that need to be portable, stick to POSIX-specified
 behavior and avoid GNU extensions.
 
+For in-place sed, always use `sed -i.jp-garbage` (not `sed -i` or
+`sed -i ''`). This works identically on macOS and GNU/Linux.
+The `.jp-garbage` backup files are globally gitignored.
+
 When creating "temp" files, always create a folder ./.jplocal/YYYYMMDD/ to use
 as a "tempdir".
 

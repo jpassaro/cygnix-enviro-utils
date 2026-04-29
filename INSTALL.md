@@ -184,6 +184,21 @@ For example, to register the timestamp-injector hook for Claude Code, add a
 }
 ```
 
+### User-level instructions
+
+`~/.claude/CLAUDE.md` and `~/.gemini/GEMINI.md` are loaded at higher
+priority than the plugin's `AGENTS.md`. They are workstation-specific and
+should not be copied verbatim between machines. Use them for:
+
+- **Session-start protocols** — which skills to invoke on first message,
+  with a pointer to the urgency-signal policy in `AGENTS.md`.
+- **Workstation-specific context** — employer URLs, desk paths, tool
+  aliases, or other details that vary per machine.
+- **Overrides** to plugin defaults that apply only on this machine.
+
+Do not duplicate portable conventions here — those belong in
+`agent/AGENTS.md`.
+
 ### Communication Style & Habits
 
 The extension automatically loads `agent/AGENTS.md`, which contains 

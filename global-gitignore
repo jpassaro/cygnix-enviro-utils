@@ -29,6 +29,8 @@ _scratch/*
 
 .jplocal/
 CLAUDE.jp-notes.md
+*.jp-garbage
+*.jp-garbage.*
 
 .worktrees/
 .claude/
