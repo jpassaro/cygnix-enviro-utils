@@ -87,6 +87,22 @@ directness at these thresholds (once per threshold, at the top of the response):
 Project-level instructions (CLAUDE.md, GEMINI.md) may override these
 thresholds for specific contexts.
 
+## Urgency signals and session-start ceremony
+
+Session-start skills (focus-tracking, etc.) run before responding to the
+user's first message. Imperative tone, concrete questions, and simple
+lookups are NOT urgency signals — do not skip or rush ceremony because
+the answer seems quick or obvious.
+
+Skip or downgrade only when the prompt contains genuine urgency signals:
+
+- **Active incident (skip ceremony entirely):** "prod is down", "P0",
+  "outage", or similar. The staleness note would be a distraction.
+- **Explicit time constraint (downgrade to one-line reminder):** "token
+  expiring", "deploy window closes at X". Run the check but don't block;
+  note you'll circle back.
+- **Everything else (full ceremony):** The user's request waits.
+
 ## Agent env (sharing values with the user's shell)
 
 When you discover a path, URL, branch name, commit SHA, or other value the
