@@ -1,0 +1,8 @@
+#!/bin/bash
+# Per-session scratch file for AI agent tools to export values into the shell.
+# Each login shell gets its own file — no cross-session races.
+
+JP_AGENT_ENV="$(mktemp /tmp/jp-agent-env.XXXXXX)"
+export JP_AGENT_ENV
+
+src() { . "$JP_AGENT_ENV"; }

@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+# MCP server (stdio transport) — exposes set_env for writing to $JP_AGENT_ENV.
+# Protocol: JSON-RPC 2.0 over newline-delimited JSON on stdin/stdout.
+
+set -euo pipefail
+
+env_file="${JP_AGENT_ENV:-}"
+
+send() {
+  printf '%s\n' "$1"
+}
+
+error_response() {
+  local id="$1" code="$2" msg="$3"
+  send "$(jq -nc --argjson id "$id" --argjson code "$code" --arg msg "$msg" \
+    '{jsonrpc:"2.0",id:$id,error:{code:$code,message:$msg}}')"
+}
+
+handle_initialize() {
+  local id="$1"
+  send "$(jq -nc --argjson id "$id" '{
+    jsonrpc: "2.0",
+    id: $id,
+    result: {
+      protocolVersion: "2024-11-05",
+      capabilities: {tools: {}},
+      serverInfo: {name: "agent-env", version: "1.0.0"}
+    }
+  }')"
+}
+
+handle_tools_list() {
+  local id="$1"
+  send "$(jq -nc --argjson id "$id" '{
+    jsonrpc: "2.0",
+    id: $id,
+    result: {tools: [{
+      name: "set_env",
+      description: "Set, update, or unset a variable in the per-session env file ($JP_AGENT_ENV). The user can load these values into their shell by running src(). After calling set_env, tell the user what you saved and how to use it, e.g.: I saved the worktree path. Grab it with: ! src && cd \"$WORKTREE\"",
+      inputSchema: {
+        type: "object",
+        properties: {
+          name: {type: "string", description: "Variable name (e.g. A, WORKTREE_PATH)"},
+          value: {description: "String value to set, JSON array for bash array, or null to unset"}
+        },
+        required: ["name"]
+      }
+    }]}
+  }')"
+}
+
+handle_set_env() {
+  local id="$1" name="$2" raw_value="$3"
+
+  if [[ -z "$env_file" ]]; then
+    error_response "$id" -32000 "JP_AGENT_ENV is not set — agent-env bashrc.d script may not have run"
+    return
+  fi
+
+  if [[ ! -f "$env_file" ]]; then
+    error_response "$id" -32000 "JP_AGENT_ENV file does not exist: $env_file"
+    return
+  fi
+
+  # Remove any existing line for this variable
+  if grep -q "^${name}=\|^unset ${name}$" "$env_file" 2>/dev/null; then
+    sed -i.jp-garbage "/^${name}=/d; /^unset ${name}$/d" "$env_file"
+    rm -f "${env_file}.jp-garbage"
+  fi
+
+  local assignment
+  assignment="$(printf '%s' "$raw_value" | jq -r --arg name "$name" '
+    if . == null then
+      "unset \($name)"
+    elif type == "array" then
+      "\($name)=(" + ([.[] | tostring | @sh] | join(" ")) + ")"
+    else
+      "\($name)=" + (tostring | @sh)
+    end
+  ')"
+
+  echo "$assignment" >> "$env_file"
+
+  send "$(jq -nc --argjson id "$id" --arg text "$assignment" \
+    '{jsonrpc:"2.0",id:$id,result:{content:[{type:"text",text:$text}]}}')"
+}
+
+handle_tools_call() {
+  local id="$1" raw="$2"
+
+  local tool_name
+  tool_name="$(printf '%s' "$raw" | jq -r '.params.name')"
+
+  if [[ "$tool_name" != "set_env" ]]; then
+    error_response "$id" -32601 "Unknown tool: $tool_name"
+    return
+  fi
+
+  local var_name raw_value
+  var_name="$(printf '%s' "$raw" | jq -r '.params.arguments.name')"
+  raw_value="$(printf '%s' "$raw" | jq -c '.params.arguments.value // null')"
+
+  handle_set_env "$id" "$var_name" "$raw_value"
+}
+
+# Main loop: read newline-delimited JSON-RPC messages
+while IFS= read -r line; do
+  [[ -n "$line" ]] || continue
+
+  method="$(printf '%s' "$line" | jq -r '.method // ""')"
+  msg_id="$(printf '%s' "$line" | jq -c '.id // null')"
+
+  case "$method" in
+    initialize)                handle_initialize "$msg_id" ;;
+    notifications/initialized) ;;
+    tools/list)                handle_tools_list "$msg_id" ;;
+    tools/call)                handle_tools_call "$msg_id" "$line" ;;
+    *)
+      if [[ "$msg_id" != "null" ]]; then
+        error_response "$msg_id" -32601 "Method not found: $method"
+      fi
+      ;;
+  esac
+done

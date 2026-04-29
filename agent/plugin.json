@@ -4,5 +4,10 @@
   "description": "John's personal conventions, skills, and hooks for AI agents",
   "author": {
     "name": "John Passaro"
+  },
+  "mcpServers": {
+    "agent-env": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/agent-env-mcp"
+    }
   }
 }

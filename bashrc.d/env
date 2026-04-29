@@ -4,7 +4,12 @@
 # Safe for non-interactive shells.
 # Interactive env setup (prompts, direnv, iterm, jenv) is in env-interactive.
 
-if [[ "${CLAUDECODE:-}" == "1" ]]; then
+if [[ -n "${CLAUDECODE}${GEMINI_CLI}" ]]; then
+  JP_IS_AGENT_SESSION=1
+  export JP_IS_AGENT_SESSION
+fi
+
+if [[ -n "$JP_IS_AGENT_SESSION" ]]; then
   export EDITOR="$HOME/bin/no-interactive-edit"
   export PAGER="$HOME/bin/no-interactive-pager"
 elif command -v nvim >/dev/null 2>&1 ; then

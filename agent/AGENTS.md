@@ -87,6 +87,21 @@ directness at these thresholds (once per threshold, at the top of the response):
 Project-level instructions (CLAUDE.md, GEMINI.md) may override these
 thresholds for specific contexts.
 
+## Agent env (sharing values with the user's shell)
+
+When you discover a path, URL, branch name, commit SHA, or other value the
+user might want to act on, save it with the `set_env` MCP tool. This writes
+to a per-session env file that the user can load via `src()`.
+
+After calling `set_env`, always tell the user what you saved and suggest the
+`! src` pattern so they can use it immediately. Example:
+
+> I saved the worktree path. Grab it with: `! src && cd "$WORKTREE"`
+
+Use short, descriptive names: `WORKTREE`, `PR_URL`, `COMMIT`, `BRANCH`.
+Overwriting a variable replaces the previous value (no duplicates).
+Pass `null` as the value to unset.
+
 ## Markdown style
 
 When writing markdown tables, always align column widths so that pipe
