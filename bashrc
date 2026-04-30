@@ -34,8 +34,8 @@ unset PRAGMA_IMPORTED  # previously was in reload-profile only, trying it here
 declare -A PRAGMA_IMPORTED
 PRAGMA_INDEX=0
 
-MY_BASHRC_FILE="${BASH_SOURCE[0]}"
-MY_BASHRC_D="${MY_BASHRC_FILE}.d"
+export MY_BASHRC_FILE="${BASH_SOURCE[0]}"
+export MY_BASHRC_D="${MY_BASHRC_FILE}.d"
 JP_LOGIN_UTILS="$(cd "$(dirname "$MY_BASHRC_FILE")" && pwd -P)"
 export JP_LOGIN_UTILS
 

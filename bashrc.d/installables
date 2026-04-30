@@ -8,14 +8,51 @@ source_pragma_once "$MY_BASHRC_D"/path  # we need prepend-path
 mkdir -p ~/bin
 prepend-path ~/bin
 
+if [[ -z "${MY_BASHRC_D:-}" ]]; then
+  return 2>/dev/null || true
+fi
+_INSTALLABLES_BIN="$(cd "$MY_BASHRC_D"/../bin && pwd -P)" || return
+_INSTALLABLES_BASE="${_INSTALLABLES_BIN%/bin}"
+_INSTALLABLES_EXCLUDE="${_INSTALLABLES_BASE}/.git/info/exclude"
+
+function _installables_status() {
+  local name="$1"
+  local tracked="${_INSTALLABLES_BIN}/${name}"
+  local local_bin=~/bin/"$name"
+  if [[ -L "$local_bin" ]]; then
+    echo installed
+  elif [[ -f "$local_bin" && ! -x "$local_bin" ]]; then
+    echo ignored-installable
+  elif [[ -x "$tracked" && ! -e "$local_bin" ]]; then
+    echo installable
+  elif [[ -f "$local_bin" && -x "$local_bin" && ! -L "$local_bin" ]]; then
+    if grep -qx "bin/${name}" "$_INSTALLABLES_EXCLUDE" 2>/dev/null; then
+      echo ignored-local
+    elif [[ "$(file --mime-encoding -b "$local_bin")" == binary ]]; then
+      echo binary
+    elif [[ -e "$tracked" ]]; then
+      if cmp -s "$local_bin" "$tracked"; then
+        echo identical
+      elif git -C "$_INSTALLABLES_BASE" ls-files --error-unmatch "bin/${name}" >/dev/null 2>&1 \
+           && git -C "$_INSTALLABLES_BASE" diff --quiet -- "bin/${name}" 2>/dev/null; then
+        echo diverged
+      else
+        echo conflict
+      fi
+    else
+      echo importable
+    fi
+  else
+    echo unknown
+  fi
+}
+
 function installables() {
-  local bin_folder thisfunc="${FUNCNAME[0]}" basedir exclude
-  if ! bin_folder="$(cd "$MY_BASHRC_D"/../bin && pwd -P)" ; then
-    echo >&2 could not locate "$MY_BASHRC_D"/../bin
+  local thisfunc="${FUNCNAME[0]}"
+  if [[ -z "${_INSTALLABLES_BIN:-}" ]]; then
+    echo >&2 "${thisfunc}: MY_BASHRC_D was not set when bashrc.d/installables was sourced"
     return 1
   fi
-  basedir="${bin_folder%/bin}"
-  exclude="${basedir}/.git/info/exclude"
 
   case "$1" in
     help)
@@ -27,65 +64,98 @@ Subcommands:
   quiet          One-line summary of what's available
   interactive    Walk through all available actions interactively
   ignored        Show permanently ignored scripts
+  status NAME    Show status of a single script
   install NAME   Symlink bin/NAME from this repo into ~/bin
-  ignore NAME    Permanently skip installing bin/NAME
+  ignore NAME    Permanently ignore (installable or importable)
   import NAME    Import ~/bin/NAME into this repo's bin/
   help           Show this help
 EOF
       return 0
       ;;
+    status)
+      local name="$2"
+      [[ -n "$name" ]] || { echo >&2 "usage: ${thisfunc} status NAME"; return 1; }
+      _installables_status "$name"
+      return 0
+      ;;
     install)
-      local name="$2" source target
+      local name="$2" tracked local_bin
       [[ -n "$name" ]] || { echo >&2 "usage: ${thisfunc} install NAME"; return 1; }
-      source="${bin_folder}/${name}"
-      target=~/bin/"$name"
-      [[ -x "$source" ]] || { echo >&2 "${name} not found in ${bin_folder}"; return 1; }
-      if [[ -L "$target" ]] ; then
-        echo >&2 "${name} is already installed (symlink exists at ${target})"
-        return 1
-      fi
-      if [[ -f "$target" && ! -x "$target" ]] ; then
-        echo "${name} was previously ignored; removing placeholder"
-        rm -v "$target"
-      fi
-      ln -sv "$source" "$target"
+      tracked="${_INSTALLABLES_BIN}/${name}"
+      local_bin=~/bin/"$name"
+      [[ -x "$tracked" ]] || { echo >&2 "${name} not found in ${_INSTALLABLES_BIN}"; return 1; }
+      case "$(_installables_status "$name")" in
+        installed)
+          echo >&2 "${name} is already installed (symlink exists at ${local_bin})"
+          return 1
+          ;;
+        ignored-installable)
+          echo "${name} was previously ignored; removing placeholder"
+          rm -v "$local_bin"
+          ;;
+        installable) ;;
+        identical)
+          echo "${name} is identical to tracked; replacing with symlink"
+          rm -v "$local_bin"
+          ;;
+        *)
+          echo >&2 "${name} is not installable"
+          return 1
+          ;;
+      esac
+      ln -sv "$tracked" "$local_bin"
       return 0
       ;;
     ignore)
-      local name="$2" target
+      local name="$2" local_bin
       [[ -n "$name" ]] || { echo >&2 "usage: ${thisfunc} ignore NAME"; return 1; }
-      target=~/bin/"$name"
-      if [[ -L "$target" ]] ; then
-        echo >&2 "${name} is currently installed (symlink at ${target}); remove it first"
-        return 1
-      fi
-      if [[ -f "$target" && ! -x "$target" ]] ; then
-        echo >&2 "${name} is already ignored"
-        return 1
-      fi
-      echo "ignoring ${name}; rm ${target} to reverse this decision"
-      touch "$target"
-      chmod 644 "$target"
+      local_bin=~/bin/"$name"
+      case "$(_installables_status "$name")" in
+        installable)
+          echo "ignoring installable ${name}; rm ${local_bin} to reverse"
+          touch "$local_bin"
+          chmod 644 "$local_bin"
+          ;;
+        importable)
+          echo "ignoring local ${name}; remove from ${_INSTALLABLES_EXCLUDE} to reverse"
+          echo "bin/${name}" >>"$_INSTALLABLES_EXCLUDE"
+          ;;
+        installed)
+          echo >&2 "${name} is currently installed (symlink at ${local_bin}); remove it first"
+          return 1
+          ;;
+        ignored-installable|ignored-local)
+          echo >&2 "${name} is already ignored"
+          return 1
+          ;;
+        *)
+          echo >&2 "${name} is not a pending installable or importable"
+          return 1
+          ;;
+      esac
       return 0
       ;;
     import)
-      local name="$2" source target existing
+      local name="$2" tracked local_bin
       [[ -n "$name" ]] || { echo >&2 "usage: ${thisfunc} $1 NAME"; return 1; }
-      source=~/bin/"$name"
-      target="${bin_folder}/${name}"
-      if [[ -L "$source" ]] ; then
-        echo >&2 "${name} is already a symlink in ~/bin; nothing to import"
-        return 1
+      local_bin=~/bin/"$name"
+      tracked="${_INSTALLABLES_BIN}/${name}"
+      case "$(_installables_status "$name")" in
+        importable) ;;
+        installed)
+          echo >&2 "${name} is already a symlink in ~/bin; nothing to import"
+          return 1
+          ;;
+        *)
+          echo >&2 "${name} not found as an importable executable in ~/bin"
+          return 1
+          ;;
+      esac
+      if [[ -e "$tracked" ]] ; then
+        echo "warning: overwriting existing ${tracked}"
       fi
-      if [[ ! -f "$source" || ! -x "$source" ]] ; then
-        echo >&2 "${name} not found as an executable in ~/bin"
-        return 1
-      fi
-      if [[ -e "$target" ]] ; then
-        echo "warning: overwriting existing ${target}"
-      fi
-      mv -v "$source" "$target"
-      ln -sv "$target" "$source"
+      mv -v "$local_bin" "$tracked"
+      ln -sv "$tracked" "$local_bin"
       return 0
       ;;
   esac
@@ -111,13 +181,13 @@ EOF
       echo "$deletion"
       echo
       echo on local but never to be added to source control:
-      git -C "$basedir" \
+      git -C "$_INSTALLABLES_BASE" \
           ls-files --others --ignored \
-          --exclude-from "$exclude" \
+          --exclude-from "$_INSTALLABLES_EXCLUDE" \
           --full-name \
-          "$bin_folder"/* \
-        | awk -v basedir="$basedir" '! /^\// {print basedir "/" $0}'
-      echo "${deletion} and remove it from ${exclude}"
+          "$_INSTALLABLES_BIN"/* \
+        | awk -v basedir="$_INSTALLABLES_BASE" '! /^\// {print basedir "/" $0}'
+      echo "${deletion} and remove it from ${_INSTALLABLES_EXCLUDE}"
       return 0
 
   elif [[ "$1" == interactive ]] ; then
@@ -125,18 +195,18 @@ EOF
       local num_installed=0 num_ignored=0 num_added=0 num_checkin_ignored
       function _when_missing() {
         local reply installable="${1}"
-        local source="${bin_folder}/${installable}" target=~/bin/"$installable"
+        local tracked="${_INSTALLABLES_BIN}/${installable}" local_bin=~/bin/"$installable"
         read -r -p "Do you want to install ${installable}? [(y)es/(S)KIP/(n)ever] " reply
         case "${reply,,}" in
           y*)
             echo installing "$installable"
-            ln -sv "$source" "$target"
+            ln -sv "$tracked" "$local_bin"
             ((num_installed++))
             ;;
           n*)
-            echo "okay, we will ignore ${installable} from now on, rm ${target} to reverse this decision."
-            touch "$target"
-            chmod 644 "$target"
+            echo "okay, we will ignore ${installable} from now on, rm ${local_bin} to reverse this decision."
+            touch "$local_bin"
+            chmod 644 "$local_bin"
             ((num_ignored++))
             ;;
           *)
@@ -146,21 +216,20 @@ EOF
       }
       function _when_eligible() {
         local reply eligible="${1}" existing="$2"
-        local target="${bin_folder}/${eligible}" source=~/bin/"$eligible"
+        local tracked="${_INSTALLABLES_BIN}/${eligible}" local_bin=~/bin/"$eligible"
         local prompt="Do you want to add ${eligible} to source control?"
         prompt="${prompt}${existing:+ (may overwrite ${existing})}"
         read -r -p "${prompt} [(y)es/(S)kip/(n)ever] " reply
         case "${reply,,}" in
           y*)
             echo adding "$eligible"
-            mv -v "$source" "$target"
-            ln -sv "$target" "$source"
+            mv -v "$local_bin" "$tracked"
+            ln -sv "$tracked" "$local_bin"
             ((num_added++))
             ;;
           n*)
             echo ignoring "$eligible"
-            touch "$target"
-            echo "bin/${eligible}" >>"$exclude"
+            echo "bin/${eligible}" >>"$_INSTALLABLES_EXCLUDE"
             ((num_checkin_ignored++))
             ;;
           *)
@@ -189,7 +258,7 @@ EOF
   fi
 
   local path basename num_missing=0 num_eligible=0
-  for path in "$bin_folder"/* ; do
+  for path in "$_INSTALLABLES_BIN"/* ; do
     [[ -x "$path" ]] || continue
     basename="${path##*/}"
     [[ -e ~/bin/"$basename" ]] || {
@@ -199,24 +268,15 @@ EOF
   done
   local existing
   for path in ~/bin/* ; do
-    if ! [[ -f "$path" && -x "$path" && ! -L "$path" ]] ; then
-      continue
-    fi
-    # Skip binary files — they never belong in git
-    if [[ "$(file --mime-encoding -b "$path")" == binary ]] ; then
-      continue
-    fi
     basename="${path##*/}"
-    existing="${bin_folder}/${basename}"
-    if [[ -e "$existing" ]] ; then
-      if git -C "$bin_folder" check-ignore -q "$existing" ; then
-        continue  # it's already ignored, ergo not actually eligible
-      fi
-    else
-      existing=''
-    fi
-    _when_eligible "$basename" "$existing"
-    ((num_eligible++))
+    case "$(_installables_status "$basename")" in
+      importable)
+        existing="${_INSTALLABLES_BIN}/${basename}"
+        [[ -e "$existing" ]] || existing=''
+        _when_eligible "$basename" "$existing"
+        ((num_eligible++))
+        ;;
+    esac
   done
   [[ "${num_missing}" -gt 0 ]] || num_missing=
   [[ "${num_eligible}" -gt 0 ]] || num_eligible=
