@@ -1,0 +1,53 @@
+#!/bin/sh
+# Query calendar events via macOS EventKit (JXA)
+# Usage: today-calendar [YYYY-MM-DD]
+# Defaults to today if no date given.
+# Requires Calendar access granted to the calling process.
+
+date_arg="${1:-}"
+
+osascript -l JavaScript - "$date_arg" <<'JSEOF'
+ObjC.import("EventKit");
+ObjC.import("Foundation");
+
+var arg = $.NSProcessInfo.processInfo.arguments.objectAtIndex(4).js;
+
+var store = $.EKEventStore.new;
+store.reset;
+
+var cals = store.calendarsForEntityType($.EKEntityTypeEvent);
+var cal = $.NSCalendar.currentCalendar;
+
+var startOfDay;
+if (arg) {
+    var isoFmt = $.NSDateFormatter.alloc.init;
+    isoFmt.dateFormat = "yyyy-MM-dd";
+    isoFmt.timeZone = $.NSTimeZone.localTimeZone;
+    startOfDay = isoFmt.dateFromString($(arg));
+    if (!startOfDay) {
+        "Error: could not parse date: " + arg;
+        $.exit(1);
+    }
+    startOfDay = cal.startOfDayForDate(startOfDay);
+} else {
+    startOfDay = cal.startOfDayForDate($.NSDate.date);
+}
+
+var endOfDay = cal.dateByAddingUnitValueToDateOptions($.NSCalendarUnitDay, 1, startOfDay, 0);
+
+var predicate = store.predicateForEventsWithStartDateEndDateCalendars(startOfDay, endOfDay, cals);
+var events = store.eventsMatchingPredicate(predicate);
+
+var df = $.NSDateFormatter.alloc.init;
+df.dateFormat = "h:mm a";
+var output = "";
+for (var i = 0; i < events.count; i++) {
+    var evt = events.objectAtIndex(i);
+    var start = df.stringFromDate(evt.startDate).js;
+    var end = df.stringFromDate(evt.endDate).js;
+    var title = evt.title.js;
+    var calName = evt.calendar.title.js;
+    output += start + " - " + end + " | " + title + " [" + calName + "]\n";
+}
+output || "No events found.";
+JSEOF
