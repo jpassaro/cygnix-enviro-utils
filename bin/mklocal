@@ -1,0 +1,4 @@
+#!/bin/sh
+# Create .jplocal subdirectory in $PWD
+set -eu
+mkdir -p "$PWD/.jplocal/$1"

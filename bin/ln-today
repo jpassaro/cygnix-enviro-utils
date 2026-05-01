@@ -1,0 +1,16 @@
+#!/bin/sh
+# Symlink a todo file to ~/desk/today.md
+set -eu
+
+if [ $# -ne 1 ]; then
+    echo "Usage: ln-today <todo-file>" >&2
+    exit 1
+fi
+
+file="$1"
+if [ ! -f "$file" ]; then
+    echo "ln-today: not a file: $file" >&2
+    exit 1
+fi
+
+ln -sfv "$file" ~/desk/today.md
