@@ -1,0 +1,782 @@
+#!/usr/bin/env bash
+#
+# iterm — iTerm2 session management
+#
+# Subcommands:
+#   iterm ls [-f format] [<id>...]    List sessions (all, or filtered by ID)
+#   iterm focus <id>...               Raise window and select tab
+#   iterm close <id>...               Close window
+#   iterm say [--cr] <id> 'TEXT'       Write text into a session
+#   iterm new [OPTIONS] [DIR] [-- CMD...]  Open a new window/tab/split
+#
+# ID syntax (all subcommands):
+#   ttysNNN       by tty (preferred; auto-selects tab in focus)
+#   12345         by stable window ID (WID)
+#   12345:1       WID + explicit tab
+#   :4            by positional window number (WNUM)
+#   :4:1          WNUM + explicit tab
+#
+# If any ID cannot be resolved, remaining IDs are still processed.
+# Missed IDs are reported on stderr and exit code is 1.
+#
+# iTerm2 scripting notes:
+#   - AppleScript `activate` + `select window id` raises the window.
+#     JXA `win.select()` alone does NOT raise.
+#   - JXA `tab.select()` switches tabs within a window.
+
+set -euo pipefail
+
+for _cmd in osascript grealpath; do
+    command -v "$_cmd" >/dev/null 2>&1 || {
+        printf 'Error: %s not found on PATH\n' "$_cmd" >&2; exit 1
+    }
+done
+unset _cmd
+
+exec {_iterm_dbg}>/dev/null
+set_debug() { exec {_iterm_dbg}>&-; exec {_iterm_dbg}>&2; }
+[[ -z "${ITERM_DEBUG:-}" ]] || set_debug
+
+run_osascript() { osascript "$@" >&"$_iterm_dbg"; }
+
+usage() {
+  echo "Usage: iterm <ls|focus|close> [args...]" >&2
+  echo "  iterm ls [-f text|tsv|csv|json] [<id>...]" >&2
+  echo "  iterm focus <id>..." >&2
+  echo "  iterm close <id>..." >&2
+  echo "  iterm say [--cr] <id> 'TEXT'    Write text into a session" >&2
+  echo "  iterm new [OPTIONS] [DIR] [-- CMD...]" >&2
+}
+
+# --- AppleScript escaping ---
+# Escape for AppleScript double-quoted string literals: backslashes → \\,
+# double quotes → \"
+esc_as() {
+  local s="$1"
+  s="${s//\\/\\\\}"
+  s="${s//\"/\\\"}"
+  printf '%s' "$s"
+}
+
+# --- JXA enumeration ---
+# Output per line: wnum\twid\ttab\tprofile\ttty
+
+jxa_enumerate() {
+  osascript -l JavaScript -e '
+    ObjC.import("Foundation");
+    const out = $.NSFileHandle.fileHandleWithStandardOutput;
+    const app = Application("iTerm2");
+    const wins = app.windows();
+    for (let wi = 0; wi < wins.length; wi++) {
+      const wid = wins[wi].id();
+      const tabs = wins[wi].tabs();
+      for (let ti = 0; ti < tabs.length; ti++) {
+        const sessions = tabs[ti].sessions();
+        for (let si = 0; si < sessions.length; si++) {
+          const profile = sessions[si].profileName() || "";
+          const tty = sessions[si].tty();
+          out.writeData(
+            $.NSString.alloc.initWithString(
+              wi + "\t" + wid + "\t" + ti + "\t" + profile + "\t" + tty + "\n"
+            ).dataUsingEncoding($.NSUTF8StringEncoding)
+          );
+        }
+      }
+    }
+    ""
+  '
+}
+
+# --- ID parsing ---
+# Sets: id_match_type (tty|wid|wnum), id_match_val, id_explicit_tab
+
+parse_id() {
+  local id="$1"
+  id_explicit_tab=""
+  if [[ "$id" == ttys* ]]; then
+    id_match_type=tty
+    id_match_val="/dev/$id"
+  elif [[ "$id" == :* ]]; then
+    local rest="${id#:}"
+    if [[ "$rest" == *:* ]]; then
+      id_match_type=wnum
+      id_match_val="${rest%%:*}"
+      id_explicit_tab="${rest#*:}"
+    else
+      id_match_type=wnum
+      id_match_val="$rest"
+    fi
+  elif [[ "$id" == *:* ]]; then
+    id_match_type=wid
+    id_match_val="${id%%:*}"
+    id_explicit_tab="${id#*:}"
+  else
+    id_match_type=wid
+    id_match_val="$id"
+  fi
+}
+
+# Filter JXA lines matching an ID type+val. Reads stdin.
+filter_jxa_by_id() {
+  local mtype="$1" mval="$2"
+  case "$mtype" in
+    tty)  awk -F'\t' -v v="$mval" '$5 == v' ;;
+    wid)  awk -F'\t' -v v="$mval" '$2 == v' ;;
+    wnum) awk -F'\t' -v v="$mval" '$1 == v' ;;
+  esac
+}
+
+# --- Process enrichment (ps/lsof for a single session line) ---
+
+enrich_line() {
+  local wnum="$1" wid="$2" tab="$3" profile="$4" ttypath="$5"
+  local ttyshort="${ttypath#/dev/}"
+
+  local shell_pid
+  shell_pid="$({ ps -t "$ttyshort" -o pid=,stat= 2>/dev/null || true; } \
+    | awk '/s/{print $1; exit}')"
+
+  local fg_tpgid
+  fg_tpgid="$({ ps -t "$ttyshort" -o tpgid= 2>/dev/null || true; } \
+    | head -1 | tr -d ' ')"
+  local fg_pid="" fg_cmd=""
+  if [ -n "$fg_tpgid" ]; then
+    local fg_line
+    fg_line="$({ ps -t "$ttyshort" -o pid=,pgid=,comm= 2>/dev/null || true; } \
+      | awk -v g="$fg_tpgid" '$2 == g {print $1, $3; exit}')"
+    fg_pid="$(echo "$fg_line" | awk '{print $1}')"
+    fg_cmd="$(echo "$fg_line" | awk '{print $2}')"
+  fi
+
+  local cwd=""
+  if [ -n "$fg_pid" ]; then
+    cwd="$({ lsof -a -p "$fg_pid" -d cwd -Fn 2>/dev/null || true; } \
+      | grep '^n/' | sed 's/^n//')"
+  fi
+
+  local rows_cols
+  rows_cols="$(stty size < "$ttypath" 2>/dev/null)" || rows_cols=""
+  local tty_rows="${rows_cols%% *}" tty_cols="${rows_cols##* }"
+
+  printf "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n" \
+    "$ttyshort" "$wnum" "$wid" "$tab" "$profile" \
+    "${shell_pid:--}" "${fg_pid:--}" "${fg_cmd:--}" "${cwd:--}" \
+    "${tty_rows:--}" "${tty_cols:--}"
+}
+
+# --- Subcommands ---
+
+cmd_ls() {
+  local format="${CLAUDECODE:+tsv}"
+  format="${format:-text}"
+  local missed=0
+  local -a filter=(cat) positional=()
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --debug)   set_debug; shift ;;
+      -f)        format="$2"; shift 2 ;;
+      -d)        filter=(csvgrep -c CWD -m "$(grealpath -- "$2")"); shift 2 ;;
+      --profile) filter=(csvgrep -c PROFILE -m "$2"); shift 2 ;;
+      --cmd)     filter=(csvgrep -c FG_CMD -m "$2"); shift 2 ;;
+      -*)        echo "Usage: iterm ls [-f format] [-d dir] [--profile name] [--cmd name] [<id>...]" >&2; return 1 ;;
+      *)         positional+=("$1"); shift ;;
+    esac
+  done
+  set -- "${positional[@]+"${positional[@]}"}"
+
+  case "$format" in
+    text|tsv|csv|json) ;;
+    *) echo "Unknown format: $format (expected text, tsv, csv, json)" >&2; return 1 ;;
+  esac
+
+  local headers="TTY,WNUM,WID,TAB,PROFILE,SHELL_PID,FG_PID,FG_CMD,CWD,ROWS,COLS"
+
+  {
+    printf "%s\n" "$headers"
+    if [ $# -eq 0 ]; then
+      jxa_enumerate | while IFS=$'\t' read -r wnum wid tab profile tty; do
+        [ -n "$tty" ] || continue
+        enrich_line "$wnum" "$wid" "$tab" "$profile" "$tty"
+      done
+    else
+      local jxa_data
+      jxa_data="$(jxa_enumerate)"
+      for id in "$@"; do
+        parse_id "$id"
+        local matches
+        matches="$(printf '%s' "$jxa_data" | filter_jxa_by_id "$id_match_type" "$id_match_val")"
+        if [ -z "$matches" ]; then
+          echo "Not found: $id" >&2
+          missed=1
+          continue
+        fi
+        printf '%s\n' "$matches" | while IFS=$'\t' read -r wnum wid tab profile tty; do
+          [ -n "$tty" ] || continue
+          enrich_line "$wnum" "$wid" "$tab" "$profile" "$tty"
+        done
+      done
+    fi
+  } | "${filter[@]}" | case "$format" in
+    csv)  cat ;;
+    tsv)  csvformat -T ;;
+    json) csvjson --no-inference --stream ;;
+    text) csvlook --no-inference ;;
+  esac
+
+  return "$missed"
+}
+
+cmd_focus() {
+  [[ "${1:-}" == --debug ]] && { set_debug; shift; }
+  if [ $# -eq 0 ]; then
+    echo "Usage: iterm focus <id>..." >&2
+    return 1
+  fi
+
+  local jxa_data missed=0
+  jxa_data="$(jxa_enumerate)"
+
+  for id in "$@"; do
+    parse_id "$id"
+    local line
+    line="$(printf '%s' "$jxa_data" | filter_jxa_by_id "$id_match_type" "$id_match_val" | head -1)"
+    if [ -z "$line" ]; then
+      echo "Not found: $id" >&2
+      missed=1
+      continue
+    fi
+
+    local wid
+    wid="$(printf '%s' "$line" | cut -f2)"
+
+    # Determine whether to select a tab:
+    #   tty match → always select the found tab
+    #   explicit tab (12345:1, :4:1) → select that tab
+    #   bare wid/wnum → don't switch tabs
+    local select_tab=""
+    if [ "$id_match_type" = "tty" ]; then
+      select_tab="$(printf '%s' "$line" | cut -f3)"
+    fi
+    if [ -n "$id_explicit_tab" ]; then
+      select_tab="$id_explicit_tab"
+    fi
+
+    run_osascript -e 'tell application "iTerm2"' \
+      -e 'activate' \
+      -e "select window id $wid" \
+      -e 'end tell' || {
+      echo "Failed to focus: $id (window id $wid)" >&2
+      missed=1
+      continue
+    }
+
+    if [ -n "$select_tab" ]; then
+      local ttypath=""
+      if [ "$id_match_type" = "tty" ]; then
+        ttypath="$id_match_val"
+      fi
+      run_osascript -l JavaScript -e "
+        const app = Application('iTerm2');
+        const win = app.windows().find(w => w.id() === $wid);
+        win.tabs()[$select_tab].select();
+        const tty = '$ttypath';
+        if (tty) {
+          const sessions = win.tabs()[$select_tab].sessions();
+          for (let i = 0; i < sessions.length; i++) {
+            if (sessions[i].tty() === tty) { sessions[i].select(); break; }
+          }
+        }
+        ''
+      " || {
+        echo "Failed to select tab $select_tab: $id" >&2
+        missed=1
+      }
+    fi
+  done
+
+  return "$missed"
+}
+
+cmd_close() {
+  [[ "${1:-}" == --debug ]] && { set_debug; shift; }
+  if [ $# -eq 0 ]; then
+    echo "Usage: iterm close <id>..." >&2
+    return 1
+  fi
+
+  local jxa_data missed=0
+  jxa_data="$(jxa_enumerate)"
+
+  for id in "$@"; do
+    parse_id "$id"
+    local line
+    line="$(printf '%s' "$jxa_data" | filter_jxa_by_id "$id_match_type" "$id_match_val" | head -1)"
+    if [ -z "$line" ]; then
+      echo "Not found: $id" >&2
+      missed=1
+      continue
+    fi
+
+    local wid
+    wid="$(printf '%s' "$line" | cut -f2)"
+
+    run_osascript -e "tell application \"iTerm2\" to close window id $wid" || {
+      echo "Failed to close: $id (window id $wid)" >&2
+      missed=1
+    }
+  done
+
+  return "$missed"
+}
+
+cmd_say() {
+  local use_cr=false
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --debug) set_debug; shift ;;
+      --cr) use_cr=true; shift ;;
+      -*) echo "Usage: iterm say [--cr] <id> ['TEXT']" >&2; return 1 ;;
+      *) break ;;
+    esac
+  done
+
+  if [[ $# -lt 1 ]]; then
+    echo "Usage: iterm say [--cr] <id> ['TEXT']" >&2
+    return 1
+  fi
+
+  local id="$1" text=""
+  if [[ $# -ge 2 ]]; then
+    text="$2"
+  elif [[ -t 0 ]]; then
+    echo "Usage: iterm say [--cr] <id> ['TEXT']" >&2
+    echo "  TEXT may also be provided via stdin." >&2
+    return 1
+  else
+    text="$(cat)"
+  fi
+  parse_id "$id"
+
+  local ttypath
+  if [[ "$id_match_type" == tty ]]; then
+    ttypath="$id_match_val"
+  else
+    local jxa_data
+    jxa_data="$(jxa_enumerate)"
+    local line
+    line="$(printf '%s' "$jxa_data" | filter_jxa_by_id "$id_match_type" "$id_match_val" | head -1)"
+    if [[ -z "$line" ]]; then
+      echo "Not found: $id" >&2
+      return 1
+    fi
+    ttypath="$(printf '%s' "$line" | cut -f5)"
+  fi
+
+  local as_text
+  as_text="$(esc_as "$text")"
+
+  if [[ "$use_cr" == true ]]; then
+    run_osascript <<EOF
+set cr to ASCII character 13
+tell application "iTerm2"
+    repeat with w in windows
+        repeat with t in tabs of w
+            repeat with s in sessions of t
+                if tty of s is "$ttypath" then
+                    tell s
+                        write text "$as_text" newline NO
+                        write text cr newline NO
+                    end tell
+                    return
+                end if
+            end repeat
+        end repeat
+    end repeat
+end tell
+EOF
+  else
+    run_osascript <<EOF
+tell application "iTerm2"
+    repeat with w in windows
+        repeat with t in tabs of w
+            repeat with s in sessions of t
+                if tty of s is "$ttypath" then
+                    tell s
+                        write text "$as_text"
+                    end tell
+                    return
+                end if
+            end repeat
+        end repeat
+    end repeat
+end tell
+EOF
+  fi
+}
+
+# --- Color presets ---
+
+resolve_preset() {
+  case "$1" in
+    light)  echo "240,240,240" ;;
+    dark)   echo "30,30,30" ;;
+    teal)   echo "180,230,230" ;;
+    cream)  echo "255,245,230" ;;
+    mint)   echo "230,245,240" ;;
+    sand)   echo "210,200,180" ;;
+    navy)   echo "25,40,80" ;;
+    forest) echo "35,55,40" ;;
+    slate)  echo "40,45,55" ;;
+    *) return 1 ;;
+  esac
+}
+
+# Escape single quotes for shell strings embedded in AppleScript write text.
+esc_sh() { printf '%s' "${1//\'/\'\\\'\'}"; }
+
+cmd_new() {
+  local profile="Default"
+  local color=""
+  local random_mode=none
+  local force_bg=""
+  local rows="" cols=""
+  local -a env_vars=()
+  local use_stdin=false
+  local dir=""
+  local -a cmd_args=()
+  local if_not_exists=false
+  local split_down_id="" split_right_id="" tab_id=""
+  local json_output=false
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --debug)              set_debug; shift ;;
+      -p|--profile)         profile="$2"; shift 2 ;;
+      -c|--color)           color="$2"; shift 2 ;;
+      --random)             random_mode="$2"; shift 2 ;;
+      --light)              force_bg=light; shift ;;
+      --dark)               force_bg=dark; shift ;;
+      -r|--rows)            rows="$2"; shift 2 ;;
+      -C|--cols)            cols="$2"; shift 2 ;;
+      -e|--env)             env_vars+=("$2"); shift 2 ;;
+      --stdin)              use_stdin=true; shift ;;
+      --if-not-exists|--focus-if-exists) if_not_exists=true; shift ;;
+      --json)                 json_output=true; shift ;;
+      --split-down)         split_down_id="$2"; shift 2 ;;
+      --split-right)        split_right_id="$2"; shift 2 ;;
+      --tab)               tab_id="$2"; shift 2 ;;
+      -h|--help)
+        echo "Usage: iterm new [OPTIONS] [DIRECTORY] [-- COMMAND...]" >&2
+        echo "Options: -p PROFILE, -c COLOR, --random MODE, --light, --dark," >&2
+        echo "  -r ROWS, -C COLS, -e KEY=VALUE, --stdin, --if-not-exists," >&2
+        echo "  --json, --split-down ID, --split-right ID, --tab ID" >&2
+        return 0
+        ;;
+      --)                   shift; cmd_args=("$@"); break ;;
+      -*)                   printf 'Error: unknown option: %s\n' "$1" >&2; return 1 ;;
+      *)
+        if [[ -n "$dir" ]]; then
+          printf 'Error: unexpected argument: %s\n' "$1" >&2
+          return 1
+        fi
+        dir="$1"; shift
+        ;;
+    esac
+  done
+
+  dir="$(grealpath -- "${dir:-.}")"
+  if [[ ! -d "$dir" ]]; then
+    printf 'Error: not a directory: %s\n' "$dir" >&2
+    return 1
+  fi
+
+  # --- Resolve color ---
+
+  local r="" g="" b=""
+  if [[ -n "$color" ]]; then
+    local preset
+    if preset="$(resolve_preset "$color")"; then
+      IFS=, read -r r g b <<< "$preset"
+    elif [[ "$color" =~ ^[0-9]+,[0-9]+,[0-9]+$ ]]; then
+      IFS=, read -r r g b <<< "$color"
+    else
+      printf 'Error: unknown color: %s\n' "$color" >&2
+      return 1
+    fi
+  fi
+
+  # --- Apply --random jitter ---
+
+  if [[ -z "$r" && "$random_mode" != none ]]; then
+    printf 'Warning: --random ignored without --color\n' >&2
+  elif [[ -n "$r" && "$random_mode" != none ]]; then
+    local hash
+    case "$random_mode" in
+      dir)     hash="$(printf '%s' "$dir" | md5 -q)" ;;
+      urandom) hash="$(head -c 16 /dev/urandom | md5 -q)" ;;
+      *)       printf 'Error: --random must be none, dir, or urandom\n' >&2; return 1 ;;
+    esac
+    local i offset
+    for i in 0 1 2; do
+      offset=$(( 16#${hash:$((i * 2)):2} % 31 - 15 ))
+      case $i in
+        0) r=$(( r + offset )) ;;
+        1) g=$(( g + offset )) ;;
+        2) b=$(( b + offset )) ;;
+      esac
+    done
+    (( r < 0 )) && r=0 || true; (( r > 255 )) && r=255 || true
+    (( g < 0 )) && g=0 || true; (( g > 255 )) && g=255 || true
+    (( b < 0 )) && b=0 || true; (( b > 255 )) && b=255 || true
+  fi
+
+  # --- Derive COLORFGBG ---
+
+  local colorfgbg=""
+  if [[ -n "$r" ]]; then
+    if [[ -n "$force_bg" ]]; then
+      case "$force_bg" in
+        light) colorfgbg="0;15" ;;
+        dark)  colorfgbg="15;0" ;;
+      esac
+    else
+      local lum=$(( 299 * r + 587 * g + 114 * b ))
+      if (( lum > 180000 )); then
+        colorfgbg="0;15"
+      else
+        colorfgbg="15;0"
+      fi
+    fi
+  fi
+
+  # --- --if-not-exists: check for existing matching session ---
+
+  if [[ "$if_not_exists" == true ]]; then
+    local jxa_data
+    jxa_data="$(jxa_enumerate)"
+    local match_tty=""
+    while IFS=$'\t' read -r _wnum _wid _tab _profile _tty; do
+      [[ -n "$_tty" ]] || continue
+      [[ "$_profile" == "$profile" ]] || continue
+      local enriched
+      enriched="$(enrich_line "$_wnum" "$_wid" "$_tab" "$_profile" "$_tty")"
+      local session_cwd
+      session_cwd="$(printf '%s' "$enriched" | cut -d, -f9)"
+      if [[ "$session_cwd" == "$dir" ]]; then
+        match_tty="$_tty"
+        break
+      fi
+    done <<< "$jxa_data"
+
+    if [[ -n "$match_tty" ]]; then
+      local ttyshort="${match_tty#/dev/}"
+      cmd_focus "$ttyshort" >/dev/null
+      if [[ ${#cmd_args[@]} -gt 0 ]]; then
+        printf 'Warning: reusing existing session; command not sent\n' >&2
+      fi
+      if [[ "$json_output" == true ]]; then
+        printf '{"action":"reused","tty":"%s"}\n' "$ttyshort"
+      else
+        printf '%s\n' "$ttyshort"
+      fi
+      return 0
+    fi
+  fi
+
+  # --- Read stdin if requested ---
+
+  local stdin_content=""
+  if [[ "$use_stdin" == true ]]; then
+    stdin_content="$(cat)"
+  fi
+
+  # --- Build AppleScript session body ---
+
+  local safe_dir safe_profile as_body=""
+  safe_dir="$(esc_sh "$dir")"
+  safe_dir="$(esc_as "$safe_dir")"
+  safe_profile="$(esc_as "$profile")"
+
+  if [[ -n "$r" ]]; then
+    local r16=$(( r * 257 )) g16=$(( g * 257 )) b16=$(( b * 257 ))
+    as_body+="        set background color to {${r16}, ${g16}, ${b16}}"$'\n'
+    if [[ "$colorfgbg" == "0;15" ]]; then
+      as_body+="        set foreground color to {0, 0, 0}"$'\n'
+    else
+      as_body+="        set foreground color to {65535, 65535, 65535}"$'\n'
+    fi
+  fi
+
+  if [[ -n "$rows" ]]; then
+    as_body+="        set rows to ${rows}"$'\n'
+  fi
+  if [[ -n "$cols" ]]; then
+    as_body+="        set columns to ${cols}"$'\n'
+  fi
+
+  if [[ -n "$colorfgbg" ]]; then
+    as_body+="        write text \"export COLORFGBG='${colorfgbg}'\""$'\n'
+  fi
+
+  local env_pair key val
+  for env_pair in "${env_vars[@]+"${env_vars[@]}"}"; do
+    key="${env_pair%%=*}"
+    val="$(esc_as "$(esc_sh "${env_pair#*=}")")"
+    as_body+="        write text \"export ${key}='${val}'\""$'\n'
+  done
+
+  if [[ -n "$stdin_content" ]]; then
+    local safe_stdin
+    safe_stdin="$(esc_as "$stdin_content")"
+    as_body+="        write text \"${safe_stdin}\""$'\n'
+  fi
+
+  if [[ ${#cmd_args[@]} -gt 0 ]]; then
+    local safe_cmd="" arg
+    for arg in "${cmd_args[@]}"; do
+      safe_cmd+="'$(esc_sh "$arg")' "
+    done
+    safe_cmd="${safe_cmd% }"
+    safe_cmd="$(esc_as "$safe_cmd")"
+    as_body+="        write text \"cd '${safe_dir}' && ${safe_cmd}\""$'\n'
+  else
+    as_body+="        write text \"cd '${safe_dir}'\""$'\n'
+  fi
+
+  # --- Resolve split-down/split-right/tab target session ---
+
+  local target_ttypath="" target_wid=""
+  if [[ -n "$split_down_id" || -n "$split_right_id" || -n "$tab_id" ]]; then
+    local resolve_id="${split_down_id}${split_right_id}${tab_id}"
+    parse_id "$resolve_id"
+    local jxa_data line
+    jxa_data="$(jxa_enumerate)"
+    line="$(printf '%s' "$jxa_data" | filter_jxa_by_id "$id_match_type" "$id_match_val" | head -1)"
+    if [[ -z "$line" ]]; then
+      printf 'Error: session not found: %s\n' "$resolve_id" >&2
+      return 1
+    fi
+    target_ttypath="$(printf '%s' "$line" | cut -f5)"
+    target_wid="$(printf '%s' "$line" | cut -f2)"
+    cmd_focus "${target_ttypath#/dev/}" >/dev/null
+  fi
+
+  # --- AppleScript: poll tty of a session ref (30 × 0.1s = 3s) ---
+
+  local as_poll_tty='
+    set theTty to ""
+    repeat 30 times
+        set theTty to tty of theSession
+        if theTty is not "" then exit repeat
+        delay 0.1
+    end repeat
+    return theTty'
+
+  # --- Execute: create window, split, or tab ---
+
+  local new_ttypath=""
+
+  if [[ -n "$split_down_id" ]]; then
+    new_ttypath="$(osascript <<EOF
+tell application "iTerm2"
+    activate
+    repeat with w in windows
+        repeat with t in tabs of w
+            repeat with s in sessions of t
+                if tty of s is "${target_ttypath}" then
+                    tell s
+                        set theSession to (split horizontally with profile "${safe_profile}")
+                    end tell
+                    tell theSession
+${as_body}                    end tell
+${as_poll_tty}
+                end if
+            end repeat
+        end repeat
+    end repeat
+end tell
+EOF
+)"
+
+  elif [[ -n "$split_right_id" ]]; then
+    new_ttypath="$(osascript <<EOF
+tell application "iTerm2"
+    activate
+    repeat with w in windows
+        repeat with t in tabs of w
+            repeat with s in sessions of t
+                if tty of s is "${target_ttypath}" then
+                    tell s
+                        set theSession to (split vertically with profile "${safe_profile}")
+                    end tell
+                    tell theSession
+${as_body}                    end tell
+${as_poll_tty}
+                end if
+            end repeat
+        end repeat
+    end repeat
+end tell
+EOF
+)"
+
+  elif [[ -n "$tab_id" ]]; then
+    new_ttypath="$(osascript <<EOF
+tell application "iTerm2"
+    activate
+    tell window id ${target_wid}
+        set newTab to (create tab with profile "${safe_profile}")
+        set theSession to current session of newTab
+        tell theSession
+${as_body}        end tell
+${as_poll_tty}
+    end tell
+end tell
+EOF
+)"
+
+  else
+    new_ttypath="$(osascript <<EOF
+tell application "iTerm2"
+    activate
+    set newWindow to (create window with profile "${safe_profile}")
+    set theSession to current session of newWindow
+    tell theSession
+${as_body}    end tell
+${as_poll_tty}
+end tell
+EOF
+)"
+  fi
+
+  # --- Output the new session's tty ---
+
+  if [[ -n "$new_ttypath" ]]; then
+    local ttyshort="${new_ttypath#/dev/}"
+    if [[ "$json_output" == true ]]; then
+      printf '{"action":"created","tty":"%s"}\n' "$ttyshort"
+    else
+      printf '%s\n' "$ttyshort"
+    fi
+  else
+    printf 'Warning: session created but tty not detected\n' >&2
+    return 2
+  fi
+}
+
+# --- Main dispatch ---
+
+if [[ "${1:-}" == --debug ]]; then
+  set_debug; shift
+fi
+
+case "${1:-}" in
+  ls)    shift; cmd_ls "$@" ;;
+  focus) shift; cmd_focus "$@" ;;
+  close) shift; cmd_close "$@" ;;
+  say)   shift; cmd_say "$@" ;;
+  new)   shift; cmd_new "$@" ;;
+  -h|--help) usage ;;
+  "")    usage; exit 1 ;;
+  *)     echo "Unknown subcommand: $1" >&2; usage; exit 1 ;;
+esac

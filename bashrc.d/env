@@ -4,6 +4,8 @@
 # Safe for non-interactive shells.
 # Interactive env setup (prompts, direnv, iterm, jenv) is in env-interactive.
 
+[[ ! -t 0 ]] || { JP_TTY="$(tty)"; export JP_TTY="${JP_TTY#/dev/}"; }
+
 if [[ -n "${CLAUDECODE}${GEMINI_CLI}" ]]; then
   JP_IS_AGENT_SESSION=1
   export JP_IS_AGENT_SESSION
