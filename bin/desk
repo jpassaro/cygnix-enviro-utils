@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+exec ~/bin/claude-term ~/desk -- "start a desk session"

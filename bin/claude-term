@@ -1,0 +1,140 @@
+#!/usr/bin/env bash
+# claude-term: Open a Claude Code session in a new iTerm2 window.
+# Uses iterm new for window creation; handles auth and policy.
+#
+# Usage:
+#   claude-term [--random] [--force] [directory] [-- CLAUDE_ARGS...]
+#
+# If no directory is given, defaults to $PWD.
+# If the directory resolves to $HOME, redirects to ~/desk instead.
+#
+# Authentication:
+#   Runs jp-claude-auth-check if available, otherwise checks
+#   jp-claude auth status. --force skips the auth check.
+#   On failure, offers jp-claude-auth-fix if available, otherwise
+#   jp-claude auth login.
+
+set -euo pipefail
+
+for _cmd in iterm jq grealpath; do
+    command -v "$_cmd" >/dev/null 2>&1 || {
+        printf 'Error: %s not found on PATH\n' "$_cmd" >&2; exit 1
+    }
+done
+unset _cmd
+
+_auth_check() {
+    if command -v jp-claude-auth-check >/dev/null 2>&1; then
+        jp-claude-auth-check
+    else
+        local response
+        response="$(claude auth status)" || return $?
+        jq -e .loggedIn <<< "$response" >/dev/null
+    fi
+}
+
+_auth_fix() {
+    if command -v jp-claude-auth-fix >/dev/null 2>&1; then
+        jp-claude-auth-fix
+    else
+        jp-claude auth login
+    fi
+}
+
+USE_RANDOM=false
+FORCE=false
+DIR=""
+CLAUDE_ARGS=()
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --random) USE_RANDOM=true; shift ;;
+        --force)  FORCE=true; shift ;;
+        -h|--help)
+            printf 'Usage: claude-term [--random] [--force] [directory] [-- CLAUDE_ARGS...]\n'
+            exit 0
+            ;;
+        --) shift; CLAUDE_ARGS=("$@"); break ;;
+        *)
+            if [[ -n "$DIR" ]]; then
+                printf 'Error: unexpected argument: %s\n' "$1" >&2
+                exit 1
+            fi
+            DIR="$1"; shift
+            ;;
+    esac
+done
+
+DIR="$(grealpath -- "${DIR:-.}")"
+
+if [[ ! -d "$DIR" ]]; then
+    printf 'Error: not a directory: %s\n' "$DIR" >&2
+    exit 1
+fi
+
+# --- Refuse to run in $HOME (trust reasons) --------------------------------
+
+if [[ "$DIR" == "$HOME" ]]; then
+    printf 'Cannot run in $HOME for trust reasons; using ~/desk instead.\n'
+    mkdir -p ~/desk
+    DIR="$HOME/desk"
+fi
+
+# --- Ensure authentication -------------------------------------------------
+
+if [[ "$FORCE" != true ]]; then
+    if ! _auth_check 2>/dev/null; then
+        if [[ ! -t 0 ]]; then
+            printf 'Error: not authenticated, cannot launch claude.\n' >&2
+            printf 'Use "claude-term --force" to skip auth check.\n' >&2
+            exit 1
+        fi
+        printf 'Not authenticated. How would you like to proceed?\n'
+        select choice in "Authenticate" "Open terminal anyway" "Cancel"; do
+            case "$choice" in
+                "Authenticate")
+                    _auth_fix
+                    break
+                    ;;
+                "Open terminal anyway")
+                    break
+                    ;;
+                "Cancel")
+                    exit 0
+                    ;;
+                *)
+                    printf 'Invalid selection.\n'
+                    ;;
+            esac
+        done
+    fi
+fi
+
+# --- Build iterm new arguments ------------------------------------------------
+
+ITERM_ARGS=(new --json --if-not-exists -p Claude)
+
+if [[ "$DIR" == "$HOME/desk" ]]; then
+    ITERM_ARGS+=(-c teal)
+else
+    ITERM_ARGS+=(-c light)
+fi
+
+if [[ "$USE_RANDOM" == true ]]; then
+    ITERM_ARGS+=(--random urandom)
+else
+    ITERM_ARGS+=(--random dir)
+fi
+
+ITERM_ARGS+=("$DIR" -- jp-claude "${CLAUDE_ARGS[@]}")
+
+result="$(iterm "${ITERM_ARGS[@]}")"
+action="$(jq -r .action <<< "$result")"
+tty="$(jq -r .tty <<< "$result")"
+
+if [[ "$action" == created ]]; then
+    shell_tty="$(iterm new --split-right "$tty" -c light --random dir "$DIR")"
+    printf 'Claude session: %s  Shell pane: %s\n' "$tty" "$shell_tty"
+else
+    printf 'Reused session: %s\n' "$tty"
+fi
