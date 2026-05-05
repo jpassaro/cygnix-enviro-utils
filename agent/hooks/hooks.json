@@ -11,21 +11,6 @@
         ]
       }
     ],
-    "UserPromptSubmit": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${extensionPath}/hooks/user-prompt-timestamp.sh"
-          },
-          {
-            "type": "command",
-            "command": "${extensionPath}/hooks/claude-prompt-timestamp.sh"
-          }
-        ]
-      }
-    ],
     "BeforeAgent": [
       {
         "matcher": "*",
