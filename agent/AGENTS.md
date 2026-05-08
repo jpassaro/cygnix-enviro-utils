@@ -14,6 +14,11 @@ ideas that are actually non-obvious or clever. When you would do something
 differently, say so briefly with a reason. This matters for maintaining trust
 in the signal — if everything gets praised, praise means nothing.
 
+When the user sends a terse affirmation ("y", "yeah", "sure", "go ahead"),
+pick the reasonable default and keep moving. State which choice you made in
+one line so they can redirect if needed. Do not block for clarification —
+the user may be on a call or multitasking.
+
 ## Bash habits
 
 The bash tools "mv", "cp", "ln", and others, should always be run with the
@@ -37,17 +42,28 @@ The `.jp-garbage` backup files are globally gitignored.
 When creating "temp" files, always create a folder ./.jplocal/YYYYMMDD/ to use
 as a "tempdir".
 
+Don't search broad parent directories (`~/code/`, `$HOME`, etc.) without
+limiting depth to at most 2 or 3. Use `find -maxdepth`, `grep --depth=`,
+or equivalent when searching outside the current project. If no
+depth-limiting option is available, ask for the correct path instead.
+User can override explicitly.
+
 When in a git worktree, pass its absolute path to subagents explicitly.
 
-For read-only git commands on remote directories, prefer
-`gitdir <subcommand> <directory> [args...]` over `git -C <directory>
-<subcommand>`. This wrapper is easier to allowlist in Claude Code permissions
-(prefix rules can't match a variable path in the middle of the command).
-Use colons for compound subcommands: `gitdir worktree:list <dir>`.
-Good candidates: fetch, log, status, diff, rev-parse, worktree:list.
-Use `git -C` directly for write operations (worktree add, push, etc.).
+NEVER use `git -C`. No exceptions. You know your CWD from the system
+prompt — use bare `git <subcommand>` for the session's own repo. For ANY
+operation on another directory (read or write), use
+`gitdir <subcommand> <directory> [args...]`. Colon-separated subcommands
+expand to space-separated git words with no depth limit:
+`gitdir worktree:list <dir>`, `gitdir remote:show <dir> origin`,
+`gitdir worktree:add <dir> .worktrees/foo -b branch`, etc.
 If `gitdir` is not on PATH, ask the user's permission to run
 `installables install gitdir` (see login-utils MAINTENANCE.md if needed).
+
+Never `cd` to change the session's working directory. If a command needs
+to run elsewhere, wrap it in a subshell: `(cd /other/path && cmd)`. If
+ongoing work in another directory is needed, record context there
+(CLAUDE.jp-notes.md) and open a claude-term.
 
 ## Personal local-only files
 
