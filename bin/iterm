@@ -58,8 +58,10 @@ esc_as() {
   printf '%s' "$s"
 }
 
+_csvgrep_t() { csvgrep -t "$@" | csvformat -T; }
+
 # --- JXA enumeration ---
-# Output per line: wnum\twid\ttab\tprofile\ttty
+# Output per line: wnum\twid\ttab\tprofile\ttty\tpath\trows\tcols
 
 jxa_enumerate() {
   osascript -l JavaScript -e '
@@ -73,11 +75,15 @@ jxa_enumerate() {
       for (let ti = 0; ti < tabs.length; ti++) {
         const sessions = tabs[ti].sessions();
         for (let si = 0; si < sessions.length; si++) {
-          const profile = sessions[si].profileName() || "";
-          const tty = sessions[si].tty();
+          const s = sessions[si];
+          const profile = s.profileName() || "";
+          const tty = s.tty();
+          const path = s.variable({named: "path"}) || "";
+          const rows = s.rows();
+          const cols = s.columns();
           out.writeData(
             $.NSString.alloc.initWithString(
-              wi + "\t" + wid + "\t" + ti + "\t" + profile + "\t" + tty + "\n"
+              wi + "\t" + wid + "\t" + ti + "\t" + profile + "\t" + tty + "\t" + path + "\t" + rows + "\t" + cols + "\n"
             ).dataUsingEncoding($.NSUTF8StringEncoding)
           );
         }
@@ -130,6 +136,7 @@ filter_jxa_by_id() {
 
 enrich_line() {
   local wnum="$1" wid="$2" tab="$3" profile="$4" ttypath="$5"
+  local cwd="${6:-}" tty_rows="${7:-}" tty_cols="${8:-}"
   local ttyshort="${ttypath#/dev/}"
 
   local shell_pid
@@ -148,17 +155,7 @@ enrich_line() {
     fg_cmd="$(echo "$fg_line" | awk '{print $2}')"
   fi
 
-  local cwd=""
-  if [ -n "$fg_pid" ]; then
-    cwd="$({ lsof -a -p "$fg_pid" -d cwd -Fn 2>/dev/null || true; } \
-      | grep '^n/' | sed 's/^n//')"
-  fi
-
-  local rows_cols
-  rows_cols="$(stty size < "$ttypath" 2>/dev/null)" || rows_cols=""
-  local tty_rows="${rows_cols%% *}" tty_cols="${rows_cols##* }"
-
-  printf "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n" \
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
     "$ttyshort" "$wnum" "$wid" "$tab" "$profile" \
     "${shell_pid:--}" "${fg_pid:--}" "${fg_cmd:--}" "${cwd:--}" \
     "${tty_rows:--}" "${tty_cols:--}"
@@ -175,9 +172,9 @@ cmd_ls() {
     case "$1" in
       --debug)   set_debug; shift ;;
       -f)        format="$2"; shift 2 ;;
-      -d)        filter=(csvgrep -c CWD -m "$(grealpath -- "$2")"); shift 2 ;;
-      --profile) filter=(csvgrep -c PROFILE -m "$2"); shift 2 ;;
-      --cmd)     filter=(csvgrep -c FG_CMD -m "$2"); shift 2 ;;
+      -d)        filter=(_csvgrep_t -c CWD -m "$(grealpath -- "$2")"); shift 2 ;;
+      --profile) filter=(_csvgrep_t -c PROFILE -m "$2"); shift 2 ;;
+      --cmd)     filter=(_csvgrep_t -c FG_CMD -m "$2"); shift 2 ;;
       -*)        echo "Usage: iterm ls [-f format] [-d dir] [--profile name] [--cmd name] [<id>...]" >&2; return 1 ;;
       *)         positional+=("$1"); shift ;;
     esac
@@ -189,14 +186,14 @@ cmd_ls() {
     *) echo "Unknown format: $format (expected text, tsv, csv, json)" >&2; return 1 ;;
   esac
 
-  local headers="TTY,WNUM,WID,TAB,PROFILE,SHELL_PID,FG_PID,FG_CMD,CWD,ROWS,COLS"
+  local headers=$'TTY\tWNUM\tWID\tTAB\tPROFILE\tSHELL_PID\tFG_PID\tFG_CMD\tCWD\tROWS\tCOLS'
 
   {
     printf "%s\n" "$headers"
     if [ $# -eq 0 ]; then
-      jxa_enumerate | while IFS=$'\t' read -r wnum wid tab profile tty; do
+      jxa_enumerate | while IFS=$'\t' read -r wnum wid tab profile tty path rows cols; do
         [ -n "$tty" ] || continue
-        enrich_line "$wnum" "$wid" "$tab" "$profile" "$tty"
+        enrich_line "$wnum" "$wid" "$tab" "$profile" "$tty" "$path" "$rows" "$cols"
       done
     else
       local jxa_data
@@ -210,17 +207,21 @@ cmd_ls() {
           missed=1
           continue
         fi
-        printf '%s\n' "$matches" | while IFS=$'\t' read -r wnum wid tab profile tty; do
+        printf '%s\n' "$matches" | while IFS=$'\t' read -r wnum wid tab profile tty path rows cols; do
           [ -n "$tty" ] || continue
-          enrich_line "$wnum" "$wid" "$tab" "$profile" "$tty"
+          enrich_line "$wnum" "$wid" "$tab" "$profile" "$tty" "$path" "$rows" "$cols"
         done
       done
     fi
   } | "${filter[@]}" | case "$format" in
-    csv)  cat ;;
-    tsv)  csvformat -T ;;
-    json) csvjson --no-inference --stream ;;
-    text) csvlook --no-inference ;;
+    tsv)  cat ;;
+    csv)  csvformat -t ;;
+    json) { IFS= read -r hdr
+            jq --unbuffered -Rc --argjson keys "$(printf '%s' "$hdr" | jq -Rc 'split("\t")')" '
+              split("\t") | [to_entries[] | {($keys[.key]): .value}] | add
+            '
+          } ;;
+    text) csvlook --no-inference -t ;;
   esac
 
   return "$missed"
@@ -552,21 +553,15 @@ cmd_new() {
   # --- --if-not-exists: check for existing matching session ---
 
   if [[ "$if_not_exists" == true ]]; then
-    local jxa_data
-    jxa_data="$(jxa_enumerate)"
     local match_tty=""
-    while IFS=$'\t' read -r _wnum _wid _tab _profile _tty; do
+    while IFS=$'\t' read -r _wnum _wid _tab _profile _tty _path _rows _cols; do
       [[ -n "$_tty" ]] || continue
       [[ "$_profile" == "$profile" ]] || continue
-      local enriched
-      enriched="$(enrich_line "$_wnum" "$_wid" "$_tab" "$_profile" "$_tty")"
-      local session_cwd
-      session_cwd="$(printf '%s' "$enriched" | cut -d, -f9)"
-      if [[ "$session_cwd" == "$dir" ]]; then
+      if [[ "$_path" == "$dir" ]]; then
         match_tty="$_tty"
         break
       fi
-    done <<< "$jxa_data"
+    done < <(jxa_enumerate)
 
     if [[ -n "$match_tty" ]]; then
       local ttyshort="${match_tty#/dev/}"

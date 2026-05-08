@@ -126,7 +126,7 @@ else
     ITERM_ARGS+=(--random dir)
 fi
 
-ITERM_ARGS+=("$DIR" -- jp-claude "${CLAUDE_ARGS[@]}")
+ITERM_ARGS+=("$DIR")
 
 result="$(iterm "${ITERM_ARGS[@]}")"
 action="$(jq -r .action <<< "$result")"
@@ -134,6 +134,9 @@ tty="$(jq -r .tty <<< "$result")"
 
 if [[ "$action" == created ]]; then
     shell_tty="$(iterm new --split-right "$tty" -c light --random dir "$DIR")"
+    # Start claude after the split so it sees final terminal dimensions.
+    printf -v claude_cmd '%q ' jp-claude "${CLAUDE_ARGS[@]}"
+    iterm say --cr "$tty" "${claude_cmd% }"
     printf 'Claude session: %s  Shell pane: %s\n' "$tty" "$shell_tty"
 else
     printf 'Reused session: %s\n' "$tty"
