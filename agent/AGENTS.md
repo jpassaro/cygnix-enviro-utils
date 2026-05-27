@@ -66,7 +66,7 @@ When in a git worktree, pass its absolute path to subagents explicitly.
 Never `cd` to change the session's working directory. If a command needs
 to run elsewhere, wrap it in a subshell: `(cd /other/path && cmd)`. If
 ongoing work in another directory is needed, record context there
-(CLAUDE.jp-notes.md) and open a claude-term.
+(`.jplocal/CLAUDE.md`) and open a claude-term.
 
 ## Command wrappers (permissions)
 
@@ -122,22 +122,23 @@ Exclude dirs: `--exclude-dir='.git'`
 
 ## Personal local-only files
 
-Two files provide per-repo context that is local to the user (globally
-gitignored, never committed):
+Both files below are globally gitignored and never committed.
 
-- `CLAUDE.jp-notes.md` — personal notes, task context, or reminders for a
-  specific repo or worktree. Lives alongside CLAUDE.md at the repo root.
-- `.jplocal/CLAUDE.md` — local-only project instructions (supplements the
-  committed CLAUDE.md).
+### Local notes — `.jplocal/CLAUDE.md`
 
-These files are NOT read proactively on every session start. Read them when:
-- The user says "let's go", "pick up where I left off", or similar resume cues
-- The user references personal notes or local context
-- Starting work in a worktree (check for worktree-specific context)
+Primary per-repo/worktree context file. Claude Code **loads** it
+automatically (CLAUDE.md resolution chain) — no explicit read needed.
 
-When the user wants to save context to another directory (rough plans, future
-tasks, reminders for a different repo), write it to CLAUDE.jp-notes.md in that
-directory. Create the file if it doesn't exist; append if it does.
+Use for: worktree purpose, in-flight state, decisions, local env quirks.
+
+Trigger phrases: **"local note"**, **"note that locally"**, **"save to
+local context"** → write/append to `.jplocal/CLAUDE.md` in the relevant
+repo root. Write tool creates parent dirs automatically.
+
+### Legacy: `CLAUDE.jp-notes.md`
+
+NOT auto-loaded — requires explicit read ("pick up where I left off").
+Prefer `.jplocal/CLAUDE.md` for new usage.
 
 ## Commit messages
 
@@ -157,7 +158,7 @@ When the user declares a timebox, enforce it as a hard stop. Load the
 soft-timebox skill for specifics.
 
 Approximately every hour of active work, write a 2–4 line checkpoint to
-CLAUDE.jp-notes.md (accomplished, current state, non-obvious decisions).
+`.jplocal/CLAUDE.md` (accomplished, current state, non-obvious decisions).
 Don't ask permission — just write it at natural pauses near the hour mark.
 
 ## Agent env (sharing values with the user's shell)
