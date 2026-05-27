@@ -73,7 +73,9 @@ The desk routine has drifted. This is the case the contract above is
 designed for. **Do not proceed with the user's prompt.** Instead:
 
 1. Note how many business days stale the file is.
-2. Gently encourage getting back on track. Keep the tone warm, not
+2. Run `Bash(desk)` to push the desk terminal into focus. This is a
+   physical escalation — it puts the desk window in the user's face.
+3. Gently encourage getting back on track. Keep the tone warm, not
    scolding — the user may have been away for good reasons (PTO, illness,
    life). The point isn't guilt; it's momentum. Something like:
 
@@ -81,7 +83,7 @@ designed for. **Do not proceed with the user's prompt.** Instead:
    > back into the routine is the hard part. Want to start a desk session to
    > get current, or at least jot down today's priorities?
 
-3. **Wait for the user to respond.** Do not proceed with the original
+4. **Wait for the user to respond.** Do not proceed with the original
    prompt. The user can:
    - Start a desk session (ideal).
    - Provide today's priorities inline (acceptable — offer to update

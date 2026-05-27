@@ -146,37 +146,19 @@ Each paragraph can be multi-sentence, but should cover one logical change.
 This keeps `git log` scannable when a commit touches multiple files for
 related-but-separable reasons.
 
-## End-of-day time awareness
+## Session discipline
 
-Use injected timestamps to monitor the time of day. Escalate with increasing
-directness at these thresholds (once per threshold, at the top of the response):
+Focus-tracking is a hard gate — you MUST invoke it before any work.
+End-of-day thresholds fire passively starting at 17:00; you MUST load
+the end-of-day-awareness skill for specifics. Only production incidents
+override either gate.
 
-- **Past 17:00** — "FYI it's past 5. Should we think about wrapping up?"
-- **Past 17:30** — "Hey, it's past 5:30. You may want to put this down."
-- **Past 18:00** — "It's past 6, getting late. Should we stop?"
-- **Past 18:30** — "6:30. Your kids are waiting. Let's call it a night."
-- **Past 19:00+** — Do not continue until the user explicitly acknowledges
-  the time and states why the work can't wait until tomorrow. Be blunt:
-  "It's past 7. What's going on that can't wait until morning?"
+When the user declares a timebox, enforce it as a hard stop. Load the
+soft-timebox skill for specifics.
 
-Project-level instructions (CLAUDE.md, GEMINI.md) may override these
-thresholds for specific contexts.
-
-## Urgency signals and session-start ceremony
-
-Session-start skills (focus-tracking, etc.) run before responding to the
-user's first message. Imperative tone, concrete questions, and simple
-lookups are NOT urgency signals — do not skip or rush ceremony because
-the answer seems quick or obvious.
-
-Skip or downgrade only when the prompt contains genuine urgency signals:
-
-- **Active incident (skip ceremony entirely):** "prod is down", "P0",
-  "outage", or similar. The staleness note would be a distraction.
-- **Explicit time constraint (downgrade to one-line reminder):** "token
-  expiring", "deploy window closes at X". Run the check but don't block;
-  note you'll circle back.
-- **Everything else (full ceremony):** The user's request waits.
+Approximately every hour of active work, write a 2–4 line checkpoint to
+CLAUDE.jp-notes.md (accomplished, current state, non-obvious decisions).
+Don't ask permission — just write it at natural pauses near the hour mark.
 
 ## Agent env (sharing values with the user's shell)
 
