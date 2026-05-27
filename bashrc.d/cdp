@@ -1,0 +1,98 @@
+#!/bin/bash
+# cdp: CDPATH-style project navigation using JP_CDPATH.
+# Sources cdp-resolve for the resolution logic (no fork for completions).
+
+# shellcheck source=../bin/cdp-resolve
+local _cdp_resolve_path
+_cdp_resolve_path="$(command -v cdp-resolve 2>/dev/null)" || {
+  printf >&2 'cdp: cdp-resolve not found on PATH; cdp disabled\n'
+  return 0
+}
+source_pragma_once "$_cdp_resolve_path"
+
+cdp() {
+  if [[ $# -eq 0 ]]; then
+    printf >&2 'usage: cdp <directory>\n'
+    return 1
+  fi
+
+  local resolved
+  resolved="$(_cdp_resolve "$1")" || return $?
+  cd "$resolved" || return 1
+  if [[ "$resolved" != "$PWD" ]] || [[ "$1" != */ && "$1" != /* ]]; then
+    printf >&2 '%s\n' "$resolved"
+  fi
+}
+
+_cdp_completions() {
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+  local -a results=()
+
+  mapfile -t results < <(_cdp_complete "$cur")
+
+  if [[ ${#results[@]} -eq 1 ]]; then
+    COMPREPLY=("${results[0]}/")
+  elif [[ ${#results[@]} -gt 1 ]]; then
+    local -a basenames=()
+    local r
+    for r in "${results[@]}"; do
+      basenames+=("${r##*/}")
+    done
+    COMPREPLY=("${basenames[@]}")
+  fi
+}
+
+_claude_term_completions() {
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+
+  # Complete flags
+  if [[ "$cur" == -* ]]; then
+    COMPREPLY=($(compgen -W "--random --force --help" -- "$cur"))
+    return
+  fi
+
+  # If we haven't passed '--', complete directory via cdp
+  local word
+  for word in "${COMP_WORDS[@]:1:COMP_CWORD-1}"; do
+    [[ "$word" == "--" ]] && return
+  done
+
+  _cdp_completions
+}
+
+_iterm_completions() {
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+  local subcmd=""
+
+  # Find subcommand
+  local word
+  for word in "${COMP_WORDS[@]:1:COMP_CWORD-1}"; do
+    case "$word" in
+      ls|focus|close|say|new) subcmd="$word"; break ;;
+    esac
+  done
+
+  # Complete subcommand
+  if [[ -z "$subcmd" ]]; then
+    COMPREPLY=($(compgen -W "ls focus close say new" -- "$cur"))
+    return
+  fi
+
+  # Only 'new' gets cdp directory completion
+  if [[ "$subcmd" == "new" ]]; then
+    # Complete flags for 'new'
+    if [[ "$cur" == -* ]]; then
+      COMPREPLY=($(compgen -W "--json --if-not-exists --random --split-right --split-below -p -c" -- "$cur"))
+      return
+    fi
+    # If past '--', no completion
+    for word in "${COMP_WORDS[@]:1:COMP_CWORD-1}"; do
+      [[ "$word" == "--" ]] && return
+    done
+    _cdp_completions
+  fi
+}
+
+complete -o nospace -F _cdp_completions cdp
+complete -o nospace -F _claude_term_completions claude-term
+complete -o nospace -F _iterm_completions iterm

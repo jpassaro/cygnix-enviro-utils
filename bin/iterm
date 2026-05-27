@@ -485,7 +485,11 @@ cmd_new() {
     esac
   done
 
-  dir="$(grealpath -- "${dir:-.}")"
+  if [[ -n "$dir" && "$dir" != /* && ! -d "$dir" ]] && command -v cdp-resolve >/dev/null 2>&1; then
+    dir="$(cdp-resolve "$dir")" || return 1
+  else
+    dir="$(grealpath -- "${dir:-.}")"
+  fi
   if [[ ! -d "$dir" ]]; then
     printf 'Error: not a directory: %s\n' "$dir" >&2
     return 1

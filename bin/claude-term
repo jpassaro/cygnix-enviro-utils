@@ -65,7 +65,17 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-DIR="$(grealpath -- "${DIR:-.}")"
+# Resolve via JP_CDPATH if not absolute and not a direct relative path
+if [[ -n "$DIR" && "$DIR" != /* && ! -d "$DIR" ]]; then
+    if command -v cdp-resolve >/dev/null 2>&1; then
+        DIR="$(cdp-resolve "$DIR")" || exit 1
+    else
+        printf 'Error: not a directory: %s\n' "$DIR" >&2
+        exit 1
+    fi
+else
+    DIR="$(grealpath -- "${DIR:-.}")"
+fi
 
 if [[ ! -d "$DIR" ]]; then
     printf 'Error: not a directory: %s\n' "$DIR" >&2

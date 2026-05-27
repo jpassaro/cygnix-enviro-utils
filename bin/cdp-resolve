@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+# cdp-resolve: Resolve a directory name against JP_CDPATH.
+#
+# When executed: prints the resolved absolute path to stdout.
+#   cdp-resolve <name>        → /absolute/path
+#   cdp-resolve --complete <prefix>  → one resolved path per line
+#
+# When sourced: defines _cdp_resolve and _cdp_complete (no side effects).
+#
+# JP_CDPATH is colon-separated; empty element means CWD (like CDPATH).
+# Default: '':~/code:~
+
+JP_CDPATH="${JP_CDPATH:-:$HOME/code:$HOME}"
+
+_cdp_resolve() {
+  local target="$1"
+
+  if [[ -z "$target" ]]; then
+    printf >&2 'usage: cdp-resolve <directory>\n'
+    return 1
+  fi
+
+  # Absolute path — just verify and echo
+  if [[ "$target" == /* ]]; then
+    if [[ -d "$target" ]]; then
+      printf '%s\n' "$target"
+      return 0
+    fi
+    printf >&2 'cdp-resolve: not a directory: %s\n' "$target"
+    return 1
+  fi
+
+  local IFS=: dir resolved
+  # shellcheck disable=SC2086
+  local -a dirs=($JP_CDPATH)
+
+  for dir in "${dirs[@]}"; do
+    dir="${dir:-$PWD}"
+    resolved="${dir}/${target}"
+    if [[ -d "$resolved" ]]; then
+      grealpath -- "$resolved"
+      return 0
+    fi
+  done
+
+  printf >&2 'cdp-resolve: no such directory: %s\n' "$target"
+  printf >&2 'searched: %s\n' "$JP_CDPATH"
+  return 1
+}
+
+_cdp_complete() {
+  local prefix="$1"
+  local -A seen=()
+
+  # Absolute prefix — glob directly, bypass JP_CDPATH
+  if [[ "$prefix" == /* ]]; then
+    local candidate rp
+    for candidate in "${prefix}"*; do
+      [[ -d "$candidate" ]] || continue
+      rp="$(grealpath -- "$candidate" 2>/dev/null)" || continue
+      [[ -d "$rp" ]] || continue
+      if [[ -z "${seen[$rp]+x}" ]]; then
+        seen[$rp]=1
+        printf '%s\n' "$rp"
+      fi
+    done
+    return
+  fi
+
+  local IFS=: dir
+  # shellcheck disable=SC2086
+  local -a dirs=($JP_CDPATH)
+
+  for dir in "${dirs[@]}"; do
+    dir="${dir:-$PWD}"
+    [[ -d "$dir" ]] || continue
+    local candidate rp
+    for candidate in "${dir}/${prefix}"*; do
+      [[ -d "$candidate" ]] || continue
+      rp="$(grealpath -- "$candidate" 2>/dev/null)" || continue
+      [[ -d "$rp" ]] || continue
+      if [[ -z "${seen[$rp]+x}" ]]; then
+        seen[$rp]=1
+        printf '%s\n' "$rp"
+      fi
+    done
+  done
+}
+
+# --- Detect sourced vs executed ---
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  set -euo pipefail
+  case "${1:-}" in
+    --complete)
+      shift
+      _cdp_complete "${1:-}"
+      ;;
+    *)
+      _cdp_resolve "$@"
+      ;;
+  esac
+fi
