@@ -31,6 +31,9 @@ _scratch/*
 CLAUDE.jp-notes.md
 *.jp-garbage
 *.jp-garbage.*
+.jp-backup-exclude
+.jp-no-bundle
+.jp-no-fetch
 
 .worktrees/
 .claude/
