@@ -211,6 +211,35 @@ The extension includes a `timestamp-injector` hook that automatically injects
 `[Current Time: ...]` into your conversations. This is used by skills like 
 `soft-timebox` and `end-of-day-awareness`.
 
+### Agent CLI wrappers (`gitdir`, `ghe`)
+
+Two scripts in `bin/` provide read-only wrappers that simplify AI agent
+permissions:
+
+- **`gitdir`** — wraps `git -C` for operating on repos outside the CWD.
+  Grant the same read-only subcommands you allow for bare `git`:
+  ```json
+  "Bash(gitdir fetch:*)",
+  "Bash(gitdir log:*)",
+  "Bash(gitdir status:*)",
+  "Bash(gitdir diff:*)",
+  "Bash(gitdir show:*)",
+  "Bash(gitdir blame:*)",
+  "Bash(gitdir worktree:list:*)",
+  "Bash(gitdir rev-parse:*)",
+  "Bash(gitdir config:get:*)",
+  "Bash(gitdir ls-tree *)"
+  "Bash(gitdir cat-file *)"
+  ```
+- **`ghe`** — wraps `gh` for read-only GitHub Enterprise operations
+  (PR views, diffs, API GETs, browse). Avoids the `GH_HOST` env var
+  complication that breaks permissions patterns. Grant per-command:
+  ```json
+  "Bash(ghe *)",
+  ```
+
+Install both via `installables install gitdir ghe`.
+
 ## Editor configuration
 
 Add the following to your `~/.vimrc`:
@@ -230,7 +259,7 @@ background detection (which neovim does not do natively).
 ## Other bits of setup
 
 It's a good idea to supply a github API token in your private `.bash_profile`
-for various tools. For brew, `GITHUB_API_TOKEN`; for `hub`, Github's CLI,
+for various tools. For brew, `GITHUB_API_TOKEN`; for `gh`, GitHub's CLI,
 `GITHUB_TOKEN`.
 
 ### mac specific

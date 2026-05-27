@@ -1,0 +1,67 @@
+#!/bin/sh
+# ghe — read-only GitHub Enterprise CLI wrapper
+# Usage: ghe <command> <repo-or-endpoint> [args...]
+#
+# Commands:
+#   pr-list   <host/org/repo> [gh flags...]
+#   pr-view   <host/org/repo> <number> [gh flags...]
+#   pr-diff   <host/org/repo> <number> [gh flags...]
+#   pr-status <host/org/repo> [gh flags...]
+#   pr-checks <host/org/repo> <number> [gh flags...]
+#   issue-list <host/org/repo> [gh flags...]
+#   issue-view <host/org/repo> <number> [gh flags...]
+#   repo-view  <host/org/repo> [gh flags...]
+#   run-list  <host/org/repo> [gh flags...]
+#   run-view  <host/org/repo> <run-id> [gh flags...]
+#   release-list <host/org/repo> [gh flags...]
+#   release-view <host/org/repo> <tag> [gh flags...]
+#   browse    <host/org/repo> [gh browse flags...]
+#   search-prs     <host> [gh search flags...]
+#   search-issues  <host> [gh search flags...]
+#   search-repos   <host> [gh search flags...]
+#   search-code    <host> [gh search flags...]
+#   search-commits <host> [gh search flags...]
+#   apiget    <host/path> [gh api flags...]
+
+set -e
+
+usage() {
+  sed -n '2,/^$/s/^# //p; 2,/^$/s/^#$//p' "$0" >&2
+  exit 1
+}
+
+die() { printf 'ghe: %s\n' "$*" >&2; exit 1; }
+
+[ $# -ge 2 ] || usage
+
+cmd="$1"
+target="$2"
+shift 2
+
+case "$cmd" in
+  browse)
+    exec gh browse --repo "$target" "$@"
+    ;;
+  repo-view)
+    exec gh repo view "$target" "$@"
+    ;;
+  pr-list|pr-view|pr-diff|pr-status|pr-checks|issue-list|issue-view|run-list|run-view|release-list|release-view)
+    gh_cmd="$(echo "$cmd" | cut -d- -f1)"
+    gh_sub="$(echo "$cmd" | cut -d- -f2-)"
+    exec gh "$gh_cmd" "$gh_sub" --repo "$target" "$@"
+    ;;
+  search-*)
+    gh_sub="$(echo "$cmd" | cut -d- -f2-)"
+    GH_HOST="$target" exec gh search "$gh_sub" "$@"
+    ;;
+  apiget)
+    # target is host/path — split on first slash
+    host="${target%%/*}"
+    path="${target#*/}"
+    [ "$path" != "$target" ] || die "apiget target must be host/path"
+    exec gh api --hostname "$host" -X GET "$path" "$@"
+    ;;
+  *)
+    die "unknown command: $cmd"
+    ;;
+esac

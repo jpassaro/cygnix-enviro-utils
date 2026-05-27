@@ -1,0 +1,81 @@
+#!/bin/sh
+
+usage() {
+  echo >&2 "usage: $0 [-f] [--tee|-e|--edit] FILE <<EOF"
+  exit 1
+}
+args=
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -f|--force) args="f$args"; shift ;;
+    -e|--edit)  args="e$args"; shift ;;
+    --tee)      args="t$args"; shift ;;
+    -*)         usage ;;
+    *)          break ;;
+  esac
+done
+
+case "$args" in
+  *t*e*|*e*t*)
+    echo >&2 "--edit and --tee are incompatible"
+    exit 1
+    ;;
+  *t*) mode='tee' ;;
+  *e*)
+    mode='edit'
+    if [ -t 0 ] && [ -t 1 ] ; then : ; else
+      echo >&2 "must have terminal control for --edit mode"
+      exit 1
+    fi
+    ;;
+  *) mode='sink' ;;
+esac
+
+force=
+case "$args" in *f*) force=x ;; esac
+
+tmp="$PWD"/.jplocal/"$(date +%Y%m%d)"
+
+name="$1"
+
+if [ "$#" -eq 1 ] && [ -n "$name" ] ; then : ; else usage ; fi
+
+case "$name" in
+  .jplocal/*) file="$name" ;;
+  *) file="$tmp/$name" ;;
+esac
+barefile="${file##*/}"
+dir="${file%"$barefile"}"
+
+if [ -e "$file" ] && [ -z "$force" ] && [ "$mode" != edit ] ; then
+  echo >&2 "error: '$file' already exists (use -f to overwrite)"
+  exit 1
+fi
+
+[ -d "$dir" ] || mkdir -p "$dir" || {
+  echo >&2 "could not create '$dir'"
+  exit 1
+}
+
+# shellcheck disable=SC2015
+touch "$file" && [ -w "$file" ] || {
+  echo >&2 "error: '$file' is not writeable, or not in a writeable location"
+  exit 1
+}
+
+case "$mode" in
+  edit)
+    echo >&2 "editing '$file'..."
+    exec $EDITOR "$file" ;;
+  tee)
+    echo >&2 "tee '$file'..."
+    tee "$file"
+    ;;
+  write)
+    echo >&2 "cat >'$file'..."
+    cat >"$file"
+    ;;
+esac || {
+  echo >&2 "unable to write to '$file' (error $?)"
+  exit 1
+}

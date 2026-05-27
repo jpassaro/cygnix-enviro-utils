@@ -42,6 +42,19 @@ The `.jp-garbage` backup files are globally gitignored.
 When creating "temp" files, always create a folder ./.jplocal/YYYYMMDD/ to use
 as a "tempdir".
 
+To write a file atomically to that directory from stdin, use:
+`jplocal <filename> <<'EOF'` (content on stdin, closes with `EOF`).
+The script creates the dated directory if needed. Useful for checkpoints,
+drafted notifications, or any artifact that should survive the session
+but not be committed. By default `jplocal` refuses to overwrite existing
+files — pass `-f` (or `--force`) to allow overwrite, or use the Edit
+tool directly on the resolved path for appends/updates.
+
+For long-running commands (terraform apply/destroy, large builds, etc.),
+don't pipe solely to `tail` — use
+`jplocal --tee -f <descriptive>.log | tail` so the full output is
+preserved for inspection while the command runs and after it completes.
+
 Don't search broad parent directories (`~/code/`, `$HOME`, etc.) without
 limiting depth to at most 2 or 3. Use `find -maxdepth`, `grep --depth=`,
 or equivalent when searching outside the current project. If no
@@ -50,20 +63,62 @@ User can override explicitly.
 
 When in a git worktree, pass its absolute path to subagents explicitly.
 
+Never `cd` to change the session's working directory. If a command needs
+to run elsewhere, wrap it in a subshell: `(cd /other/path && cmd)`. If
+ongoing work in another directory is needed, record context there
+(CLAUDE.jp-notes.md) and open a claude-term.
+
+## Command wrappers (permissions)
+
+These commands exist to avoid false-positive permission prompts in
+Claude Code. Use them instead of the underlying tools.
+
+**Subagent note:** When dispatching subagents, pass this section in the
+prompt. Subagents inherit the same permission allowlists. Tell them:
+(1) use `gitdir` not `git -C` for other repos, (2) use `ghe` not `gh`
+for GHE reads, (3) use `grep -r` not `find -exec grep`.
+
+| Instead of                                   | Use                                          | Why                                    |
+|:---------------------------------------------|:---------------------------------------------|:---------------------------------------|
+| `git -C <dir> <cmd>`                        | `gitdir <cmd> <dir>`                         | Allowlisted per-subcommand             |
+| `GH_HOST=... gh <cmd>`                      | `ghe <cmd> <host/org/repo>`                  | Env prefix triggers permission prompt  |
+| `find <dir> -name '*.x' -exec grep ...`     | `grep -r --include='*.x' <pattern> <dir>`    | find-exec not allowlisted; grep -r is  |
+
+### gitdir
+
 NEVER use `git -C`. No exceptions. You know your CWD from the system
 prompt — use bare `git <subcommand>` for the session's own repo. For ANY
 operation on another directory (read or write), use
 `gitdir <subcommand> <directory> [args...]`. Colon-separated subcommands
 expand to space-separated git words with no depth limit:
 `gitdir worktree:list <dir>`, `gitdir remote:show <dir> origin`,
-`gitdir worktree:add <dir> .worktrees/foo -b branch`, etc.
+`gitdir config:get <dir> hub.host`, etc.
+The colon syntax is for chaining git noun/verb subcommands — never embed
+flags (e.g. `config:--get` is wrong; `config:get` is correct).
+The `gitdir` permissions allowlist covers read-only commands (log, diff,
+status, config:get, etc.) so they don't trigger permission prompts. Write
+operations through `gitdir` still require approval as normal.
 If `gitdir` is not on PATH, ask the user's permission to run
 `installables install gitdir` (see login-utils MAINTENANCE.md if needed).
 
-Never `cd` to change the session's working directory. If a command needs
-to run elsewhere, wrap it in a subshell: `(cd /other/path && cmd)`. If
-ongoing work in another directory is needed, record context there
-(CLAUDE.jp-notes.md) and open a claude-term.
+### ghe
+
+For GitHub Enterprise operations, use `ghe` instead of `gh`. It exposes
+only read-only commands and avoids the `GH_HOST=...` complication that
+confuses permissions checks. Syntax: `ghe <command> <host/org/repo>`.
+Example: `ghe pr-list github.bamtech.co/ge-accounting/datos-aggregator`.
+Run `ghe --help` for available commands.
+If `ghe` is not on PATH, run `installables install ghe`.
+
+### grep over find-exec
+
+Prefer `grep -r --include='*.ext' <pattern> <dir>` over
+`find <dir> -name '*.ext' -exec grep ... {} \;` or piping through
+`xargs grep`. The `grep -r` form is allowlisted, simpler, and faster
+(no process-per-file overhead).
+
+Multiple patterns: `--include='*.scala' --include='*.sbt'`
+Exclude dirs: `--exclude-dir='.git'`
 
 ## Personal local-only files
 
