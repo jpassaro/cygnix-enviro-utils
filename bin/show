@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+flags=()
+for x in "$@" ; do
+  case "$x" in
+    -*) flags+=("$x") ;;
+    *.md) PAGER='less -FRX' glow "${flags[@]}" "$x" ;;
+    *) bat "${flags[@]}" "$x" ;;
+  esac
+done

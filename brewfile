@@ -3,14 +3,14 @@ tap "homebrew/cask"
 tap "homebrew/core"
 tap "homebrew/services"
 
+# PostScript file formatter
+brew "a2ps"
+
 # Search tool like grep, but optimized for programmers
 brew "ack"
 
 # List ASCII idiomatic names and octal/decimal code-point forms
 brew "ascii"
-
-# Interpreted, interactive, object-oriented programming language
-brew "python@3.11"  # try and keep this up to date
 
 # Official Amazon AWS command-line interface
 brew "awscli"
@@ -21,8 +21,17 @@ brew "bash"
 # Programmable completion for Bash 4.x+
 brew "bash-completion@2"
 
+# Cat clone with syntax highlighting and git integration
+brew "bat"
+
 # GNU File, Shell, and Text utilities
 brew "coreutils"
+
+# Suite of command-line tools for working with CSV
+brew "csvkit"
+
+# POSIX-compliant /bin/sh implementation
+brew "dash"
 
 # Load/unload environment variables based on $PWD
 # brew "direnv"
@@ -30,21 +39,29 @@ brew "coreutils"
 # Collection of GNU find, xargs, and locate
 brew "findutils"
 
+# Command-line fuzzy finder
+brew "fzf"
+
 # GNU awk utility
 brew "gawk"
 
 # GNU debugger
-# left out for now because not supported on silicon -- and hardly ever needed!
-#brew "gdb"
+# brew "gdb"  # not supported on silicon
 
-# Interpreter for PostScript and PDF -- not strictly necessary
-# brew "ghostscript"
+# GitHub command-line tool
+brew "gh"
 
-# Command-line utility for uploading Gists
-brew "gist"
+# Interpreter for PostScript and PDF
+brew "ghostscript"
 
 # Distributed revision control system
 brew "git"
+
+# Git extension for versioning large files
+brew "git-lfs"
+
+# Render markdown on the CLI, with pizzazz
+brew "glow"
 
 # GNU implementation of the famous stream editor
 brew "gnu-sed"
@@ -61,6 +78,9 @@ brew "gnu-units"
 # GNU Pretty Good Privacy (PGP) package
 brew "gnupg"
 
+# Open source programming language from Google
+brew "go"
+
 # Graph visualization software from AT&T and Bell Labs
 brew "graphviz"
 
@@ -70,11 +90,8 @@ brew "grep"
 # User-friendly cURL replacement (command-line HTTP client)
 brew "httpie"
 
-# Highly capable, feature-rich programming language
-brew "perl"
-
 # Tools and libraries to manipulate images in many formats
-brew "imagemagick" #, args: ["with-fontconfig", "with-ghostscript", "with-pango", "with-perl", "with-x11"]
+brew "imagemagick"
 
 # GNU utilities for networking
 brew "inetutils"
@@ -94,11 +111,20 @@ brew "lorem"
 # Java-based project management
 # brew "maven"
 
-# Platform built on V8 to build network applications
-brew "node"
+# Message Sequence Chart renderer
+brew "mscgen"
+
+# Ambitious Vim-fork focused on extensibility and agility
+brew "neovim"
 
 # Password manager
 brew "pass"
+
+# Highly capable, feature-rich programming language
+brew "perl"
+
+# Install and run Python applications in isolated environments
+brew "pipx"
 
 # Show ps output as a tree
 brew "pstree"
@@ -109,7 +135,10 @@ brew "pwgen"
 # Command-line YAML and XML processor that wraps jq
 brew "python-yq"
 
-# Tools for and transforming and inspecting PDF files
+# Interpreted, interactive, object-oriented programming language
+brew "python@3.11"
+
+# Tools for transforming and inspecting PDF files
 brew "qpdf"
 
 # Command-line tool for the Amazon S3 service
@@ -127,25 +156,26 @@ brew "ssh-copy-id"
 # Programatically correct mistyped console commands
 brew "thefuck"
 
+# Typing speed test in the terminal
+brew "typespeed"
+
 # Manipulate and analyze Unicode text
 brew "uniutils"
 
 # Vi 'workalike' with many additional features
 brew "vim"
 
+# Hassle-free Node.js version manager
+brew "volta"
+
+# Internet file retriever
+brew "wget"
+
 # Suite of barcodes-reading tools
 brew "zbar"
 
-#cask "iterm2"  # i usually do this by hand
+# X11 server for macOS (needed by imagemagick display, some graphviz renderers)
 cask "xquartz"
-# some casks that are likely to be useful
 # cask "gimp"
-# cask "slack"
+# cask "iterm2"  # usually installed by hand
 # cask "wireshark"
-
-brew "a2ps"
-brew "ghostscript"
-brew "dash"
-brew "hub"
-
-brew "neovim"

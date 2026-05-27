@@ -13,13 +13,11 @@ alias whence='type -a'                        # where, of a sort
 alias grep='grep --color'                     # show differences in colour
 alias egrep='egrep --color=auto'              # show differences in colour
 alias fgrep='fgrep --color=auto'              # show differences in colour
-# Some shortcuts for different directory listings
-# alias ls='ls -hF --color=tty'                 # classify files in colour
-alias dir='ls --color=auto --format=vertical'
-alias vdir='ls --color=auto --format=long'
-alias ll='ls -l'                              # long list
-alias la='ls -A'                              # all but . and ..
-alias l="ls -FGh"
+alias ls='ls -F --color=auto'
+alias ll='ls -lh'
+alias la='ls -A'
+alias lla='ls -lAh'
+alias lt='ls -lht'
 
 # my own:
 alias grepp='grep -P' # obselete when ack is available
@@ -65,6 +63,8 @@ if [[ "$jp_system_type" == linux ]] ; then
 fi
 
 alias jq='jq --unbuffered'
+
+alias glo='LESS="-RFX${LESS:+ $LESS}" glow -p'
 
 function _jp_alias_setup() {
   local _jp_awk

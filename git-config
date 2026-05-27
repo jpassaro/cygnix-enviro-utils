@@ -15,6 +15,7 @@
 	excludesfile = ~/.gitignore
 	abbrev = 12
 	editor = vim
+	pager = less -FRX
 [url "https://github.com/"]
 	insteadOf = git@github.com:
 [user]

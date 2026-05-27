@@ -38,3 +38,5 @@ if [[ -n "$lesspipe" ]] \
   LESSOPEN="|$(command -v "$lesspipe") %s"
   export LESSOPEN
 fi
+
+export LESS="-R${LESS:+ $LESS}"
