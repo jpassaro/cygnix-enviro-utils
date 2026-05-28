@@ -285,3 +285,63 @@ EOF
   fi
   unset -f _when_missing _when_eligible _after
 }
+
+_installables_complete() {
+  local cur prev
+  COMPREPLY=()
+  cur="${COMP_WORDS[COMP_CWORD]}"
+  prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+  if [[ "$COMP_CWORD" -eq 1 ]]; then
+    COMPREPLY=($(compgen -W "help status install ignore import quiet ignored interactive" -- "$cur"))
+    return
+  fi
+
+  case "$prev" in
+    install)
+      local names=()
+      local path
+      for path in "$_INSTALLABLES_BIN"/* ; do
+        [[ -x "$path" ]] || continue
+        local name="${path##*/}"
+        case "$(_installables_status "$name")" in
+          installable|ignored-installable|identical) names+=("$name") ;;
+        esac
+      done
+      COMPREPLY=($(compgen -W "${names[*]}" -- "$cur"))
+      ;;
+    ignore)
+      local names=()
+      local path name
+      for path in "$_INSTALLABLES_BIN"/* ; do
+        [[ -x "$path" ]] || continue
+        name="${path##*/}"
+        [[ "$(_installables_status "$name")" == installable ]] && names+=("$name")
+      done
+      for path in ~/bin/* ; do
+        name="${path##*/}"
+        [[ "$(_installables_status "$name")" == importable ]] && names+=("$name")
+      done
+      COMPREPLY=($(compgen -W "${names[*]}" -- "$cur"))
+      ;;
+    import)
+      local names=()
+      local path name
+      for path in ~/bin/* ; do
+        name="${path##*/}"
+        [[ "$(_installables_status "$name")" == importable ]] && names+=("$name")
+      done
+      COMPREPLY=($(compgen -W "${names[*]}" -- "$cur"))
+      ;;
+    status)
+      local names=()
+      local path
+      for path in "$_INSTALLABLES_BIN"/* ~/bin/* ; do
+        [[ -e "$path" ]] || continue
+        names+=("${path##*/}")
+      done
+      COMPREPLY=($(compgen -W "$(printf '%s\n' "${names[@]}" | sort -u)" -- "$cur"))
+      ;;
+  esac
+}
+complete -F _installables_complete installables
