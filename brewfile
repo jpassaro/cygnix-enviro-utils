@@ -1,7 +1,8 @@
 tap "homebrew/bundle"
-tap "homebrew/cask"
-tap "homebrew/core"
 tap "homebrew/services"
+
+# tap "homebrew/cask"
+# tap "homebrew/core"
 
 # PostScript file formatter
 brew "a2ps"
@@ -136,7 +137,7 @@ brew "pwgen"
 brew "python-yq"
 
 # Interpreted, interactive, object-oriented programming language
-brew "python@3.11"
+brew "python@3.14"
 
 # Tools for transforming and inspecting PDF files
 brew "qpdf"
