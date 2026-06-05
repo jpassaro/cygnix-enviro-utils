@@ -29,25 +29,59 @@ function _jp_ps1_settitle() {
 }
 
 
+function _jp_ps1_cwd() {
+  local parent
+  parent="$(dirname "$PWD")"
+  if [[ "${parent##*/}" == ".worktrees" ]]; then
+    printf '%s/.worktrees/%s' "$(basename "$(dirname "$parent")")" "${PWD##*/}"
+  else
+    printf '%s' "${PWD##*/}"
+  fi
+}
+
+function _jp_ps1_git() {
+  local git_info
+  git_info="$(__git_ps1 "%s")" || return
+  [[ -n "$git_info" ]] || return
+  local parent
+  parent="$(dirname "$PWD")"
+  if [[ "${parent##*/}" == ".worktrees" ]]; then
+    local wt_name="${PWD##*/}"
+    local branch="${git_info%%[:*+%< =]*}"
+    if [[ "$branch" == "$wt_name" || "$wt_name" == pr-+([0-9]) ]]; then
+      local rest="${git_info#"$branch"}"
+      if [[ -n "$rest" ]]; then
+        printf '(%s)' "$rest"
+      fi
+      return
+    fi
+  fi
+  printf '(%s)' "$git_info"
+}
+
 function _jp_ps1_setup() {
   local i _iterm_profile _jp_ps1_dimensions promptfile
 
   # using : ${var:=value} instead of straight assignment allows per-host override
   : "${_jp_ps1_color_cwd:=1;31}"  # bold red
   : "${_jp_ps1_color_prompt:=1;34}"  # bold blue
-  _iterm_profile="${ITERM_PROFILE,,}"
-  if [[ "$_iterm_profile" == *solarized* && "$_iterm_profile" == *dark* ]] ; then
-    : "${_jp_ps1_color_git:=1;32}"  # bold green for solarized dark
-    : "${_jp_ps1_color_timestamp:=0;36}"  # regular green
+
+  # detect dark vs light background from COLORFGBG (last field is bg color index)
+  local _bg_index="${COLORFGBG##*;}"
+  if [[ "$_bg_index" -le 6 ]] 2>/dev/null ; then
+    # dark background — use bright/bold colors for contrast
+    : "${_jp_ps1_color_git:=1;33}"  # bold yellow
+    : "${_jp_ps1_color_timestamp:=0;36}"  # cyan
   else
+    # light background — use darker colors
     : "${_jp_ps1_color_git:=1;30}"  # bold grey
-    : "${_jp_ps1_color_timestamp:=0;32}"  # regular green
+    : "${_jp_ps1_color_timestamp:=0;32}"  # green
   fi
 
   : "${jp_prompt_tty:=\l}"
   PS1="[${jp_prompt_tty}]" # bracketed tty
   PS1="${PS1} $(_jp_ps1_withcolor '${_jp_ps1_color_timestamp}' '\D{%F %T}')"  # timestamp, in green
-  PS1="${PS1} $(_jp_ps1_withcolor '${_jp_ps1_color_cwd}' '\W')" # $(basename $PWD), in bold red
+  PS1="${PS1} $(_jp_ps1_withcolor '${_jp_ps1_color_cwd}' '$(_jp_ps1_cwd)')"
 
   # add angle-brackets for each nested bash
   for ((i=1 ; i < SHLVL ; i++)) ; do
@@ -66,7 +100,7 @@ function _jp_ps1_setup() {
       source_pragma_once "${promptfile}"
       # parenthesize the git prompt info
       # reference the color dynamically so i can experiment
-      PS1="${PS1} $(_jp_ps1_withcolor '${_jp_ps1_color_git}' '$(__git_ps1 "(%s)")')"
+      PS1="${PS1} $(_jp_ps1_withcolor '${_jp_ps1_color_git}' '$(_jp_ps1_git)')"
       # git prompt consists of:
       # branch name (automatic);
       # '*' for dirty state;
