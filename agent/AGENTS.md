@@ -68,6 +68,11 @@ to run elsewhere, wrap it in a subshell: `(cd /other/path && cmd)`. If
 ongoing work in another directory is needed, record context there
 (`.jplocal/CLAUDE.md`) and open a claude-term.
 
+For JSON processing, always use `jq`. Never use
+`python3 -c 'import json, sys; ...'` — jq is on PATH and auto-allowed.
+Never merge stderr into a JSON parser (`2>&1 | jq` is always wrong);
+redirect stderr separately (`2>/dev/null`, `2>err.log`, etc.).
+
 ## Command wrappers (permissions)
 
 These commands exist to avoid false-positive permission prompts in
@@ -83,6 +88,7 @@ for GHE reads, (3) use `grep -r` not `find -exec grep`.
 | `git -C <dir> <cmd>`                        | `gitdir <cmd> <dir>`                         | Allowlisted per-subcommand             |
 | `GH_HOST=... gh <cmd>`                      | `ghe <cmd> <host/org/repo>`                  | Env prefix triggers permission prompt  |
 | `find <dir> -name '*.x' -exec grep ...`     | `grep -r --include='*.x' <pattern> <dir>`    | find-exec not allowlisted; grep -r is  |
+| `python3 -c 'import json...'`               | `jq '<filter>'`                              | jq is auto-allowed and faster          |
 
 ### gitdir
 
