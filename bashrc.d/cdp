@@ -33,12 +33,16 @@ _cdp_completions() {
   if [[ ${#results[@]} -eq 1 ]]; then
     COMPREPLY=("${results[0]}/")
   elif [[ ${#results[@]} -gt 1 ]]; then
-    local -a basenames=()
-    local r
-    for r in "${results[@]}"; do
-      basenames+=("${r##*/}")
-    done
-    COMPREPLY=("${basenames[@]}")
+    if [[ "$cur" == /* ]]; then
+      COMPREPLY=("${results[@]/%//}")
+    else
+      local -a basenames=()
+      local r
+      for r in "${results[@]}"; do
+        basenames+=("${r##*/}")
+      done
+      COMPREPLY=("${basenames[@]}")
+    fi
   fi
 }
 
