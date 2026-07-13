@@ -28,7 +28,7 @@ case "$args" in
       exit 1
     fi
     ;;
-  *) mode='sink' ;;
+  *) mode='write' ;;
 esac
 
 force=
@@ -38,7 +38,13 @@ tmp="$PWD"/.jplocal/"$(date +%Y%m%d)"
 
 name="$1"
 
-if [ "$#" -eq 1 ] && [ -n "$name" ] ; then : ; else usage ; fi
+if [ -z "$name" ]; then
+  name="$(date +%H%M%S).txt"
+elif [ "$#" -eq 1 ] && [ -n "$name" ] ; then
+  :
+else
+  usage
+fi
 
 case "$name" in
   .jplocal/*) file="$name" ;;

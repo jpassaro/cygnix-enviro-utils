@@ -40,7 +40,7 @@ Add a `=== Journal ===` section to today's file. Brief retrospective:
 ### 5. Tomorrow prep
 
 Ask if any open items need notes for tomorrow. Offer to:
-- Create future reminder files for deferred items
+- Pre-seed deferred items into their target day's file (~/desk/todo/YYYYMM/DD.md)
 - Add notes to tomorrow's file if it exists
 - Flag anything that needs attention first thing
 

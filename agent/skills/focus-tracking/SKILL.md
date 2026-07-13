@@ -18,9 +18,10 @@ If in the ~/desk workspace and the user is invoking desk-startup or
 desk-wrapup routines/skills, *do not invoke focus tracking*. These are
 implicitly part of daily expectations.
 
-Filing a future reminder (i.e. writing to ~/desk/todo/future/) is lightweight
-housekeeping. It does not require priority matching — note the staleness
-status if applicable, file the reminder, and move on.
+Filing a future reminder (i.e. writing to ~/desk/todo/YYYYMM/DD.md for a
+future date) is lightweight housekeeping. It does not require priority
+matching — note the staleness status if applicable, file the reminder, and
+move on.
 
 ## On session start
 
@@ -111,6 +112,17 @@ context.
 - If the user indicates a new task, offer to add it to the to-do list.
 - For a new task or one that is not in progress, offer to mark it `[~]`.
 - When done, offer to mark the task complete `[x]`.
+
+## Telemetry
+
+After the focus check resolves (priority matched or overridden), log the
+session start:
+
+    desk-log "started session for <goal/tag>, timebox <N>m"
+
+If focus tracking was skipped (override or exception), log that instead:
+
+    desk-log "skipped focus check: <reason>, timebox 10m"
 
 ## References
 

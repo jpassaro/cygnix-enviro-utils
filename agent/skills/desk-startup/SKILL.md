@@ -38,17 +38,12 @@ date header (`# YYYY-MM-DD`) and the confirmed items. Update the symlink:
 
     ln-today ~/desk/todo/YYYYMM/DD.md
 
-### 2. Check future reminders
+### 2. Check for pre-seeded items in today's file
 
-Glob ~/desk/todo/future/ for all files. Any file with a date (YYYYMMDD.md)
-equal to or earlier than today is due. Surface those reminders and ask the
-user to either: add to today's list, reschedule to a new future date, or
-drop.
-
-**Important: write-before-delete.** First write accepted reminders into
-today's todo file. Only delete the future file after confirming the items
-are present in today's file. If the session is interrupted between steps,
-a duplicate reminder on next startup is preferable to a lost one.
+Future reminders are written directly into ~/desk/todo/YYYYMM/DD.md ahead
+of time. When creating today's file (step 1), any items already present in
+the file are pre-seeded reminders. Surface them explicitly so the user
+can confirm, reprioritize, or drop them before adding new items.
 
 ### 3. Daily checks
 
@@ -60,31 +55,7 @@ Remind the user to check:
 - Open tickets and outstanding code reviews — read the desk's AI instructions
   for the specific URLs to check. If no URLs are configured there, ask the user.
 
-### 4. Fetch and report on repos
-
-Dispatch a **background agent** for this step so fetches don't clutter
-the main session. Continue with step 5 while it runs.
-
-The agent should:
-1. **Connectivity check first.** Pick one repo and run a single
-   `gitdir fetch <repo> --quiet`. If it fails (network error, timeout,
-   auth failure), skip all remaining fetches and return a soft note:
-   "Fetch skipped — couldn't reach remote. You may need to connect to
-   VPN." This is not a showstopper; the main session continues normally.
-2. Read ~/.config/jp-agent/workspaces.md for the list of repos.
-3. For each repo path listed (lines matching `- ~/code/<name>`), run:
-
-       gitdir fetch <repo> --quiet
-
-4. Check for new upstream commits:
-
-       gitdir log <repo> HEAD..origin/<main-branch> --oneline
-
-5. Return a **1–2 line summary**: which repos have new commits (and
-   how many each), or "all repos up to date." No tables, no commit
-   lists — only expand if the user asks.
-
-### 5. Final prompt
+### 4. Final prompt
 
 Ask: "Anything else to add before we start?"
 
@@ -97,9 +68,8 @@ view over sequential sections.
 
 Use vertical splits (side-by-side columns) when the terminal is wide
 enough (~120+ cols):
-- Left: carry-forward items. Right: future reminders.
+- Left: carry-forward items. Right: pre-seeded reminders (if any).
 - Left: calendar. Right: code reviews (non-draft).
-- Bottom: repo summary (one line).
 
 ### Calendar formatting
 
@@ -133,6 +103,4 @@ Detect via `iterm ls -d ~/desk` to find the session TTY, then
 ## Implementation notes
 
 - Use Glob + Read exclusively — no bash calls needed for the scan
-- Future reminder files use flat naming: ~/desk/todo/future/YYYYMMDD.md
-- One reminder per line, suffixed with "(added YYYY-MM-DD)"
-- Priority markers in future files (e.g., `!! item`) carry forward to tasks
+- Future reminders are pre-seeded directly into ~/desk/todo/YYYYMM/DD.md
