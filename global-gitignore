@@ -29,6 +29,7 @@ _scratch/*
 
 .jplocal/
 CLAUDE.jp-notes.md
+CLAUDE.local.md
 *.jp-garbage
 *.jp-garbage.*
 .jp-backup-exclude

@@ -66,7 +66,7 @@ When in a git worktree, pass its absolute path to subagents explicitly.
 Never `cd` to change the session's working directory. If a command needs
 to run elsewhere, wrap it in a subshell: `(cd /other/path && cmd)`. If
 ongoing work in another directory is needed, record context there
-(`.jplocal/CLAUDE.md`) and open a claude-term.
+(`./CLAUDE.local.md`) and open a claude-term.
 
 For JSON processing, always use `jq`. Never use
 `python3 -c 'import json, sys; ...'` — jq is on PATH and auto-allowed.
@@ -126,25 +126,13 @@ Prefer `grep -r --include='*.ext' <pattern> <dir>` over
 Multiple patterns: `--include='*.scala' --include='*.sbt'`
 Exclude dirs: `--exclude-dir='.git'`
 
-## Personal local-only files
+## Local notes and checkpoints
 
-Both files below are globally gitignored and never committed.
-
-### Local notes — `.jplocal/CLAUDE.md`
-
-Primary per-repo/worktree context file. Claude Code **loads** it
-automatically (CLAUDE.md resolution chain) — no explicit read needed.
-
-Use for: worktree purpose, in-flight state, decisions, local env quirks.
-
-Trigger phrases: **"local note"**, **"note that locally"**, **"save to
-local context"** → write/append to `.jplocal/CLAUDE.md` in the relevant
-repo root. Write tool creates parent dirs automatically.
-
-### Legacy: `CLAUDE.jp-notes.md`
-
-NOT auto-loaded — requires explicit read ("pick up where I left off").
-Prefer `.jplocal/CLAUDE.md` for new usage.
+Use `./CLAUDE.local.md` for worktree-level notes (low-token, dated
+summaries). For substantial work, write detailed checkpoints to
+`~/desk/checkpoints/YYYYMMDD/<slug>.md` with a `Workspace(s):` header;
+always `desk-log` the checkpoint path when done. Load the
+local-notes-and-checkpoints skill for conventions and checkpoint format.
 
 ## Commit messages
 
