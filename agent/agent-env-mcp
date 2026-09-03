@@ -1,10 +1,24 @@
 #!/usr/bin/env bash
-# MCP server (stdio transport) — exposes set_env for writing to $JP_AGENT_ENV.
+# MCP server (stdio transport) — exposes set_env (writing to $JP_AGENT_ENV)
+# plus three discipline-tick.sh-adjacent tools: get_timebox_end/
+# set_timebox_end (read/write this session's stretch deadline) and
+# log_break (the global, cross-session "I stepped away" signal). The
+# tick-file and global-break-file schemas are owned by discipline-tick.sh;
+# this server just reads/writes the same paths, so a schema change there
+# must be mirrored here.
 # Protocol: JSON-RPC 2.0 over newline-delimited JSON on stdin/stdout.
 
 set -euo pipefail
 
 env_file="${JP_AGENT_ENV:-}"
+
+# Shared with discipline-tick.sh (the hook, not this server) — same
+# per-session .tick state files and the same global-break.state file, so
+# both sides must agree on paths and the 4-line schema
+# (stretch_start/last_fire/last_invocation/timebox_end).
+state_dir="${HOME}/.claude/hooks/state/discipline-tick"
+global_break_file="${state_dir}/global-break.state"
+location_override_file="${state_dir}/location-override.state"
 
 send() {
   printf '%s\n' "$1"
@@ -24,29 +38,76 @@ handle_initialize() {
     result: {
       protocolVersion: "2024-11-05",
       capabilities: {tools: {}},
-      serverInfo: {name: "agent-env", version: "1.0.0"}
+      serverInfo: {name: "agent-env", version: "1.1.0"}
     }
   }')"
 }
 
 handle_tools_list() {
   local id="$1"
-  send "$(jq -nc --argjson id "$id" '{
-    jsonrpc: "2.0",
-    id: $id,
-    result: {tools: [{
-      name: "set_env",
-      description: "Set, update, or unset a variable in the per-session env file ($JP_AGENT_ENV). The user can load these values into their shell by running src(). After calling set_env, tell the user what you saved and how to use it, e.g.: I saved the worktree path. Grab it with: ! src && cd \"$WORKTREE\"",
-      inputSchema: {
-        type: "object",
-        properties: {
-          name: {type: "string", description: "Variable name (e.g. A, WORKTREE_PATH)"},
-          value: {description: "String value to set, JSON array for bash array, or null to unset"}
+  # Heredoc, not a jq -n literal: everything here is static except id, and
+  # a single-quoted jq filter can't contain plain apostrophes (descriptions
+  # below have several) without the '"'"' escaping dance. `<<'JSONEOF'`
+  # (quoted delimiter) also keeps literal $-signs in the set_env example
+  # from being shell-expanded.
+  jq -c --argjson id "$id" '. + $ARGS.named' <<'JSONEOF'
+{
+  "jsonrpc": "2.0",
+  "result": {"tools": [
+    {
+      "name": "set_env",
+      "description": "Set, update, or unset a variable in the per-session env file ($JP_AGENT_ENV). The user can load these values into their shell by running src(). After calling set_env, tell the user what you saved and how to use it, e.g.: I saved the worktree path. Grab it with: ! src && cd \"$WORKTREE\"",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {"type": "string", "description": "Variable name (e.g. A, WORKTREE_PATH)"},
+          "value": {"description": "String value to set, JSON array for bash array, or null to unset"}
         },
-        required: ["name"]
+        "required": ["name"]
       }
-    }]}
-  }')"
+    },
+    {
+      "name": "get_timebox_end",
+      "description": "Get this session's current timebox deadline (when the current work stretch is meant to end). Set automatically by discipline-tick.sh on first invocation of a session, or manually via set_timebox_end.",
+      "inputSchema": {"type": "object", "properties": {}}
+    },
+    {
+      "name": "set_timebox_end",
+      "description": "Manually set or override this session's timebox deadline.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "epoch_seconds": {"type": "integer", "description": "Unix epoch seconds for the new timebox deadline"}
+        },
+        "required": ["epoch_seconds"]
+      }
+    },
+    {
+      "name": "log_break",
+      "description": "Record that the user is taking, or just took, a real break. This is a GLOBAL signal, not scoped to this session — every open Claude Code session picks it up next time its discipline hook fires and resets its own stretch clock accordingly (this is how a short break, under the 30-minute implicit gap-detection threshold, gets credited at all). Call this when the user has actually confirmed they're stepping away, not on a bare acknowledgment.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "minutes_ago": {"type": "integer", "description": "How many minutes ago the break started, if not right now (default 0)"},
+          "note": {"type": "string", "description": "Optional short note about the break"}
+        }
+      }
+    },
+    {
+      "name": "set_location",
+      "description": "Manually assert current physical location (office or home) for discipline-tick.sh's go-home watcher, when automatic WiFi-based detection can't tell (e.g. macOS Location Services permission not granted to the terminal app, or an unrecognized network). Global, not session-scoped. Expires at local midnight, so it must be reasserted daily rather than silently persisting after the user has left. Live WiFi detection always takes priority over this the moment it successfully resolves.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "location": {"type": "string", "enum": ["office", "home"]},
+          "note": {"type": "string", "description": "Optional short note"}
+        },
+        "required": ["location"]
+      }
+    }
+  ]}
+}
+JSONEOF
 }
 
 handle_set_env() {
@@ -85,22 +146,143 @@ handle_set_env() {
     '{jsonrpc:"2.0",id:$id,result:{content:[{type:"text",text:$text}]}}')"
 }
 
+# Path to this session's .tick file — same naming discipline-tick.sh
+# uses. Returns nonempty only if CLAUDE_CODE_SESSION_ID is set.
+tick_state_file() {
+  local session_id="${CLAUDE_CODE_SESSION_ID:-}"
+  [[ -n "$session_id" ]] || return 1
+  printf '%s' "${state_dir}/${session_id}.tick"
+}
+
+handle_get_timebox_end() {
+  local id="$1" state_file tb_end clock
+
+  if ! state_file="$(tick_state_file)"; then
+    error_response "$id" -32000 "CLAUDE_CODE_SESSION_ID is not set — cannot locate session state"
+    return
+  fi
+
+  tb_end="$( [[ -f "$state_file" ]] && sed -n '4p' "$state_file" 2>/dev/null || true )"
+  case "$tb_end" in
+    ''|*[!0-9]*)
+      send "$(jq -nc --argjson id "$id" \
+        '{jsonrpc:"2.0",id:$id,result:{content:[{type:"text",text:"No timebox set yet for this session."}]}}')"
+      ;;
+    *)
+      clock="$(date -r "$tb_end" '+%H:%M' 2>/dev/null || echo '?')"
+      send "$(jq -nc --argjson id "$id" --argjson epoch "$tb_end" --arg clock "$clock" \
+        '{jsonrpc:"2.0",id:$id,result:{content:[{type:"text",text:("Timebox ends at " + $clock + " (epoch " + ($epoch|tostring) + ").")}]}}')"
+      ;;
+  esac
+}
+
+handle_set_timebox_end() {
+  local id="$1" epoch="$2" state_file
+  local now stretch_start last_fire last_invocation clock
+
+  case "$epoch" in
+    ''|*[!0-9]*)
+      error_response "$id" -32602 "epoch_seconds must be a positive integer"
+      return
+      ;;
+  esac
+
+  if ! state_file="$(tick_state_file)"; then
+    error_response "$id" -32000 "CLAUDE_CODE_SESSION_ID is not set — cannot locate session state"
+    return
+  fi
+  mkdir -p "$state_dir"
+
+  now="$(date +%s)"
+  stretch_start="$now"; last_fire="$now"; last_invocation="$now"
+  if [[ -f "$state_file" ]] && [[ "$(wc -l < "$state_file" 2>/dev/null | tr -d ' ')" -ge 3 ]]; then
+    stretch_start="$(sed -n '1p' "$state_file")"
+    last_fire="$(sed -n '2p' "$state_file")"
+    last_invocation="$(sed -n '3p' "$state_file")"
+  fi
+  printf '%s\n%s\n%s\n%s\n' "$stretch_start" "$last_fire" "$last_invocation" "$epoch" > "$state_file"
+
+  clock="$(date -r "$epoch" '+%H:%M' 2>/dev/null || echo '?')"
+  send "$(jq -nc --argjson id "$id" --arg clock "$clock" \
+    '{jsonrpc:"2.0",id:$id,result:{content:[{type:"text",text:("Timebox set to end at " + $clock + ".")}]}}')"
+}
+
+handle_log_break() {
+  local id="$1" minutes_ago="$2" note="$3"
+  local now break_epoch human
+
+  case "$minutes_ago" in
+    ''|*[!0-9]*) minutes_ago=0 ;;
+  esac
+
+  mkdir -p "$state_dir"
+  now="$(date +%s)"
+  break_epoch=$((now - minutes_ago * 60))
+  human="$(date -r "$break_epoch" '+%Y-%m-%d %H:%M:%S %z' 2>/dev/null || echo '?')"
+  printf '%s\n%s%s\n' "$break_epoch" "$human" "${note:+ — $note}" > "$global_break_file"
+
+  send "$(jq -nc --argjson id "$id" --arg note "$note" \
+    '{jsonrpc:"2.0",id:$id,result:{content:[{type:"text",text:("Break logged" + (if $note != "" then ": " + $note else "" end) + ". Every open session will pick this up and reset its own stretch clock next time its hook fires.")}]}}')"
+}
+
+handle_set_location() {
+  local id="$1" location="$2" note="$3"
+  local now human
+
+  case "$location" in
+    office|home) ;;
+    *)
+      error_response "$id" -32602 "location must be \"office\" or \"home\""
+      return
+      ;;
+  esac
+
+  mkdir -p "$state_dir"
+  now="$(date +%s)"
+  human="$(date '+%Y-%m-%d %H:%M:%S %z')"
+  printf '%s\n%s\n%s%s\n' "$now" "$location" "$human" "${note:+ — $note}" > "$location_override_file"
+
+  send "$(jq -nc --argjson id "$id" --arg location "$location" \
+    '{jsonrpc:"2.0",id:$id,result:{content:[{type:"text",text:("Location set to " + $location + " for the rest of today (expires at local midnight). Live WiFi detection will override this automatically once it works.")}]}}')"
+}
+
 handle_tools_call() {
   local id="$1" raw="$2"
 
   local tool_name
   tool_name="$(printf '%s' "$raw" | jq -r '.params.name')"
 
-  if [[ "$tool_name" != "set_env" ]]; then
-    error_response "$id" -32601 "Unknown tool: $tool_name"
-    return
-  fi
-
-  local var_name raw_value
-  var_name="$(printf '%s' "$raw" | jq -r '.params.arguments.name')"
-  raw_value="$(printf '%s' "$raw" | jq -c '.params.arguments.value // null')"
-
-  handle_set_env "$id" "$var_name" "$raw_value"
+  case "$tool_name" in
+    set_env)
+      local var_name raw_value
+      var_name="$(printf '%s' "$raw" | jq -r '.params.arguments.name')"
+      raw_value="$(printf '%s' "$raw" | jq -c '.params.arguments.value // null')"
+      handle_set_env "$id" "$var_name" "$raw_value"
+      ;;
+    get_timebox_end)
+      handle_get_timebox_end "$id"
+      ;;
+    set_timebox_end)
+      local epoch
+      epoch="$(printf '%s' "$raw" | jq -r '.params.arguments.epoch_seconds')"
+      handle_set_timebox_end "$id" "$epoch"
+      ;;
+    log_break)
+      local minutes_ago note
+      minutes_ago="$(printf '%s' "$raw" | jq -r '.params.arguments.minutes_ago // 0')"
+      note="$(printf '%s' "$raw" | jq -r '.params.arguments.note // ""')"
+      handle_log_break "$id" "$minutes_ago" "$note"
+      ;;
+    set_location)
+      local location note
+      location="$(printf '%s' "$raw" | jq -r '.params.arguments.location')"
+      note="$(printf '%s' "$raw" | jq -r '.params.arguments.note // ""')"
+      handle_set_location "$id" "$location" "$note"
+      ;;
+    *)
+      error_response "$id" -32601 "Unknown tool: $tool_name"
+      ;;
+  esac
 }
 
 # Main loop: read newline-delimited JSON-RPC messages

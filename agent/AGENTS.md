@@ -155,17 +155,16 @@ related-but-separable reasons.
 
 ## Session discipline
 
-Focus-tracking is a hard gate — you MUST invoke it before any work.
-End-of-day thresholds fire passively starting at 17:00; you MUST load
-the end-of-day-awareness skill for specifics. Only production incidents
-override either gate.
+Run focus-tracking in a background subagent. Load end-of-day-awareness and
+soft-timebox skills for specifics.
 
-When the user declares a timebox, enforce it as a hard stop. Load the
-soft-timebox skill for specifics.
-
-Approximately every hour of active work, write a 2–4 line checkpoint to
-`.jplocal/CLAUDE.md` (accomplished, current state, non-obvious decisions).
-Don't ask permission — just write it at natural pauses near the hour mark.
+When the discipline-tick hook fires (`[discipline-tick]` message), always
+surface it to the user aloud. Load the soft-timebox skill for timebox
+enforcement, end-of-day-awareness skill for end-of-day gate details, and
+the local-notes-and-checkpoints skill for checkpoint cadence. Never act
+on ticks silently — the user doesn't see injected text. Roughly every
+hour, write a 2–4 line checkpoint to `./CLAUDE.local.md`; use
+`~/desk/checkpoints/YYYYMMDD/<slug>.md` for substantial work.
 
 ## Agent env (sharing values with the user's shell)
 

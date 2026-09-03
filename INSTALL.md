@@ -211,6 +211,38 @@ The extension includes a `timestamp-injector` hook that automatically injects
 `[Current Time: ...]` into your conversations. This is used by skills like 
 `soft-timebox` and `end-of-day-awareness`.
 
+### Location Services permission (for office/home detection)
+
+`discipline-tick.sh`'s office/home watcher (and the older
+`~/.claude/statusline-timecheck.sh`) detect physical location by reading
+the current WiFi SSID via `system_profiler SPAirPortDataType` /
+`networksetup -getairportnetwork`. Since macOS Big Sur, reading the *real*
+SSID requires the calling process to hold Location Services permission —
+without it, both commands fail silently in different ways:
+`system_profiler` returns the literal string `"<redacted>"` as the SSID
+value (not an error, a valid-looking placeholder string that's easy to
+mistake for a real network name), and `networksetup` reports "You are not
+associated with an AirPort network" even while genuinely connected.
+
+**Symptom if this is missed:** the office/home watcher silently never
+fires — it always resolves to "unknown location" and just stops nagging,
+which looks identical to "you're not at either known location," not like
+a broken feature.
+
+**Fix:** grant Location Services permission to whatever process actually
+runs the Claude Code hooks (typically your terminal app — Terminal.app,
+iTerm2, etc.) in System Settings → Privacy & Security → Location
+Services, then start a fresh terminal session.
+
+Known SSIDs live in a machine-local, git-ignored config file (not part of
+this repo, since it's workstation- and site-specific):
+`~/.claude/hooks/state/discipline-tick/location-config.sh`, sourced by
+`discipline-tick.sh`:
+```bash
+HOME_SSIDS=("YOUR_HOME_SSID")
+OFFICE_SSIDS=("YOUR_OFFICE_SSID")
+```
+
 ### Agent CLI wrappers (`gitdir`, `ghe`)
 
 Two scripts in `bin/` provide read-only wrappers that simplify AI agent

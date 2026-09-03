@@ -1,16 +1,16 @@
 ---
 name: focus-tracking
-description: On session start, read today's priority list, match the user's request against it, and surface tradeoffs. Blocks work when today.md is significantly stale (>2 business days). Includes task tracking ceremony (offer to add/mark tasks).
+description: On session start, read today's priority list, match the user's request against it, and gently surface adherence. Never blocks — always proceeds after calling out drift. Includes task tracking ceremony (offer to add/mark tasks).
 ---
 
 # Focus tracking
 
 ## The contract
 
-By enabling this skill, the user has memorialized a desire to be redirected
-and kept on track. Treat that as a standing instruction: when the skill
-detects drift, the user is asking you to call it out — even if the immediate
-prompt is about something else entirely. The intervention is the feature.
+By enabling this skill, the user has memorialized a desire to have agenda
+adherence surfaced. When the skill detects drift, call it out gently — but
+**never block**. The callout is the feature; the user decides whether to
+act on it. Always proceed with the user's request after noting the drift.
 
 ## Exceptions
 
@@ -33,21 +33,12 @@ Before doing any other work:
 1. Run the **staleness check** (see below).
 2. If the file is current (not blocked by staleness), match the user's
    request against the priority list. If the work doesn't correspond to any
-   listed item, **do not proceed with the request.** Say so clearly:
+   listed item, note it gently before proceeding:
 
    > I don't see this on today's priority list. Your top items are (X) and
-   > (Y). Where does this fit — is it one of those, should I add it to
-   > today's list, or do you want to override?
+   > (Y) — noting for awareness.
 
-   **Wait for the user to respond.** The user can:
-   - Identify which existing priority the work falls under.
-   - Ask to add it as a new item on today's list (offer to mark it `[~]`).
-   - Explicitly override: "skip focus tracking" / "just do the thing" /
-     any clear signal. Honor the override without further argument.
-
-   Do not proceed until one of these happens. If the user restates the
-   prompt without addressing the question, re-surface it once more, then
-   honor a second dismissal as implicit override.
+   Then proceed with the user's request. Do not wait or block.
 
 ## Staleness check
 
@@ -70,32 +61,17 @@ Proceed to priority matching and the user's request. Don't block.
 
 ### Significantly stale (>2 business days)
 
-The desk routine has drifted. This is the case the contract above is
-designed for. **Do not proceed with the user's prompt.** Instead:
+The desk routine has drifted. Note it warmly before proceeding:
 
 1. Note how many business days stale the file is.
-2. Run `Bash(desk)` to push the desk terminal into focus. This is a
-   physical escalation — it puts the desk window in the user's face.
-3. Gently encourage getting back on track. Keep the tone warm, not
+2. Gently encourage getting back on track. Keep the tone warm, not
    scolding — the user may have been away for good reasons (PTO, illness,
    life). The point isn't guilt; it's momentum. Something like:
 
-   > today.md is from [date] — that's [N] business days ago. I know getting
-   > back into the routine is the hard part. Want to start a desk session to
-   > get current, or at least jot down today's priorities?
+   > today.md is from [date] — that's [N] business days ago. When you get
+   > a moment, a quick desk session would help get current.
 
-4. **Wait for the user to respond.** Do not proceed with the original
-   prompt. The user can:
-   - Start a desk session (ideal).
-   - Provide today's priorities inline (acceptable — offer to update
-     today.md with what they give you).
-   - Explicitly override: "skip focus tracking" / "just do the thing" /
-     any clear signal that they want to bypass the intervention. Honor the
-     override without further argument.
-
-The override must be explicit. "Yeah yeah" or ignoring the message and
-re-stating the prompt does not count — re-surface the intervention once
-more, then honor a second dismissal as implicit override.
+3. **Proceed with the user's request.** Do not block or wait.
 
 ### Mid-session staleness
 
@@ -115,12 +91,12 @@ context.
 
 ## Telemetry
 
-After the focus check resolves (priority matched or overridden), log the
-session start:
+Always log the session start after the focus check, regardless of
+staleness or drift:
 
     desk-log "started session for <goal/tag>, timebox <N>m"
 
-If focus tracking was skipped (override or exception), log that instead:
+If focus tracking was skipped (exception), log that instead:
 
     desk-log "skipped focus check: <reason>, timebox 10m"
 
