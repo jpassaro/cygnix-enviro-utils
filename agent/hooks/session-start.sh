@@ -4,7 +4,8 @@ set -euo pipefail
 
 command -v jq >/dev/null 2>&1 || { echo "jq required but not found" >&2; exit 1; }
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REAL_SCRIPT="$(realpath "$0")"
+SCRIPT_DIR="$(cd "$(dirname "$REAL_SCRIPT")" && pwd)"
 PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 claude_md="${PLUGIN_ROOT}/CLAUDE.md"
