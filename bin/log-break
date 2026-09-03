@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# Record a real break for discipline-tick.sh's global break axis — the
+# same signal the agent-env MCP tool's log_break writes, but callable
+# directly by the user (the MCP tool only exists for the agent to call).
+# Writes the same 2-line global-break.state file
+# (agent/agent-env-mcp:handle_log_break), so every open Claude Code
+# session picks it up and resets its own stretch clock next time its
+# discipline-tick hook fires. Also fires a desk-log entry (best-effort —
+# a desk-log failure must not fail the break itself) so breaks show up in
+# the monthly self-assessment telemetry.
+#
+# Usage: log-break [minutes-ago] [note...]
+#   log-break                       # break starting now
+#   log-break 10                    # break started 10 minutes ago
+#   log-break 0 "grabbing coffee"   # break now, with a note
+
+set -euo pipefail
+
+minutes_ago="${1:-0}"
+case "$minutes_ago" in
+    ''|*[!0-9]*)
+        echo "log-break: minutes-ago must be a non-negative integer, got: $minutes_ago" >&2
+        exit 1
+        ;;
+esac
+shift || true
+note="$*"
+
+state_dir="${HOME}/.claude/hooks/state/discipline-tick"
+global_break_file="${state_dir}/global-break.state"
+mkdir -p "$state_dir"
+
+now="$(date +%s)"
+break_epoch=$((now - minutes_ago * 60))
+human="$(date -r "$break_epoch" '+%Y-%m-%d %H:%M:%S %z' 2>/dev/null || echo '?')"
+printf '%s\n%s%s\n' "$break_epoch" "$human" "${note:+ — $note}" > "$global_break_file"
+desk-log "took a break${note:+ - $note}" || true
+
+echo "Break logged at ${human}${note:+ — $note}. Every open session will pick this up next time its discipline hook fires."

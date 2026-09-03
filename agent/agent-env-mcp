@@ -2,13 +2,24 @@
 # MCP server (stdio transport) — exposes set_env (writing to $JP_AGENT_ENV)
 # plus three discipline-tick.sh-adjacent tools: get_timebox_end/
 # set_timebox_end (read/write this session's stretch deadline) and
-# log_break (the global, cross-session "I stepped away" signal). The
-# tick-file and global-break-file schemas are owned by discipline-tick.sh;
-# this server just reads/writes the same paths, so a schema change there
-# must be mirrored here.
+# log_break (the global, cross-session "I stepped away" signal — delegates
+# to bin/log-break, the user-facing CLI equivalent, rather than writing
+# global-break.state itself). The tick-file schema (read/written directly
+# by get_timebox_end/set_timebox_end) is owned by discipline-tick.sh; this
+# server just reads/writes the same paths, so a schema change there must
+# be mirrored here.
 # Protocol: JSON-RPC 2.0 over newline-delimited JSON on stdin/stdout.
 
 set -euo pipefail
+
+# realpath first, then cd/pwd — same fix as hooks/session-start.sh: this
+# script is invoked via ${CLAUDE_PLUGIN_ROOT}/agent-env-mcp, which can
+# itself be a symlink into a plugin install dir, so resolving symlinks
+# only at the end (a bare `pwd -P`) would still leave `..` navigating the
+# symlinked path instead of the real one.
+real_script="$(realpath "${BASH_SOURCE[0]}")"
+script_dir="$(cd "$(dirname "$real_script")" && pwd)"
+log_break_bin="${script_dir}/../bin/log-break"
 
 env_file="${JP_AGENT_ENV:-}"
 
@@ -17,7 +28,6 @@ env_file="${JP_AGENT_ENV:-}"
 # both sides must agree on paths and the 4-line schema
 # (stretch_start/last_fire/last_invocation/timebox_end).
 state_dir="${HOME}/.claude/hooks/state/discipline-tick"
-global_break_file="${state_dir}/global-break.state"
 location_override_file="${state_dir}/location-override.state"
 
 send() {
@@ -84,7 +94,7 @@ handle_tools_list() {
     },
     {
       "name": "log_break",
-      "description": "Record that the user is taking, or just took, a real break. This is a GLOBAL signal, not scoped to this session — every open Claude Code session picks it up next time its discipline hook fires and resets its own stretch clock accordingly (this is how a short break, under the 30-minute implicit gap-detection threshold, gets credited at all). Call this when the user has actually confirmed they're stepping away, not on a bare acknowledgment.",
+      "description": "Record that the user is taking, or just took, a real break. This is a GLOBAL signal, not scoped to this session — every open Claude Code session picks it up next time its discipline hook fires and resets its own stretch clock accordingly (this is how a short break, under the 30-minute implicit gap-detection threshold, gets credited at all). Call this when the user has actually confirmed they're stepping away, not on a bare acknowledgment. The user can also log their own break directly with the `log-break` CLI (same arguments: minutes-ago, then an optional note) without going through the agent at all — mention it if they'd rather self-serve.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -209,20 +219,19 @@ handle_set_timebox_end() {
 
 handle_log_break() {
   local id="$1" minutes_ago="$2" note="$3"
-  local now break_epoch human
+  local cli_output
 
   case "$minutes_ago" in
     ''|*[!0-9]*) minutes_ago=0 ;;
   esac
 
-  mkdir -p "$state_dir"
-  now="$(date +%s)"
-  break_epoch=$((now - minutes_ago * 60))
-  human="$(date -r "$break_epoch" '+%Y-%m-%d %H:%M:%S %z' 2>/dev/null || echo '?')"
-  printf '%s\n%s%s\n' "$break_epoch" "$human" "${note:+ — $note}" > "$global_break_file"
+  # Delegate to bin/log-break — the user-facing CLI equivalent — rather
+  # than duplicating its write logic here, so global-break.state has one
+  # writer implementation, not two that must be kept in sync.
+  cli_output="$("$log_break_bin" "$minutes_ago" "$note")"
 
-  send "$(jq -nc --argjson id "$id" --arg note "$note" \
-    '{jsonrpc:"2.0",id:$id,result:{content:[{type:"text",text:("Break logged" + (if $note != "" then ": " + $note else "" end) + ". Every open session will pick this up and reset its own stretch clock next time its hook fires.")}]}}')"
+  send "$(jq -nc --argjson id "$id" --arg text "$cli_output" \
+    '{jsonrpc:"2.0",id:$id,result:{content:[{type:"text",text:$text}]}}')"
 }
 
 handle_set_location() {
