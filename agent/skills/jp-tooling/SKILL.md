@@ -42,6 +42,41 @@ appends/updates.
 For long-running commands, use `jplocal --tee -f <descriptive>.log | tail`
 to preserve full output while showing progress.
 
+### Command/process substitution (`$(cmd)`, `<(cmd)`)
+
+Any substitution syntax — `$(cmd)` or `<(cmd)` — gates the whole command
+line with "Contains shell syntax (string) that cannot be statically
+analyzed", even when every command involved is individually permitted
+(e.g. `echo "$(echo something)"` is gated). As of 2026-09-03, the
+classifier can't statically analyze nested substitutions, so it gates on
+the shape of the line, not on whether the inner command is allowlisted.
+
+For `diff <(cmd1) <(cmd2)`, write each side to a `jplocal` file first,
+then run the final command against plain file paths:
+
+```bash
+cmd1 | jplocal a
+cmd2 | jplocal b
+diff .jplocal/YYYYMMDD/{a,b}
+```
+
+This works because `diff` takes file paths as plain arguments. It does
+NOT help when the substitution's output is genuinely needed inline in
+argv (e.g. a script that requires `--flag="$(cmd)"` as a single
+argument) — writing to a `jplocal` file doesn't eliminate the need for
+substitution syntax in that case, so the command stays gated. There's no
+`jplocal`-based workaround for that shape; expect and accept the prompt.
+
+Note the two input forms for `jplocal` are not interchangeable:
+- **Pipe form** (captures a command's live output): `cmd | jplocal [-f] <name>`
+- **Heredoc form** (literal, hand-authored content only):
+  `jplocal <name> <<'EOF' ... EOF`
+
+A quoted heredoc (`<<'EOF'`) suppresses shell expansion by design, so
+embedding `$(cmd)` inside it does NOT capture that command's output — it
+silently produces empty or literal text. Use the pipe form whenever you
+need a command's output captured.
+
 ## Subagent passthrough
 
 When dispatching subagents, include the following rules in the prompt.
@@ -54,5 +89,6 @@ and auto-allowed; their alternatives trigger permission prompts.
 > For git in other repos, use `gitdir <cmd> <dir>` — not `git -C`.
 > For GitHub Enterprise, use `ghe <cmd> <host/org/repo>` — not `gh`.
 > For file search, use `grep -r --include='*.ext'` — not `find -exec`.
+> For diffing command output, use `cmd | jplocal a && cmd2 | jplocal b && diff .jplocal/YYYYMMDD/{a,b}` — not `diff <(cmd1) <(cmd2)`.
 > Always quote variables: `"$var"`, `"$(cmd)"`, `"${arr[@]}"`.
 > All of the above avoid permission prompts.

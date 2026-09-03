@@ -70,6 +70,7 @@ of `gitdir`, `ghe`, `jplocal`, and subagent passthrough text.
 | `find <dir> -name '*.x' -exec grep ...` | `grep -r --include='*.x' <pattern> <dir>` | find-exec not allowlisted; grep -r is |
 | `python3 -c 'import json...'`           | `jq '<filter>'`                           | jq is auto-allowed and faster         |
 | `cmd >/tmp/out.log` or `cmd > /tmp/x`    | `cmd \| jplocal <filename>`                | /tmp/ triggers permission prompt      |
+| `diff <(cmd1) <(cmd2)`                  | `cmd1 \| jplocal a && cmd2 \| jplocal b && diff .jplocal/YYYYMMDD/{a,b}` | process substitution looks write-like |
 
 Never use `git -C` — use `gitdir` for other repos, bare `git` for CWD.
 Never merge stderr into a JSON parser (`2>&1 | jq` is always wrong).
@@ -78,6 +79,10 @@ For `grep -r`: `--include='*.ext'` for patterns, `--exclude-dir='.git'`.
 **Never redirect output to `/tmp/` (`>`, `2>`, `tee /tmp/...`).** Pipe into
 `jplocal` instead — it's an auto-allowed script, so it avoids the
 permission prompt. Full usage is in the `/jp-tooling` skill.
+
+Same goes for the Write tool: prefer `.jplocal/YYYYMMDD/` over `/tmp/`
+for scratch files (e.g. drafting a Jira description before
+`jira issue create`) — same reasons as the redirect case.
 
 ## Local notes and checkpoints
 

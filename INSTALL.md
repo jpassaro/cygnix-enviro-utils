@@ -272,6 +272,21 @@ permissions:
 
 Install both via `installables install gitdir ghe`.
 
+### `jplocal` scratch-file permissions
+
+`Bash(jplocal *)` allows the script itself, but writing scratch files
+into `.jplocal/` with the Write or Edit tool directly (e.g. drafting a
+Jira description before `jira issue create`) is a separate permission
+check. Confirmed 2026-09-03: only `Edit(path)` permission rules are
+matched against file-editing tools — `Write(path)` rules are never
+matched (Claude Code prints a startup warning if you add one). Add this
+to `~/.claude/settings.json`:
+```json
+"Edit(**/.jplocal/**)",
+```
+Permission-rule changes only take effect on a full Claude Code process
+restart, not `/clear`, `/resume`, or a settings-file edit alone.
+
 ## Editor configuration
 
 Add the following to your `~/.vimrc`:
