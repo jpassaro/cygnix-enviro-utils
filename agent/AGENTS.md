@@ -87,7 +87,16 @@ summaries). For substantial work, write detailed checkpoints to
 always `desk-log` the checkpoint path when done. Load the
 local-notes-and-checkpoints skill for conventions and checkpoint format.
 
-## Commit messages
+## Commits and PRs
+
+**Never run `git commit` or `gh pr create` unless specifically asked.**
+The user writes all commit messages and PR descriptions themselves.
+Your role:
+- Stage the right files (`git add`)
+- Summarize what changed or say how you would word a commit message
+- Do not commit or offer to commit unprompted
+- When you would otherwise run `gh pr create`, open the "new PR" page
+  in the browser instead: `open <repo-url>/compare/<branch>?expand=1`
 
 In commit message bodies, distinct changes belong in distinct paragraphs.
 Each paragraph can be multi-sentence, but should cover one logical change.
