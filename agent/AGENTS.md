@@ -116,23 +116,11 @@ on ticks silently — the user doesn't see injected text. Roughly every
 hour, write a 2–4 line checkpoint to `./CLAUDE.local.md`; use
 `~/desk/checkpoints/YYYYMMDD/<slug>.md` for substantial work.
 
-## Agent env (sharing values with the user's shell)
+## Agent env
 
-When you discover a path, URL, branch name, commit SHA, or other value the
-user might want to act on, save it with the `set_env` MCP tool. This writes
-to a per-session env file that the user can load via `src()`.
-
-After calling `set_env`, always tell the user what you saved and suggest the
-`! src` pattern so they can use it immediately. Example:
-
-> I saved the worktree path. Grab it with: `! src && cd "$WORKTREE"`
-
-Use short, descriptive names: `WORKTREE`, `PR_URL`, `COMMIT`, `BRANCH`.
-Overwriting a variable replaces the previous value (no duplicates).
-Pass `null` as the value to unset.
+Use `set_env` to save discoverable values (paths, URLs, branch names). After
+calling it, tell the user what was saved and suggest `! src` to load it.
 
 ## Markdown style
 
-When writing markdown tables, always align column widths so that pipe
-characters line up across all rows in the table. Pad cell contents with
-trailing spaces as needed.
+Align table pipes. Wrap prose at ~78 columns; preserve structural elements.
