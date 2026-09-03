@@ -5,4 +5,4 @@
 set -euo pipefail
 
 mkdir -p "$HOME/desk/log"
-printf '%s %s\n' "$(date +%H%M%S)" "$*" >> "$HOME/desk/log/$(date +%Y%m%d)"
+printf '%s %s [%s]\n' "$(date +%H%M%S)" "$*" "$JP_TTY${JP_TTY:+:}$PWD" >> "$HOME/desk/log/$(date +%Y%m%d)"
