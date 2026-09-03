@@ -131,13 +131,13 @@ fi
 CURRENT_DISPLAY="$(format_tokens "$CURRENT_TOKENS")"
 CONTEXT_SIZE_DISPLAY="$(format_tokens "$CONTEXT_SIZE")"
 
-# --- AWS credential TTL -----------------------------------------------------
+# --- AWS credential TTL (Bedrock mode only) ---------------------------------
 
 AWS_TTL_DISPLAY=""
 AWS_CREDS_FILE="${HOME}/.aws/credentials"
 AWS_PROFILE_NAME="twdc-bedrock-central"
 
-if [ -f "$AWS_CREDS_FILE" ]; then
+if [ "${CLAUDE_CODE_USE_BEDROCK:-}" = "1" ] && [ -f "$AWS_CREDS_FILE" ]; then
     EXPIRATION="$(awk -v profile="[$AWS_PROFILE_NAME]" '
         $0 == profile { found=1; next }
         /^\[/ { found=0 }
@@ -375,6 +375,31 @@ assemble_line() {
     # Time (always shown)
     segment_enabled time && parts+=("$TIME_DISPLAY")
 
+    # Cost + duration (kept near the front — the number you check most)
+    if segment_enabled cost || segment_enabled duration; then
+        local cd_part=""
+        if segment_enabled cost; then
+            cd_part="$COST_DISPLAY"
+        fi
+        if segment_enabled duration; then
+            if [ "$level" -lt 1 ]; then
+                if [ -n "$cd_part" ]; then
+                    cd_part="$cd_part $DURATION"
+                else
+                    cd_part="$DURATION"
+                fi
+                if [ "$API_DURATION_MS" -gt 0 ] 2>/dev/null; then
+                    cd_part="$cd_part (api $API_DURATION)"
+                fi
+            elif [ "$level" -lt 2 ]; then
+                if [ "$API_DURATION_MS" -gt 0 ] 2>/dev/null; then
+                    cd_part="${cd_part:+$cd_part }(api $API_DURATION)"
+                fi
+            fi
+        fi
+        [ -n "$cd_part" ] && parts+=("$cd_part")
+    fi
+
     # Context window
     if segment_enabled context; then
         if [ "$level" -ge 4 ]; then
@@ -402,32 +427,7 @@ assemble_line() {
         parts+=("$PR_DISPLAY")
     fi
 
-    # Cost + duration
-    if segment_enabled cost || segment_enabled duration; then
-        local cd_part=""
-        if segment_enabled cost; then
-            cd_part="$COST_DISPLAY"
-        fi
-        if segment_enabled duration; then
-            if [ "$level" -lt 1 ]; then
-                if [ -n "$cd_part" ]; then
-                    cd_part="$cd_part $DURATION"
-                else
-                    cd_part="$DURATION"
-                fi
-                if [ "$API_DURATION_MS" -gt 0 ] 2>/dev/null; then
-                    cd_part="$cd_part (api $API_DURATION)"
-                fi
-            elif [ "$level" -lt 2 ]; then
-                if [ "$API_DURATION_MS" -gt 0 ] 2>/dev/null; then
-                    cd_part="${cd_part:+$cd_part }(api $API_DURATION)"
-                fi
-            fi
-        fi
-        [ -n "$cd_part" ] && parts+=("$cd_part")
-    fi
-
-    # AWS (shed at level 7)
+    # AWS (Bedrock mode only, shed at level 7)
     if [ "$level" -lt 7 ] && segment_enabled aws && [ -n "$AWS_TTL_DISPLAY" ]; then
         parts+=("$AWS_TTL_DISPLAY")
     fi
